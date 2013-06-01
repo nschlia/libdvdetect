@@ -1,0 +1,11 @@
+Qt examples:
+
+  guiexample
+
+      This is an example written in C++ using the Qt library. It has
+      a GUI and presents a much more clearly arranged look at the
+      DVD structures.
+
+      If you have Qt Creator, try it, it may help to understand DVDs
+      a lot. If not, get it (http://qt-project.org/downloads), it's
+      multi platform and definetly worth a try.

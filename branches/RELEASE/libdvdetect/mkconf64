@@ -1,0 +1,28 @@
+#!/bin/bash
+
+PATH=$PATH:/C/Qt/Qt5.0.1/Tools/mingw64/bin
+
+#autoscan
+#cp configure.scan configure.ac
+
+echo aclocal
+aclocal
+
+echo autoconf
+autoconf
+
+echo autoheader
+autoheader
+
+echo libtoolize
+libtoolize
+
+echo automake
+automake --add-missing -a --foreign
+
+echo Doing configure
+./configure
+
+make -s
+#make -s dist
+

@@ -1,0 +1,16 @@
+There are two examples:
+
+dvd-info
+
+    a program which checks a DVD in the drive and displays DVD information: 
+    number of titles, chapters, DVD-format and if possible basic information 
+    about the structure.
+
+dvd-lookup
+
+    checks a DVD in the drive and does a lookup in the database. Displays 
+    information like DVD title, chapters, release date and more.
+
+Examples are available in both C and C++.
+
+For an example how to use the libray with Qt GUI, see the Qt directory.
