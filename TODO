@@ -1,0 +1,4 @@
+* Actual database access
+* Lots of code review/commenting
+* Support for menus (implement virtual machine)
+* Cell handling (angles)
