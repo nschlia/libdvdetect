@@ -43,42 +43,44 @@ static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate)
     printf("\n");
 }
 
+static void usage()
+{
+    printf("Usage:\n\n");
+    printf("dvdinfo PATH-TO-DVD\n");
+    printf("\n");
+
+    printf("Example:\n\n");
+
+#ifdef _WIN32
+    printf("dvdinfo F:\n");
+#else
+    printf("dvdinfo /mnt/cdrom1/\n");
+#endif
+}
+
 int main(int argc, char *argv[])
 {
-    const char *pszPath[4];
+    const char *pszPath = "";
     LPDVDETECTHANDLE pDvDetectHandle = NULL;
     int res = 0;
 
     printf("dvdinfo V%s\n", LIBDVDETECT_VERSION);
     printf("%s\n\n", DVDETECT_COPYRIGHT);
 
-#define TESTMODE 1
-#define TESTITEM 0
+    if (argc != 2)
+    {
+        usage();
+        return 1;
+    }
 
-#if TESTMODE == 0
-    pszPath[0] = "/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/";
-    pszPath[1] = "/files/mp3base2/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/";
-    pszPath[2] = "/files/mp3base2/DVD/Musik/Subway to Sally/Engelskrieger (Konzert)/DVD1/VIDEO_TS/";
-    pszPath[3] = "/files/mp3base2/DVD/Spielfilme/Miss Marple/16 Uhr 50 ab Paddington (Murder, she said) [1961]/DVD1/VIDEO_TS/";
-#elif TESTMODE == 1
-    pszPath[0] = "D:/temp/DVD/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/";
-    pszPath[1] = "D:/temp/DVD/Metallica/S+M/";
-    pszPath[2] = "D:/temp/DVD/Garfield/";
-    pszPath[3] = "D:/temp/DVD/Hollywood/";
-#elif TESTMODE == 2
-    pszPath[0] = "t:/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/";
-    pszPath[1] = "t:/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/";
-    pszPath[2] = "t:/DVD/Musik/Subway to Sally/Engelskrieger (Konzert)/DVD1/VIDEO_TS/";
-    pszPath[3] = "T:/DVD/Spielfilme/Miss Marple/16 Uhr 50 ab Paddington (Murder, she said) [1961]/DVD1/VIDEO_TS/";
-#else
-#error "Unknown test mode"
-#endif
-    printf("TESTPATH: %s\n", pszPath[TESTITEM]);
+    pszPath = argv[1];
+
+    printf("TESTPATH: %s\n\n", pszPath);
 
     pDvDetectHandle = dvdOpenLib();
     if (pDvDetectHandle != NULL)
     {
-        res = dvdParse(pDvDetectHandle, pszPath[TESTITEM]);
+        res = dvdParse(pDvDetectHandle, pszPath);
         if (res == 0)
         {
             const DVDVMGM *pDVDVMGM = dvdGetDVDVMGM(pDvDetectHandle);
