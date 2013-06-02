@@ -47,40 +47,42 @@ static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate = (uint16_t)-1)
     cout << endl;
 }
 
-int main()
+static void usage()
 {
-    vector<string> strPath;
+    cout << "Usage:" << endl << endl;
+    cout << "dvdinfo PATH-TO-DVD" << endl;
+    cout << endl;
+
+    cout << "Example:" << endl << endl;
+
+#ifdef _WIN32
+    cout << "dvdinfo F:" << endl;
+#else
+    cout << "dvdinfo /mnt/cdrom1/" << endl;
+#endif
+}
+
+int main(int argc, char *argv[])
+{
+    string strPath;
     int res = 0;
 
     cout << "dvdinfo/c++ V" << LIBDVDETECT_VERSION << endl;
     cout << DVDETECT_COPYRIGHT << endl << endl;
 
-#define TESTMODE 1
-#define TESTITEM 0
+    if (argc != 2)
+    {
+        cerr << "Invalid parameter" << endl << endl;
+        usage();
+        return 1;
+    }
 
-#if TESTMODE == 0
-    strPath.push_back("/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/");
-    strPath.push_back("/files/mp3base2/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/");
-    strPath.push_back("/files/mp3base2/DVD/Musik/Subway to Sally/Engelskrieger (Konzert)/DVD1/VIDEO_TS/");
-    strPath.push_back("/files/mp3base2/DVD/Spielfilme/Miss Marple/16 Uhr 50 ab Paddington (Murder, she said) [1961]/DVD1/VIDEO_TS/");
-#elif TESTMODE == 1
-    strPath.push_back("D:/temp/DVD/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/");
-    strPath.push_back("D:/temp/DVD/Metallica/S+M/");
-    strPath.push_back("D:/temp/DVD/Garfield/");
-    strPath.push_back("D:/temp/DVD/Hollywood/");
-#elif TESTMODE == 2
-    strPath.push_back("t:/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/");
-    strPath.push_back("t:/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/");
-    strPath.push_back("t:/DVD/Musik/Subway to Sally/Engelskrieger (Konzert)/DVD1/VIDEO_TS/");
-    strPath.push_back("T:/DVD/Spielfilme/Miss Marple/16 Uhr 50 ab Paddington (Murder, she said) [1961]/DVD1/VIDEO_TS/");
-#else
-#error "Unknown test mode"
-#endif
+    strPath = argv[1];
 
-    cout << "TESTPATH: "<< strPath[TESTITEM] << endl;
+    cout << "TESTPATH: "<< strPath << endl << endl;
 
     dvdparse dvd;
-    res = dvd.parse(strPath[TESTITEM]);
+    res = dvd.parse(strPath);
 
     //res = 1;
     if (res == 0)
