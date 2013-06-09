@@ -1,0 +1,10 @@
+2012-06-08 V0.20 released!
+
+The maintenance release is ready: The biggest changes are concerning the documentation (added
+and updated a lot of doxygen style comments) and the support for part-of-title indexes. The
+rest is of cosmetical nature and a few refactorings.
+
+Next: Actual DVD database lookup will be added.
+
+This is a humongous task: Not only that the code needs to be written, but I will also have to
+type in some of my DVDs for lookup testing. So please stay tuned.

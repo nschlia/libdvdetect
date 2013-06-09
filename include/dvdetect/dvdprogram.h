@@ -17,15 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdprogram.h
+/*! \file dvdprogram.h
  *
- *  \brief dvdprogram class
+ *  \brief dvdprogram class declaration
+ *
+ * Store information about a DVD program.
  */
 
 #pragma once
 
 #ifndef DVDPROGRAM_H
+
 #define DVDPROGRAM_H
+
 
 #include <dvdetect/dvdcell.h>
 #include <dvdetect/dvdfile.h>
@@ -40,25 +44,75 @@ class DLL_PUBLIC dvdprogram : public dvdetectbase
     friend class dvdparse;
 
 public:
+    //! Constructor.
+    /*!
+     *  Construct a dvdprogram element.
+     */
     explicit dvdprogram();
+    //! Destructor.
+    /*!
+     *  Destruct a dvdprogram element.
+     */
     virtual ~dvdprogram();
 
+    //! Access the DVDPROGRAM data structure.
+    /*!
+     *  \return Pointer to the underlying DVDPROGRAM structure.
+     *  \return It is guaranteed that a valid structure is returned (never NULL).
+     */
     LPCDVDPROGRAM       getDVDPROGRAM() const;
+
+    //! Get a DVD cell in this program.
+    /*!
+     *  \param wCell uint16_t Index of cell (1...n)
+     *  \return Success: Pointer to dvdcell class
+     *  \return Fail: NULL if wCell out of bounds.
+     */
     const dvdcell *     getDvdCell(uint16_t wCell) const;
+
+    //! Get the number of cells in this program.
+    /*!
+     *  \return Number of cells (1...n)
+     */
     uint16_t            getCellCount() const;
 
+    //! Get the size (in bytes) of this program.
+    /*!
+     *  \return Size (in bytes) of this program.
+     */
     uint64_t            getSize() const;
+
+    //! Get the playtime (in ms) of this program.
+    /*!
+     *  \return Playtime (in ms) of this program.
+     */
     uint64_t            getPlayTime() const;
+
+    //! Get the start sector (LBA/Logical Block Adress) of this program.
+    /*!
+     *  \return Start sector (LBA/Logical Block Adress) of this program.
+     */
     uint32_t            getStartSector() const;
+
+    //! Get the end sector (LBA/Logical Block Adress) of this program.
+    /*!
+     *  \return end sector (LBA/Logical Block Adress) of this program.
+     */
     uint32_t            getEndSector() const;
 
+//    dvdprogram& operator= (dvdprogram const& rhs);
+
+    //! Get the type_info of this class.
+    /*!
+     *  \return type_info of this class.
+     */
     virtual const std::type_info & classtype() const;
 
 protected:
-    DVDPROGRAM          m_DVDPROGRAM;
-    dvdcelllst          m_dvdCellLst;
+    DVDPROGRAM          m_DVDPROGRAM;				//!< DVDPROGRAM structure (DVD program)
+    dvdcelllst          m_dvdCellLst;				//!< list of DVD cells of this program
 };
 
-typedef std::vector<dvdprogram> dvdprogramlst;
+typedef std::vector<dvdprogram> dvdprogramlst;		//!< shortcut for a list of dvdprograms
 
 #endif // DVDPROGRAM_H

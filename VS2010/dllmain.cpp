@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dllmain.cpp
+/*! \file dllmain.cpp
  *
  *  \brief Windows DllMain function for MS Visual C code
  */

@@ -26,8 +26,9 @@ pkginclude_HEADERS = \
 	dvdparse.h \
 	dvdpgc.h \
 	dvdprogram.h \
-	dvdptt.h \
-	dvdtitle.h \
+        dvdpttvmg.h \
+        dvdpttvts.h \
+        dvdtitle.h \
 	dvdunit.h \
 	dvdutils.h \
 	types.h \

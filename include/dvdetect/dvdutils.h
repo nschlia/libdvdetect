@@ -17,48 +17,49 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdutils.h
+/*! \file dvdutils.h
+ *
+ *  \brief Public utility collection
  *
  * Several handy utility functions to be used in accessing DVD structure data.
- * These are created as C style functions (e.g., no C++ decoration) so they can also
- * be used directly as part of the C API.
+ * These are created as C style functions (e.g., no C++ decoration) so the same
+ * they can also be used directly as part of the C API.
  */
 
 #pragma once
 
 #ifndef DVDUTILS_H
+
 #define DVDUTILS_H
+
 
 #ifdef __cplusplus
     extern "C" {
 #endif
 
-/**
- * Convert sector (LBA) to bytes
+/*!
+ * Convert sector (LBA/Logical Block Adress) to bytes
  *
- *  @param dwSectorAddress uint32_t
- *  @exception none
- *  @return Adress in bytes
+ * \param dwSectorAddress uint32_t
+ * \return Adress in bytes
  */
 
 DLL_PUBLIC uint64_t dvdSector2bytes(uint32_t dwSectorAddress);
 
-/**
+/*!
  * Get file extension for DVD file type
  *
- *  @param eFileType DVDFILETYPE
- *  @exception none
- *  @return File extension string (e.g. "IFO")
+ * \param eFileType DVDFILETYPE
+ * \return File extension string (e.g. "IFO")
  */
 
 DLL_PUBLIC const char * dvdGetExtension(DVDFILETYPE eFileType);
 
-/**
- * Get textual description of file type
+/*!
+ * Get textual description of DVD file type
  *
- *  @param eFileType DVDFILETYPE
- *  @exception none
- *  @return File type string (e.g. "VMG/VOB")
+ * \param eFileType DVDFILETYPE
+ * \return File type string (e.g. "VMG/VOB")
  */
 
 DLL_PUBLIC const char * dvdGetFileType(DVDFILETYPE eFileType);

@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdetectdll.h
+/*! \file dvdetectdll.h
  *
  *  \brief Special defines for function visibility in Windoze DLL and libraries
  */
@@ -25,11 +25,9 @@
 #pragma once
 
 #ifndef DVDETECTDLL_H
+
 #define DVDETECTDLL_H
 
-/**
- * XXXX....
- */
 
 #ifndef BUILDING_STATIC
 #if defined _WIN32 || defined __CYGWIN__

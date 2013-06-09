@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdutils.cpp
+/*! \file dvdutils.cpp
  *
  *  \brief Collection of libdvdetect utility function
  */

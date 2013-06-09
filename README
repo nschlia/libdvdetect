@@ -9,6 +9,7 @@ It is possible to create your own copy of this documentation in both
 HTML and LaTeX format using the doxygen program (http://doxygen.org).
 If you have doxygen installed, execute the following command in the
 doc/ directory:
+
     doxygen doxygen.conf
 
 This will create two subdirectories html/ and latex/ in which you will
@@ -18,7 +19,7 @@ COMPILING
 
 To compile. do the usual "configure" and then "make".
 
-For windows, you should get GNU MSYS which provides the se of UNIX 
+For windows, you should get GNU MSYS which provides the set of UNIX 
 tools required, as well as the GNU compiler (mingw):
 
 http://www.mingw.org/wiki/MSYS
@@ -55,4 +56,4 @@ homepage:
     http://sourceforge.net/projects/libdvdetect/
 
 Or they can be send directly to me:
-    Norbert Schlia <nschlia@dvdetect.de>
+    Norbert Schlia <mailto:nschlia@dvdetect.de>

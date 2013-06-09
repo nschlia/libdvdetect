@@ -17,18 +17,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdpgc.h
+/*! \file dvdpgc.h
  *
- *  \brief dvdpgc class
+ *  \brief dvdpgc class declaration
+ *
+ * Store information about a DVD program chain (PGC).
  */
 
 #pragma once
 
 #ifndef DVDPGC_H
+
 #define DVDPGC_H
 
+
 #include <dvdetect/dvdprogram.h>
-#include <dvdetect/dvdptt.h>
+#include <dvdetect/dvdpttvts.h>
 
 /*!
  *  @brief dvdpgc class
@@ -40,27 +44,68 @@ class DLL_PUBLIC dvdpgc : public dvdetectbase
     friend class dvdparse;
 
 public:
+    //! Constructor.
+    /*!
+     *  Construct a dvdpgc element.
+     */
     explicit dvdpgc();
+    //! Destructor.
+    /*!
+     *  Destruct a dvdpgc element.
+     */
     virtual ~dvdpgc();
 
+    //! Access the DVDPGC data structure.
+    /*!
+     *  \return Pointer to the underlying DVDPGC structure.
+     *  \return It is guaranteed that a valid structure is returned (never NULL).
+     */
     LPCDVDPGC           getDVDPGC() const;
-    const dvdprogram *  getDvdProgram(uint16_t wProgram) const;
-    uint16_t            getProgramCount() const;
-    uint16_t            getCellCount() const;
-    const dvdptt *      getDvdPtt(uint16_t wPtt) const;
-    uint16_t            getPttCount() const;
 
+    //! Get a DVD program in this program chain (PGC).
+    /*!
+     *  \param wProgram uint16_t Index of program (1...n)
+     *  \return Success: Pointer to dvdprogram class; Fail: NULL if wProgram out of bounds.
+     */
+    const dvdprogram *  getDvdProgram(uint16_t wProgram) const;
+
+    //! Get the number of programs in this program chain (PGC).
+    /*!
+     *  \return Number of programs (1...n)
+     */
+    uint16_t            getProgramCount() const;
+
+    //! Get the number of cells in this program chain (PGC).
+    /*!
+     *  \return Number of cells (1...n)
+     */
+    uint16_t            getCellCount() const;
+
+    //! Get the size (in bytes) of this program chain (PGC).
+    /*!
+     *  \return Size (in bytes) of this program chain (PGC).
+     */
     uint64_t            getSize() const;
+
+    //! Get the playtime (in ms) of this program chain (PGC).
+    /*!
+     *  \return Playtime (in ms) of this program chain (PGC).
+     */
     uint64_t            getPlayTime() const;
 
+//    dvdpgc& operator= (dvdpgc const& rhs);
+
+    //! Get the type_info of this class.
+    /*!
+     *  \return type_info of this class.
+     */
     virtual const std::type_info & classtype() const;
 
 protected:
-    DVDPGC              m_DVDPGC;
-    dvdprogramlst       m_dvdProgramLst;
-    dvdpttlst           m_dvdPttLst;
+    DVDPGC              m_DVDPGC;				//!< DVDPGC structure (DVD program chain information)
+    dvdprogramlst       m_dvdProgramLst;		//!< list of DVD programs of this PGC
 };
 
-typedef std::vector<dvdpgc> dvdpgclst;
+typedef std::vector<dvdpgc> dvdpgclst;			//!< shortcut for a list of dvdpgcs
 
 #endif // DVDPGC_H

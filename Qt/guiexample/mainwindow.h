@@ -25,7 +25,9 @@
 #pragma once
 
 #ifndef MAINWINDOW_H
+
 #define MAINWINDOW_H
+
 
 #include <stdint.h>
 
@@ -40,27 +42,50 @@ class MainWindow;
 class QModelIndex;
 class QStandardItemModel;
 
+/*!
+ * \brief MainWindow class
+ *  Display and maintain application's main window.
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
+    //! Constructor.
+    /*!
+     *  Construct a MainWindow element.
+     *
+     * \param parent QWidget * Optional parent windows, may be NULL
+     */
     explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
-
-    int         parseDVD(const QString & strPath);
+    //! Destructor.
+    /*!
+     *  Destruct a MainWindow element.
+     */
+    virtual ~MainWindow();
 
 protected:
+    //! Access the DVDUNIT data structure.
+    /*!
+     * \param strPath const QString & Path to DVD files
+     * \return Success:
+     * \return Fail:
+     */
+    int         parseDVD(const QString & strPath);
+
+    void        showPhysicalView();
+    void        showVirtualView();
     void        updateDialog();
 
-    void        setDetailsColumnSize(QStandardItemModel *ptreeViewDetailsModel);
-    void        setStreamColumneSize(QStandardItemModel *treeViewStreamsModel);
-    void        setFilesColumnSize(QStandardItemModel *treeViewViewFiles);
+    void        setDVDColumnSize();
+    void        setDetailsColumnSize();
+    void        setStreamColumneSize();
+    void        setFilesColumnSize();
 
     bool        showDetails(const dvdparse *pDvdParse);
     bool        showDetails(const dvdtitle* pDvdTitle);
     bool        showDetails(const dvdpgc* pDvdPgc);
-    bool        showDetails(const dvdptt* pDvdPtt);
+    bool        showDetails(const dvdpttvts* pDvdPtt);
     bool        showDetails(const dvdprogram* pDvdProgram);
     bool        showDetails(const dvdcell* pDvdCell);
     bool        showDetails(const dvdunit* pDvdUnit);
@@ -85,9 +110,10 @@ private slots:
     void        on_action_Open_triggered();
     void        on_actionE_xit_triggered();
     void        on_treeViewDVD_clicked(const QModelIndex &index);
+    void        on_checkBoxPhysicalView_clicked();
 
 protected:
-    dvdparse    m_dvd;
+    dvdparse    m_dvd;              //!< dvdparse parser object
 
 private:
     Ui::MainWindow *ui;

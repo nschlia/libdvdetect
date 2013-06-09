@@ -17,15 +17,49 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file compat.h
+/*! \file compat.h
  *
- *  \brief Compatibility layer (all playtforms)
+ *  \brief Compatibility layer (all platforms)
  */
 
 #pragma once
 
 #ifndef COMPAT_H
+
 #define COMPAT_H
+
+
+/*!
+ * \def PROTOCOL
+ * \brief Defines the supported IP protocol family (families): IPv4 or IPv4/IPv6
+ *
+ * \def _countof
+ * \brief Nice little helper to get the number of elements in an array
+ *
+ * \def countof
+ * \brief Alias for _countof
+ *
+ * \def DVD_SECTOR_SIZE
+ * \brief Size of a DVD sector
+ *
+ * \def DVD_MAX_VOB
+ * \brief Maximum number of VOBs per title
+ *
+ * \def DVD_MAX_VOB_SIZE
+ * \brief Maximum size of a single VOB (1.073.739.776 bytes == 1 GB - 2048 Bytes)
+ *
+ * \def O32_ORDER_STR
+ * \brief Short name of machine order (BE = big endian, LE = little endian)
+ *
+ * \def O32_ORDER_STR_LONG
+ * \brief Long name of machine order ("big endian", "little endian")
+ *
+ * \def native2be
+ * \brief Synonym for be2native
+ *
+ * \def native2le
+ * \brief Synonym for le2native
+*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -113,17 +147,29 @@ typedef int bool;
 
 #ifdef __cplusplus
 
-// Useful to unify ip4 and ip6 stuff
-typedef struct _tagINET_ADDRESS
+//! IPv4 and IPv6 Address
+/*!
+ * Useful to unify ip4 and ip6 stuff
+ */
+typedef struct
 {
-    size_t			iAddrLen;
-    ADDRESS_FAMILY	sa_family;
+    size_t              iAddrLen;
+    ADDRESS_FAMILY      sa_family;
     union addr
     {
-        sockaddr_in		Ipv4;
+        sockaddr_in     Ipv4;
         sockaddr_in6	Ipv6;
     } addr;
 } INET_ADDRESS, *PINET_ADDRESS;
+
+/*!
+ * \typedef PINET_ADDRESS
+ * \brief Pointer to INET_ADDRESS
+ *
+ * \typedef LPCINET_ADDRESS
+ * \brief Constant pointer to INET_ADDRESS
+ */
+typedef const INET_ADDRESS* LPCINET_ADDRESS;
 
 #endif
 

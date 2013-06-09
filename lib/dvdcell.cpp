@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdcell.cpp
+/*! \file dvdcell.cpp
  *
- *  \brief dvdell class
+ *  \brief dvdell class implementation
  */
 
 #include "compat.h"
@@ -59,7 +59,16 @@ uint16_t dvdcell::getUnitCount() const
 
 uint64_t dvdcell::getSize() const
 {
-    return (dvdSector2bytes((m_DVDCELL.m_dwLastVOBUEndSector - m_DVDCELL.m_dwFirstVOBUStartSector)));
+    uint64_t size = 0;
+
+    for (uint16_t wUnit = 1; wUnit <= getUnitCount(); wUnit++)
+    {
+        size += m_dvdUnitLst[wUnit - 1].getSize();
+    }
+
+    return size;
+
+    //return (dvdSector2bytes((m_DVDCELL.m_dwLastVOBUEndSector - m_DVDCELL.m_dwFirstVOBUStartSector)));
 }
 
 //dvdcell& dvdcell::operator= (dvdcell const& rhs)

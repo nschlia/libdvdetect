@@ -17,9 +17,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdinfocxx.cpp
+/*! \file dvdinfocxx.cpp
  *
  *  \brief DVD info example (c++ version)
+ *
+ * This example reads the information of a DVD and displays them in a rather
+ * confusing manner. The purpose of this example is to demonstrate how to
+ * traverse through the DVD structure. If you want a more clearly arranged
+ * look, better check out the Qt GUI example instead.
  */
 
 #include <iostream>
@@ -29,7 +34,13 @@
 #include <dvdetect/dvdetectc++.h>
 
 using namespace std;
-
+/*!
+ * Print playtime (and optionally frame rate)
+ *
+ *  @param qwPlaytimems uint32_t Play time in milliseconds
+ *  @param wFrameRate uint16_t Frame rate (25/30) or -1 to not display
+ *  @return Adress in bytes
+ */
 static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate = (uint16_t)-1)
 {
     uint64_t qwPlayTimeS = qwPlaytimems / 1000;
@@ -47,6 +58,9 @@ static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate = (uint16_t)-1)
     cout << endl;
 }
 
+/*!
+ * Show usage info
+ */
 static void usage()
 {
     cout << "Usage:" << endl << endl;

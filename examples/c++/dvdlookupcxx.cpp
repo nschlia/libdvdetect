@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdlookupcxx.cpp
+/*! \file dvdlookupcxx.cpp
  *
  *  \brief DVD online db lookup example (c version)
  */
@@ -29,7 +29,7 @@
 
 using namespace std;
 
-int main(int argc, char *argv[])
+int main(__attribute__((unused))int argc, __attribute__((unused))char *argv[])
 {
     cout << "dvdlookup/c++ V" << LIBDVDETECT_VERSION << endl;
     cout << DVDETECT_COPYRIGHT << endl << endl;

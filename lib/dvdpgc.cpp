@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdpgc.cpp
+/*! \file dvdpgc.cpp
  *
- *  \brief dvdpgc class
+ *  \brief dvdpgc class implementation
  */
 
 #include "compat.h"
@@ -60,21 +60,6 @@ uint16_t dvdpgc::getProgramCount() const
 uint16_t dvdpgc::getCellCount() const
 {
     return m_DVDPGC.m_wNumberOfCells;
-}
-
-const dvdptt * dvdpgc::getDvdPtt(uint16_t wPtt) const
-{
-    if (!wPtt || wPtt > m_dvdPttLst.size())
-    {
-        return NULL;
-    }
-
-    return &m_dvdPttLst[wPtt - 1];
-}
-
-uint16_t dvdpgc::getPttCount() const
-{
-    return m_dvdPttLst.size();
 }
 
 uint64_t dvdpgc::getSize() const

@@ -20,8 +20,15 @@
 #CPPFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
 #AM_CPPFLAGS = -DNDEBUG -c -pipe -fno-keep-inline-dllexport -g -frtti -Wall -Wextra -fexceptions -mthreads 
 
-AM_CFLAGS = -c -pipe -g -frtti -Wall -Wextra -fexceptions 
-AM_CPPFLAGS = -c -pipe -g -frtti -Wall -Wextra -fexceptions
+#AM_CFLAGS = -c -pipe -g -frtti -Wall -Wextra -fexceptions 
+#AM_CPPFLAGS = -c -pipe -g -frtti -Wall -Wextra -fexceptions
+AM_CFLAGS = -c -pipe -frtti -Wall -Wextra -fexceptions -pedantic-errors
+AM_CPPFLAGS = -c -pipe -frtti -Wall -Wextra -fexceptions -pedantic-errors
+#-g -O2 -MT -MD -MP -MF 
+CFLAGS = -O2
+CXXFLAGS = -O2
+#CFLAGS = -g -O2
+#CXXFLAGS = -g -O2
 
 DEFS += -DNDEBUG
 
@@ -44,8 +51,9 @@ libdvdetect_la_SOURCES = \
 	dvdparse.cpp \
 	dvdpgc.cpp \
 	dvdprogram.cpp \
-	dvdptt.cpp \
-	dvdtitle.cpp \
+        dvdpttvmg.cpp \
+        dvdpttvts.cpp \
+        dvdtitle.cpp \
 	dvdunit.cpp \
 	dvdutils.cpp \
 	http.cpp \
