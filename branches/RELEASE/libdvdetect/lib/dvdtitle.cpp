@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdtitle.cpp
+/*! \file dvdtitle.cpp
  *
- *  \brief dvdtitle class
+ *  \brief dvdtitle class implementation
  */
 
 #include "compat.h"
@@ -54,7 +54,7 @@ const dvdpgc *dvdtitle::getDvdPgc(uint16_t wProgramChainNo) const
 
 uint16_t dvdtitle::getPgcCount() const
 {
-    return m_DVDVTS.m_wNumberOfTitles;
+    return m_DVDVTS.m_wNumberOfProgramChains;
 }
 
 const dvdfile * dvdtitle::getDvdFile(uint16_t wFileNo) const

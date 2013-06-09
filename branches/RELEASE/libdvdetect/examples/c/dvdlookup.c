@@ -17,16 +17,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdlookup.c
+/*! \file dvdlookup.c
  *
  *  \brief DVD online db lookup example (c++ version)
+ *
+ * This example reads the information of a DVD and looks up that DVD
+ * in the online database. If found, the DVD name, chapter list and
+ * other information is displayed.
+ *
+ * TO BE IMPLEMENTED YET...
  */
 
 #include <dvdetect/dvdetect.h>
 
 #include <stdio.h>
 
-int main(int argc, char *argv[])
+int main(__attribute__((unused))int argc, __attribute__((unused))char *argv[])
 {
     printf("dvdlookup V%s\n", LIBDVDETECT_VERSION);
     printf("%s\n\n", DVDETECT_COPYRIGHT);

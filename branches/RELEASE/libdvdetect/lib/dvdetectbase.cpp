@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdetectbase.cpp
+/*! \file dvdetectbase.cpp
  *
- *  \brief dvdetectbase class
+ *  \brief dvdetectbase class implementation
  */
 
 #include "compat.h"

@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdetectcglue.cpp
+/*! \file dvdetectcglue.cpp
  *
  *  \brief Collection of C API functions for libdvdetect
  */
@@ -138,7 +138,7 @@ DLL_PUBLIC LPCDVDPROGRAM dvdGetDVDPROGRAM(LPDVDETECTHANDLE pDvDetectHandle, uint
     return pDvdProgram->getDVDPROGRAM();
 }
 
-DLL_PUBLIC LPCDVDPTT dvdGetDVDPTT(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wPtt)
+DLL_PUBLIC LPCDVDPTTVMG dvdGetDVDPTTVMG(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTitleSetNo)
 {
     dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
 
@@ -147,14 +147,33 @@ DLL_PUBLIC LPCDVDPTT dvdGetDVDPTT(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTi
         return NULL;
     }
 
-    const dvdptt *pDvdPtt = pDvdParse->getDvdPtt(wTitleSetNo, wProgramChainNo, wPtt);
+    const dvdpttvmg *pDvdPttVmg = pDvdParse->getDvdPttVmg(wTitleSetNo);
 
-    if (pDvdPtt == NULL)
+    if (pDvdPttVmg == NULL)
     {
         return NULL;
     }
 
-    return pDvdPtt->getDVDPTT();
+    return pDvdPttVmg->getDVDPTTVMG();
+}
+
+DLL_PUBLIC LPCDVDPTTVTS dvdGetDVDPTTVTS(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTitleSetNo, uint16_t wPtt)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    const dvdpttvts *pDvdPttVts = pDvdParse->getDvdPttVts(wTitleSetNo, wPtt);
+
+    if (pDvdPttVts == NULL)
+    {
+        return NULL;
+    }
+
+    return pDvdPttVts->getDVDPTTVTS();
 }
 
 DLL_PUBLIC LPCDVDCELL dvdGetDVDCELL(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram, uint16_t wCell)

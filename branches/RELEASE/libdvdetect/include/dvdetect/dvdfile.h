@@ -17,15 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdfile.h
+/*! \file dvdfile.h
  *
- *  \brief dvdfile class
+ *  \brief dvdfile class declaration
+ *
+ * Store information about a DVD file.
  */
 
 #pragma once
 
 #ifndef DVDFILE_H
+
 #define DVDFILE_H
+
 
 /*!
  *  @brief dvdfile class
@@ -37,17 +41,36 @@ class DLL_PUBLIC dvdfile : public dvdetectbase
     friend class dvdparse;
 
 public:
+    //! Constructor.
+    /*!
+     *  Construct a dvdfile element.
+     */
     explicit dvdfile();
+    //! Destructor.
+    /*!
+     *  Destruct a dvdfile element.
+     */
     virtual ~dvdfile();
 
+    //! Access the DVDFILE data structure.
+    /*!
+     *  \return Pointer to the underlying DVDFILE structure.
+     *  \return It is guaranteed that a valid structure is returned (never NULL).
+     */
     LPCDVDFILE          getDVDFILE() const;
 
+//    dvdfile& operator= (dvdfile const& rhs);
+
+    //! Get the type_info of this class.
+    /*!
+     *  \return type_info of this class.
+     */
     virtual const std::type_info & classtype() const;
 
 protected:
-    DVDFILE             m_DVDFILE;
+    DVDFILE             m_DVDFILE;				//!< DVDFILE structure (DVD part of title)
 };
 
-typedef std::vector<dvdfile> dvdfilelst;
+typedef std::vector<dvdfile> dvdfilelst;		//!< shortcut for a list of dvdfiles
 
 #endif // DVDFILE_H

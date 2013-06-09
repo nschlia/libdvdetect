@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdunit.cpp
+/*! \file dvdunit.cpp
  *
- *  \brief dvdunit class
+ *  \brief dvdunit class implementation
  */
 
 #include "compat.h"

@@ -17,41 +17,65 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdunit.h
+/*! \file dvdunit.h
  *
- *  \brief dvdunit class
+ *  \brief dvdunit class declaration
+ *
+ * Store information about a DVD unit.
  */
 
 #pragma once
 
 #ifndef DVDUNIT_H
+
 #define DVDUNIT_H
 
+
 /*!
- *  @brief dvdunit class
- *
- * This class stores all data about a unit.
+ * \brief dvdunit class
+ *  This class stores all data about a unit.
  */
 class DLL_PUBLIC dvdunit : public dvdetectbase
 {
     friend class dvdparse;
 
 public:
+    //! Constructor.
+    /*!
+     *  Construct a dvdunit element.
+     */
     explicit dvdunit();
+    //! Destructor.
+    /*!
+     *  Destruct a dvdunit element.
+     */
     virtual ~dvdunit();
 
+    //! Access the DVDUNIT data structure.
+    /*!
+     *  \return Pointer to the underlying DVDUNIT structure.
+     *  \return It is guaranteed that a valid structure is returned (never NULL).
+     */
     LPCDVDUNIT          getDVDUNIT() const;
 
+    //! Get the size (in bytes) of this unit.
+    /*!
+     *  \return Size (in bytes) of this unit.
+     */
     uint64_t            getSize() const;
 
-//    dvdunit& operator= (dvdunit const& rhs);
+    //    dvdunit& operator= (dvdunit const& rhs);
 
+    //! Get the type_info of this class.
+    /*!
+     *  \return type_info of this class.
+     */
     virtual const std::type_info & classtype() const;
 
 protected:
-    DVDUNIT             m_DVDUNIT;
+    DVDUNIT             m_DVDUNIT;          //!< DVDUNIT structure (DVD unit information)
 };
 
-typedef std::vector<dvdunit> dvdunitlst;
+typedef std::vector<dvdunit> dvdunitlst;    //!< shortcut for a list of dvdunits
 
 #endif // DVDUNIT_H

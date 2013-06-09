@@ -17,16 +17,93 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file commonwin32.h
+/*! \file commonwin32.h
  *
-*  \brief Compatibility layer (windoze MSVC) */
+*   \brief Compatibility layer (windoze MSVC) */
 
 #pragma once
 
 #ifndef COMMONWIN32_H
+
 #define COMMONWIN32_H
 
+
 // ***************** Special windoze stuff goes here *****************
+
+/*!
+ * \def TSTRING
+ * \brief Unicode layer: std::string or std::wstring
+ *
+ * \def TOFSTREAM
+ * \brief Unicode layer: std::ofstream or std::wofstream
+ *
+ * \def TIFSTREAM
+ * \brief Unicode layer: std::ifstream or std::wifstream
+ *
+ * \def TSTRINGSTREAM
+ * \brief Unicode layer: std::stringstream or std::wstringstream
+ *
+ * \def TCHAR
+ * \brief Unicode layer: char or wchar_t
+ *
+ * \def TCOUT
+ * \brief Unicode layer: std::cout or std::wcout
+ *
+ * \def TCERR
+ * \brief Unicode layer: std::cerr or std::wcerr
+ *
+ * \def _T(x)
+ * \brief Unicode layer: for unicode defined as L ## x, otherwise empty
+ *
+ * \def TSTRERROR
+ * \brief Unicode layer: strerror or _wcserror
+ *
+ * \def TUNLINK
+ * \brief Unicode layer: _unlink or _wunlink
+ *
+ * \def TGETADDRINFO
+ * \brief Unicode layer: getaddrinfo or GetAddrInfoW
+ *
+ * \def TADDRINFO
+ * \brief Unicode layer: addrinfo or ADDRINFOW
+ *
+ * \def TFREEADDRINFO
+ * \brief Unicode layer: freeaddrinfo or FreeAddrInfoW
+ *
+ * \def TASCTIME
+ * \brief Unicode layer: asctime or_wasctime
+ *
+ * \def WVSPRINTF
+ * \brief Unicode layer: vsprintf_s or vswprintf_s
+ *
+ * \def WTOI
+ * \brief Unicode layer: atoi or _wtoi
+ *
+ * \def WTOL
+ * \brief Unicode layer: atoi or _wtoi
+ *
+ * \def WSPRINTF
+ * \brief Unicode layer: sprintf_s or swprintf_s
+ *
+ * \def stringToWString
+ * \brief Unicode layer: for unicode declared as function, non-unicode empty
+ *
+ * \def wstringToString
+ * \brief Unicode layer: for unicode declared as function, non-unicode empty
+ *
+ * \def STRTOKEN
+ * \brief Unicode layer: "%s" or L"%s"
+ *
+ * \def POLL
+ * \brief For windows declared as WSAPoll
+ *
+ * \def ARCH
+ * \brief Defines the CPU architectur
+ *
+ * \def PLATFORM
+ * \brief Defines the platform
+ *
+ */
 
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -35,9 +112,11 @@
 // If you wish to build your application for a previous Windows _PLATFORM, include WinSDKVer.h and
 // set the _WIN32_WINNT macro to the _PLATFORM you wish to support before including SDKDDKVer.h.
 
+
 #define _WIN32_WINNT _WIN32_WINNT_VISTA
 //#define _WIN32_WINNT _WIN32_WINNT_WIN2K
 //#define _WIN32_WINNT 0x0600
+
 
 #include <SDKDDKVer.h>
 

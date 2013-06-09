@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdetectc++.h
+/*! \file dvdetectc++.h
  *
  *  \brief LIBDVDETECT C++ API
  */
@@ -25,7 +25,9 @@
 #pragma once
 
 #ifndef DVDETECTCPP_H
+
 #define DVDETECTCPP_H
+
 
 #ifndef __cplusplus
 #error "Please include this file in C++ mode only"

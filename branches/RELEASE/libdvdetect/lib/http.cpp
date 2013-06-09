@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file http.cpp
+/*! \file http.cpp
  *
- *  \brief HTTP web server access class
+ *  \brief HTTP web server access class implementation
  */
 
 #include "compat.h"
@@ -31,7 +31,7 @@
 
 #include <stdio.h>
 
-bool getLoggingEnabled(int) { return true; };
+bool getLoggingEnabled(int) { return true; }
 
 http::http()
     : m_nResponse(0)
@@ -481,7 +481,7 @@ void http::setError(const TSTRING & strError)
 #endif
 }
 
-TSTRING http::getError() const
+TSTRING http::getErrorString() const
 {
     return m_strErrorString;
 }

@@ -17,15 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdcell.h
+/*! \file dvdcell.h
  *
- *  \brief dvdcell class
+ *  \brief dvdcell class declaration
+ *
+ * Store information about a DVD cell.
  */
 
 #pragma once
 
 #ifndef DVDCELL_H
+
 #define DVDCELL_H
+
 
 #include <dvdetect/dvdunit.h>
 
@@ -39,24 +43,57 @@ class DLL_PUBLIC dvdcell : public dvdetectbase
     friend class dvdparse;
 
 public:
+    //! Constructor.
+    /*!
+     *  Construct a dvdcell element.
+     */
     explicit dvdcell();
+    //! Destructor.
+    /*!
+     *  Destruct a dvdcell element.
+     */
     virtual ~dvdcell();
 
+    //! Access the DVDCELL data structure.
+    /*!
+     *  \return Pointer to the underlying DVDCELL structure.
+     *  \return It is guaranteed that a valid structure is returned (never NULL).
+     */
     LPCDVDCELL          getDVDCELL() const;
+
+    //! Get a DVD unit in this cell.
+    /*!
+     *  \param wUnit uint16_t Index of unit (1...n)
+     *  \return Success: Pointer to dvdunit class
+     *  \return Fail: NULL if wUnit out of bounds.
+     */
     const dvdunit *     getDvdUnit(uint16_t wUnit) const;
+
+    //! Get the number of units in this cell.
+    /*!
+     *  \return Number of units (1...n)
+     */
     uint16_t            getUnitCount() const;
 
+    //! Get the size (in bytes) of this cell.
+    /*!
+     *  \return Size (in bytes) of this cell.
+     */
     uint64_t            getSize() const;
 
 //    dvdcell& operator= (dvdcell const& rhs);
 
+    //! Get the type_info of this class.
+    /*!
+     *  \return type_info of this class.
+     */
     virtual const std::type_info & classtype() const;
 
 protected:
-    DVDCELL             m_DVDCELL;
-    dvdunitlst          m_dvdUnitLst;
+    DVDCELL             m_DVDCELL;			//!< DVDCELL structure (DVD cell information)
+    dvdunitlst          m_dvdUnitLst;		//!< list of units of this cell
 };
 
-typedef std::vector<dvdcell> dvdcelllst;
+typedef std::vector<dvdcell> dvdcelllst;	//!< shortcut for a list of dvdcells
 
 #endif // DVDCELL_H

@@ -22,5 +22,5 @@
  *  \brief A file containing the libdvdetect package version
  */
 
-/*! LIBDVDETECT_VERSION can be used as a string in programs to show what version is used. */
-#define LIBDVDETECT_VERSION "@VERSION@ @build@"
+//! LIBDVDETECT_VERSION can be used as a string in programs to show what version is used.
+#define LIBDVDETECT_VERSION "@VERSION@ @build@"			

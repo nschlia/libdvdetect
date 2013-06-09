@@ -17,20 +17,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdinfo.c
+/*! \file dvdinfo.c
  *
  *  \brief DVD info example (c version)
+ *
+ * This example reads the information of a DVD and displays them in a rather
+ * confusing manner. The purpose of this example is to demonstrate how to
+ * traverse through the DVD structure. If you want a more clearly arranged
+ * look, better check out the Qt GUI example instead.
  */
 
 #include <dvdetect/dvdetect.h>
 
 #include <stdio.h>
 
+/*!
+ * Print playtime (and optionally frame rate)
+ *
+ *  @param qwPlaytimems uint32_t Play time in milliseconds
+ *  @param wFrameRate uint16_t Frame rate (25/30) or 0 to not display
+ *  @return Adress in bytes
+ */
 static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate)
 {
     uint64_t qwPlayTimeS = qwPlaytimems / 1000;
 
-    printf("Playback Time       : %02i:%02i:%02i.%03.3i",
+    printf("Playback Time       : %02i:%02i:%02i.%03i",
            (int)(qwPlayTimeS) / (60 * 60),
            (int)((qwPlayTimeS) / 60) % 60,
            (int)(qwPlayTimeS) % 60,
@@ -43,6 +55,9 @@ static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate)
     printf("\n");
 }
 
+/*!
+ * Show usage info
+ */
 static void usage()
 {
     printf("Usage:\n\n");

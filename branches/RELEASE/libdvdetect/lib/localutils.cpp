@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file localutils.cpp
+/*! \file localutils.cpp
  *
  *  \brief Utility collection (private to library)
  */
@@ -30,7 +30,7 @@
 
 #include <sstream>
 #include <iostream>
-#include <fstream>
+//#include <fstream>
 #include <iomanip>
 #include <limits.h>
 #include <stdio.h>
@@ -523,106 +523,25 @@ std::string getWin32ShortFilePath(const string& strFilePath)
 }
 #endif
 
-/*
-uint8_t* readData(const string & strFilePath, string & strErrorString)
+void removeFileSpec(std::string & strPath)
 {
-    stringstream streamErrorString;
-    ifstream is;
-    struct stat buf;
-    uint8_t* pData = NULL;
+    std::size_t found = std::string::npos;
 
-    strErrorString.clear();
+    found = strPath.rfind('/');
 
-    is.open(getWin32ShortFilePath(strFilePath).c_str(), ios::in | ios::binary);
-
-    if (!is.is_open())
+    if (found != std::string::npos)
     {
-        streamErrorString << "Error opening file: " << strFilePath << endl << strerror(errno) << endl;
-        strErrorString = streamErrorString.str();
-        return NULL;
+        strPath = strPath.substr(0, found + 1);
+        return;
     }
 
-    memset(&buf, 0, sizeof(buf));
+    found = strPath.rfind('\\');
 
-    is.seekg (0, is.end);
-    streampos length = is.tellg();
-    is.seekg (0, is.beg);
-
-    if (length <= 0)
+    if (found != std::string::npos)
     {
-        streamErrorString << "Cannot stat file: " << strFilePath << endl << strerror(errno) << endl;
-        strErrorString = streamErrorString.str();
+        strPath = strPath.substr(0, found + 1);
     }
-    else
-    {
-        pData = new uint8_t[length];
-        if (pData != NULL)
-        {
-            memset(pData, 0, length);
-            is.read((char*)pData, length);
-            if (is.gcount() != length)
-            {
-                streamErrorString << "Error reading file: " << strFilePath << endl << strerror(errno) << endl;
-                strErrorString = streamErrorString.str();
-                delete pData;
-                pData = NULL;
-            }
-        }
-    }
-
-    is.close();
-
-    return pData;
 }
-*/
-
-const uint8_t* readData(const string & strFilePath, string & strErrorString, time_t & ftime)
-{
-    stringstream streamErrorString;
-    std::FILE *fpi = NULL;
-    struct stat buf;
-    uint8_t* pData = NULL;
-
-    strErrorString.clear();
-
-    fpi = std::fopen(getWin32ShortFilePath(strFilePath).c_str(), "rb");
-    if (fpi == NULL)
-    {
-        streamErrorString << "Error opening file: " << strFilePath << endl << strerror(errno) << endl;
-        strErrorString = streamErrorString.str();
-        return NULL;
-    }
-
-    memset(&buf, 0, sizeof(buf));
-
-    if (fstat(fileno(fpi), &buf) == -1)
-    {
-        streamErrorString << "Cannot stat file: " << strFilePath << endl << strerror(errno) << endl;
-        strErrorString = streamErrorString.str();
-    }
-    else
-    {
-        pData = new uint8_t[buf.st_size];
-        if (pData != NULL)
-        {
-            memset(pData, 0, buf.st_size);
-            if (std::fread(pData, 1, buf.st_size, fpi) != (size_t)buf.st_size)
-            {
-                streamErrorString << "Error reading file: " << strFilePath << endl << strerror(errno) << endl;
-                strErrorString = streamErrorString.str();
-                delete pData;
-                pData = NULL;
-            }
-        }
-
-        ftime = buf.st_mtime;
-    }
-
-    std::fclose(fpi);
-
-    return pData;
-}
-
 
 void addSeparator(std::string & strPath)
 {

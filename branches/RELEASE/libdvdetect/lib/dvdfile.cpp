@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdfile.cpp
+/*! \file dvdfile.cpp
  *
- *  \brief dvdfile class
+ *  \brief dvdfile class implementation
  */
 
 #include "compat.h"

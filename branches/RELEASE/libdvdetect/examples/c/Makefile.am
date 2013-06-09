@@ -16,9 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #AM_CPPFLAGS = $(all_includes)
-AM_CFLAGS = -DNDEBUG
 #CPPFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
-AM_CPPFLAGS = -DNDEBUG
+
+AM_CFLAGS = -pipe -Wall -Wextra -fexceptions  
+AM_CPPFLAGS = -pipe -Wall -Wextra -fexceptions 
+CFLAGS = -O2
+CXXFLAGS = -O2
+#CFLAGS = -g -O2
+#CXXFLAGS = -g -O2
+
+DEFS += -DNDEBUG
 
 INCLUDES	= -I$(top_srcdir)/include -I$(top_builddir)/include $(LIBDVDETECT_FLAGS) 
 

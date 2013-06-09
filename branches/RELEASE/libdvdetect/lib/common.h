@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file common.h
+/*! \file common.h
  *
  *  \brief Compatibility layer (all playtforms)
 */

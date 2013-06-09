@@ -17,15 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file dvdetectbase.h
+/*! \file dvdetectbase.h
  *
- *  \brief dvdetectbase class
+ *  \brief dvdetectbase class declaration
+ *
+ * Base class for all dvd* classes. Provides type information..
  */
 
 #pragma once
 
 #ifndef DVDETECTBASE_H
+
 #define DVDETECTBASE_H
+
 
 #include <typeinfo>
 
@@ -40,9 +44,23 @@
 class DLL_PUBLIC dvdetectbase
 {
 public:
+    //! Constructor.
+    /*!
+     *  Construct a dvdtitle element.
+     */
     explicit dvdetectbase();
+    //! Destructor.
+    /*!
+     *  Destruct a dvdtitle element.
+     */
     virtual ~dvdetectbase();
 
+//    dvdetectbase& operator= (dvdetectbase const& rhs);
+
+    //! Get the type_info of this class.
+    /*!
+     *  \return type_info of this class.
+     */
      virtual const std::type_info & classtype() const = 0;
 };
 

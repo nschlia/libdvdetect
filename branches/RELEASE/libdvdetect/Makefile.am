@@ -21,12 +21,6 @@ AUTOMAKE_OPTIONS = dist-bzip2
 SUBDIRS	= include lib examples tests
 
 EXTRA_DIST = \
-	VS2010/dllmain.cpp \
-	VS2010/libdvdetect.sln \
-	VS2010/libdvdetect.vcxproj \
-	VS2010/libdvdetect.vcxproj.filters \
-	VS2010/ReadMe.txt \
-	VS2010/version.h \
        	doc/doxygen.conf \
        	doc/build \
 	examples/README \
@@ -36,6 +30,12 @@ EXTRA_DIST = \
 	Qt/guiexample/mainwindow.cpp \
 	Qt/guiexample/mainwindow.h \
 	Qt/guiexample/mainwindow.ui 
+#	VS2010/dllmain.cpp \
+#	VS2010/libdvdetect.sln \
+#	VS2010/libdvdetect.vcxproj \
+#	VS2010/libdvdetect.vcxproj.filters \
+#	VS2010/ReadMe.txt \
+#	VS2010/version.h
 
 #: Make documentation via Doxygen http://www.stack.nl/~dimitri/doxygen/
 doxygen:
