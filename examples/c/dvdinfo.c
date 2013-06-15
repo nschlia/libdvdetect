@@ -29,7 +29,10 @@
 
 #include <dvdetect/dvdetect.h>
 
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 /*!
  * Print playtime (and optionally frame rate)
@@ -60,35 +63,261 @@ static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate)
  */
 static void usage()
 {
+    printf("\n");
     printf("Usage:\n\n");
-    printf("dvdinfo PATH-TO-DVD\n");
+    printf("dvdinfo [-p] -f PATH-TO-DVD   list DVD structure\n");
+    printf("dvdinfo -h                    show help\n");
+    printf("\nTo list the physical structure, use \"-p\", otherwise the virtual structure will\nbe shown.\n");
     printf("\n");
 
     printf("Example:\n\n");
 
 #ifdef _WIN32
-    printf("dvdinfo F:\n");
+    printf("dvdinfo -f F:\n");
 #else
-    printf("dvdinfo /mnt/cdrom1/\n");
+    printf("dvdinfo -f /mnt/cdrom1/\n");
 #endif
+}
+
+static void showHeader(LPCDVDVMGM pDVDVMGM)
+{
+    printf("**************************************************************************\n");
+    printf("Version             : %u.%u\n", pDVDVMGM->m_wVersionNumberMajor, pDVDVMGM->m_wVersionNumberMinor);
+    printf("Volumes/Volume No.  : %u/%u\n", pDVDVMGM->m_wNumberOfVolumes, pDVDVMGM->m_wVolumeNumber);
+    printf("Side ID             : %u\n", pDVDVMGM->m_wSideID);
+    printf("Provider ID         : %s\n", pDVDVMGM->m_szProviderID);
+}
+
+static void showCellsAndUnits(LPDVDETECTHANDLE pDvDetectHandle, LPCDVDPROGRAM pDVDPROGRAM, uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram)
+{
+    uint16_t wCell = 1;
+
+    for (wCell = 1; wCell <= pDVDPROGRAM->m_wCells; wCell++)
+    {
+        LPCDVDCELL pDVDCELL = dvdGetDVDCELL(pDvDetectHandle, wTitleSetNo, wProgramChainNo, wProgram, wCell);
+        uint16_t wUnit = 1;
+
+        printf("\nCell                : %u\n", pDVDCELL->m_wCell);
+        printf("Seamless Multiplex  : %u\n", pDVDCELL->m_bSeamlessMultiplex);
+        printf("Interleaved         : %u\n", pDVDCELL->m_bInterleaved);
+        printf("STC Discontinuity   : %u\n", pDVDCELL->m_bSCRdiscontinuity);
+        printf("Seamless Angle      : %u\n", pDVDCELL->m_bSeamlessAngleLinkedInDSI);
+        printf("VOB Still Mode      : %u\n", pDVDCELL->m_bVOBStillMode);
+        printf("Stops Trick Play    : %u\n", pDVDCELL->m_bStopsTrickPlay);
+        printf("Cell Still Time     : %u\n", pDVDCELL->m_wCellStillTime);
+        printf("Cell Command        : %u\n", pDVDCELL->m_wCellCommand);
+
+        printf("Cell Type           : ");
+        switch (pDVDCELL->m_eCellType)
+        {
+        case CELLTYPE_NORMAL:
+            printf("normal");
+            break;
+        case CELLTYPE_FIRST:
+            printf("first of angle block");
+            break;
+        case CELLTYPE_MIDDLE:
+            printf("middle of angle block");
+            break;
+        case CELLTYPE_LAST:
+            printf("last of angle block");
+            break;
+        default:
+            printf("invalid");
+            break;
+        }
+        printf("\n");
+
+        printf("Block Type          : ");
+        switch (pDVDCELL->m_eBlockType)
+        {
+        case BLOCKTYPE_NORMAL:
+            printf("normal");
+            break;
+        case BLOCKTYPE_ANGLE:
+            printf("angle block");
+            break;
+        default:
+            printf("invalid");
+            break;
+        }
+        printf("\n");
+
+        playTime(pDVDCELL->m_qwPlayTime, pDVDCELL->m_wFrameRate);
+
+        printf("1st VOBU Start Sec. : %u\n", pDVDCELL->m_dwFirstVOBUStartSector);
+        printf("1st ILVU End Sector : %u\n", pDVDCELL->m_dwFirstILVUEndSector);
+        printf("Last VOBU Start Sec.: %u\n", pDVDCELL->m_dwLastVOBUStartSector);
+        printf("Last VOBU End Sector: %u\n", pDVDCELL->m_dwLastVOBUEndSector);
+
+        printf("VOB ID              : %u\n", pDVDCELL->m_wVOBidn);
+        printf("Cell ID             : %u\n", pDVDCELL->m_wCELLidn);
+
+        printf("Cell Pos Info Count : %u\n", pDVDCELL->m_wCellPosInfoCount);
+        printf("Number Of VOB Ids   : %u\n", pDVDCELL->m_wNumberOfVOBIds);
+
+        for (wUnit = 1; wUnit <= pDVDCELL->m_wCellPosInfoCount; wUnit++)
+        {
+            LPCDVDUNIT pDVDUNIT = dvdGetDVDUNIT(pDvDetectHandle, wTitleSetNo, wProgramChainNo, wProgram, wCell, wUnit);
+
+            printf("Unit                : %u\n", wUnit);
+            printf("Start Sector        : %u\n", pDVDUNIT->m_dwStartSector);
+            printf("End Sector          : %u\n", pDVDUNIT->m_dwEndSector);
+        }
+    }
+}
+
+static int showPhysicalStructure(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    LPCDVDVMGM pDVDVMGM = dvdGetDVDVMGM(pDvDetectHandle);
+    uint16_t wTitleSetNo = 1;
+    int res = 0;
+
+    showHeader(pDVDVMGM);
+
+    printf("Number of Title Sets: %u\n", pDVDVMGM->m_wNumberOfTitleSets);
+
+    for (wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wNumberOfTitleSets; wTitleSetNo++)
+    {
+        LPCDVDVTS pDVDVTS = dvdGetDVDVTS(pDvDetectHandle, wTitleSetNo);
+        uint16_t wProgramChainNo = 1;
+
+        printf("******************************** Title %02u ********************************\n", wTitleSetNo);
+
+        printf("Version             : %u.%u\n", pDVDVTS->m_wVersionNumberMajor, pDVDVTS->m_wVersionNumberMinor);
+        printf("Program Chains (PGC): %u\n", pDVDVTS->m_wNumberOfProgramChains);
+
+        for (wProgramChainNo = 1; wProgramChainNo <= pDVDVTS->m_wNumberOfProgramChains;  wProgramChainNo++)
+        {
+            LPCDVDPGC pDVDPGC =dvdGetDVDPGC(pDvDetectHandle, wTitleSetNo, wProgramChainNo);
+            uint16_t wProgram = 1;
+
+            printf("---------------------------------- PGC -----------------------------------\n");
+            printf("Entry PGC           : %s\n", (pDVDPGC->m_bEntryPGC ? "yes" : "no"));
+            printf("Title Number        : %u\n", pDVDPGC->m_wTitleSetNo);
+            printf("PGC Number          : %u\n", wProgramChainNo);
+            printf("Programs/Cells      : %u/%u\n", pDVDPGC->m_wNumberOfPrograms, pDVDPGC->m_wNumberOfCells);
+
+            playTime(pDVDPGC->m_qwPlayTime, pDVDPGC->m_wFrameRate);
+
+            for (wProgram = 1; wProgram <= pDVDPGC->m_wNumberOfPrograms; wProgram++)
+            {
+                LPCDVDPROGRAM pDVDPROGRAM = dvdGetDVDPROGRAM(pDvDetectHandle, wTitleSetNo, wProgramChainNo, wProgram);
+
+                printf("\nProgram #           : %u\n", pDVDPROGRAM->m_wProgramNo);
+                printf("Cells               : %u\n", pDVDPROGRAM->m_wCells);
+
+                showCellsAndUnits(pDvDetectHandle, pDVDPROGRAM, wTitleSetNo, wProgramChainNo, wProgram);
+            }
+        }
+    }
+
+    // 	  printf("\n");
+    //    printf("Size                : %l MB\n", dvd.getSize() / (1024*1024));
+    //    playTime(dvd.getPlayTime(), -1);
+
+    printf("**************************************************************************\n");
+
+    return res;
+}
+
+static int showVirtualStructure(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    LPCDVDVMGM pDVDVMGM = dvdGetDVDVMGM(pDvDetectHandle);
+    uint16_t wTitleSetNo = 1;
+    int res = 0;
+
+    showHeader(pDVDVMGM);
+
+    printf("Number of Title Sets: %u\n", pDVDVMGM->m_wPTTNumberOfTitles);
+
+    for (wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wPTTNumberOfTitles; wTitleSetNo++)
+    {
+        LPCDVDPTTVMG pDVDPTTVMG = dvdGetDVDPTTVMG(pDvDetectHandle, wTitleSetNo);
+        LPCDVDVTS pDVDVTS = dvdGetDVDVTS(pDvDetectHandle, wTitleSetNo);
+        uint16_t wPtt = 1;
+
+        printf("******************************** Title %02u ********************************\n", wTitleSetNo);
+
+        printf("Version             : %u.%u\n", pDVDVTS->m_wVersionNumberMajor, pDVDVTS->m_wVersionNumberMinor);
+        printf("Chapters            : %u\n", pDVDPTTVMG->m_wNumberOfChapters);
+        printf("Angles              : %u\n", (unsigned)pDVDPTTVMG->m_byNumberOfVideoAngles);                                   //!< Number of video angles (1...9)
+
+        for (wPtt = 1; wPtt <= pDVDPTTVMG->m_wNumberOfChapters; wPtt++)
+        {
+            LPCDVDPTTVTS pDVDPTTVTS = dvdGetDVDPTTVTS(pDvDetectHandle, wTitleSetNo, wPtt);
+            LPCDVDPROGRAM pDVDPROGRAM = dvdGetDVDPROGRAM(pDvDetectHandle, pDVDPTTVTS->m_wTitleSetNo, pDVDPTTVTS->m_wProgramChainNo, pDVDPTTVTS->m_wProgram);
+
+            printf("\n");
+            printf("Program #           : %u\n", pDVDPTTVTS->m_wProgram);
+            printf("Cells               : %u\n", pDVDPROGRAM->m_wCells);
+
+            showCellsAndUnits(pDvDetectHandle, pDVDPROGRAM, pDVDPTTVTS->m_wTitleSetNo, pDVDPTTVTS->m_wProgramChainNo, pDVDPTTVTS->m_wProgram);
+        }
+    }
+
+    //    cout << endl;
+    //    printf("Size                : " << dvd.getVirtSize() / (1024*1024) << " MB" << endl;
+    //    playTime(dvd.getVirtPlayTime());
+
+    printf("**************************************************************************\n");
+
+    return res;
 }
 
 int main(int argc, char *argv[])
 {
     const char *pszPath = "";
     LPDVDETECTHANDLE pDvDetectHandle = NULL;
+    bool bPhysicalStructure = false;
+    bool bMissingParameter = true;
     int res = 0;
+    int c;
 
     printf("dvdinfo V%s\n", LIBDVDETECT_VERSION);
     printf("%s\n\n", DVDETECT_COPYRIGHT);
 
-    if (argc != 2)
+    opterr = 0;
+
+    while ((c = getopt (argc, argv, "hpd:")) != -1)
     {
+        switch (c)
+        {
+        case 'h':
+            usage();
+            return 1;
+            break;
+        case 'p':
+            bPhysicalStructure = true;
+            break;
+        case 'd':
+            pszPath = optarg;
+            bMissingParameter = false;
+            break;
+        case '?':
+            if (optopt == 'd')
+                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint (optopt))
+                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            else
+                fprintf (stderr,
+                         "Unknown option character `\\x%x'.\n",
+                         optopt);
+
+            usage();
+            return 1;
+            break;
+        default:
+            abort ();
+        }
+    }
+
+    if (bMissingParameter)
+    {
+        fprintf(stderr, "Missing parameter.\n");
         usage();
         return 1;
     }
-
-    pszPath = argv[1];
 
     printf("TESTPATH: %s\n\n", pszPath);
 
@@ -98,125 +327,15 @@ int main(int argc, char *argv[])
         res = dvdParse(pDvDetectHandle, pszPath);
         if (res == 0)
         {
-            const DVDVMGM *pDVDVMGM = dvdGetDVDVMGM(pDvDetectHandle);
-            uint16_t wTitleSetNo = 1;
-
-            printf("**************************************************************************\n");
-            printf("Version             : %u.%u\n", pDVDVMGM->m_wVersionNumberMajor, pDVDVMGM->m_wVersionNumberMinor);
-            printf("Volumes/Volume No.  : %u/%u\n", pDVDVMGM->m_wNumberOfVolumes, pDVDVMGM->m_wVolumeNumber);
-            printf("Side ID             : %u\n", pDVDVMGM->m_wSideID);
-            printf("Provider ID         : %s\n", pDVDVMGM->m_szProviderID);
-            printf("Number of Title Sets: %u\n", pDVDVMGM->m_wNumberOfTitleSets);
-
-            for (wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wNumberOfTitleSets; wTitleSetNo++)
+            if (bPhysicalStructure)
             {
-                const DVDVTS *pDVDVTS = dvdGetDVDVTS(pDvDetectHandle, wTitleSetNo);
-                uint16_t wProgramChainNo = 1;
-
-                printf("******************************** Title %02u ********************************\n", wTitleSetNo);
-
-                printf("Version             : %u.%u\n", pDVDVTS->m_wVersionNumberMajor, pDVDVTS->m_wVersionNumberMinor);
-                printf("Program Chains (PGC): %u\n", pDVDVTS->m_wNumberOfProgramChains);
-
-                for (wProgramChainNo = 1; wProgramChainNo <= pDVDVTS->m_wNumberOfProgramChains;  wProgramChainNo++)
-                {
-                    const DVDPGC *pDVDPGC =dvdGetDVDPGC(pDvDetectHandle, wTitleSetNo, wProgramChainNo);
-                    uint16_t wProgram = 1;
-
-                    printf("---------------------------------- PGC -----------------------------------\n");
-                    printf("Entry PGC           : %s\n", (pDVDPGC->m_bEntryPGC ? "yes" : "no"));
-                    printf("Title Number        : %u\n", pDVDPGC->m_wTitleSetNo);
-                    printf("PGC Number          : %u\n", wProgramChainNo);
-                    printf("Programs/Cells      : %u/%u\n", pDVDPGC->m_wNumberOfPrograms, pDVDPGC->m_wNumberOfCells);
-
-                    playTime(pDVDPGC->m_qwPlayTime, pDVDPGC->m_wFrameRate);
-
-                    for (wProgram = 1; wProgram <= pDVDPGC->m_wNumberOfPrograms; wProgram++)
-                    {
-                        const DVDPROGRAM *pDVDPROGRAM = dvdGetDVDPROGRAM(pDvDetectHandle, wTitleSetNo, wProgramChainNo, wProgram);
-                        uint16_t wCell = 1;
-
-                        printf("\nProgram #           : %u\n", pDVDPROGRAM->m_wProgramNo);
-                        printf("Cells               : %u\n", pDVDPROGRAM->m_wCells);
-
-                        for (wCell = 1; wCell <= pDVDPROGRAM->m_wCells; wCell++)
-                        {
-                            const DVDCELL *pDVDCELL = dvdGetDVDCELL(pDvDetectHandle, wTitleSetNo, wProgramChainNo, wProgram, wCell);
-                            uint16_t wUnit = 1;
-
-                            printf("\nCell                : %u\n", pDVDCELL->m_wCell);
-                            printf("Seamless Multiplex  : %u\n", pDVDCELL->m_bSeamlessMultiplex);
-                            printf("Interleaved         : %u\n", pDVDCELL->m_bInterleaved);
-                            printf("STC Discontinuity   : %u\n", pDVDCELL->m_bSCRdiscontinuity);
-                            printf("Seamless Angle      : %u\n", pDVDCELL->m_bSeamlessAngleLinkedInDSI);
-                            printf("VOB Still Mode      : %u\n", pDVDCELL->m_bVOBStillMode);
-                            printf("Stops Trick Play    : %u\n", pDVDCELL->m_bStopsTrickPlay);
-                            printf("Cell Still Time     : %u\n", pDVDCELL->m_wCellStillTime);
-                            printf("Cell Command        : %u\n", pDVDCELL->m_wCellCommand);
-
-                            printf("Cell Type           : ");
-                            switch (pDVDCELL->m_eCellType)
-                            {
-                            case CELLTYPE_NORMAL:
-                                printf("normal");
-                                break;
-                            case CELLTYPE_FIRST:
-                                printf("first of angle block");
-                                break;
-                            case CELLTYPE_MIDDLE:
-                                printf("middle of angle block");
-                                break;
-                            case CELLTYPE_LAST:
-                                printf("last of angle block");
-                                break;
-                            default:
-                                printf("invalid");
-                                break;
-                            }
-                            printf("\n");
-
-                            printf("Block Type          : ");
-                            switch (pDVDCELL->m_eBlockType)
-                            {
-                            case BLOCKTYPE_NORMAL:
-                                printf("normal");
-                                break;
-                            case BLOCKTYPE_ANGLE:
-                                printf("angle block");
-                                break;
-                            default:
-                                printf("invalid");
-                                break;
-                            }
-                            printf("\n");
-
-                            playTime(pDVDCELL->m_qwPlayTime, pDVDCELL->m_wFrameRate);
-
-                            printf("1st VOBU Start Sec. : %u\n", pDVDCELL->m_dwFirstVOBUStartSector);
-                            printf("1st ILVU End Sector : %u\n", pDVDCELL->m_dwFirstILVUEndSector);
-                            printf("Last VOBU Start Sec.: %u\n", pDVDCELL->m_dwLastVOBUStartSector);
-                            printf("Last VOBU End Sector: %u\n", pDVDCELL->m_dwLastVOBUEndSector);
-
-                            printf("VOB ID              : %u\n", pDVDCELL->m_wVOBidn);
-                            printf("Cell ID             : %u\n", pDVDCELL->m_wCELLidn);
-
-                            printf("Cell Pos Info Count : %u\n", pDVDCELL->m_wCellPosInfoCount);
-                            printf("Number Of VOB Ids   : %u\n", pDVDCELL->m_wNumberOfVOBIds);
-
-                            for (wUnit = 1; wUnit <= pDVDCELL->m_wCellPosInfoCount; wUnit++)
-                            {
-                                const DVDUNIT *pDVDUNIT = dvdGetDVDUNIT(pDvDetectHandle, wTitleSetNo, wProgramChainNo, wProgram, wCell, wUnit);
-
-                                printf("Unit                : %u\n", wUnit);
-                                printf("Start Sector        : %u\n", pDVDUNIT->m_dwStartSector);
-                                printf("End Sector          : %u\n", pDVDUNIT->m_dwEndSector);
-                            }
-                        }
-                    }
-                }
+                showPhysicalStructure(pDvDetectHandle);
+            }
+            else
+            {
+                res = showVirtualStructure(pDvDetectHandle);
             }
 
-            printf("**************************************************************************\n");
         }
         else
         {

@@ -1,21 +1,30 @@
 2012-05-02 nschlia V0.10
 
-    * Created
+  * Created
 
 2012-06-08 nschlia V0.20
 
-    * Bugfix: Removed VS2010 solution from distribution (not ready for release yet.
+  * Bugfix: Removed VS2010 solution from distribution (not ready for release yet.
       BTW it is perfectly OK to use the regular gcc compiled dll with VS projects anyways).
-    * Added support for PTT (Video Manager Title Map) which represents the Title/Chapter structure
+  * Added support for PTT (Video Manager Title Map) which represents the Title/Chapter structure
       intended by the author
-    * Added physical/virtual view check box to Qt example.
-    * Library internal code: Changed several pointers to const where they should be
-    * Library internal code: Changed several declarations to their typedef
-    * Same for examples
-    * Tested parser with some 500 DVDs (without obvious errors and no crashes :)
-    * Bugfix: Last chapter/program had no cells for multiangle program chains
-    * Bugfix: DVDPTT program chain number field was duplicate
-    * Bugfix: File size/playtime are added several times for multi angle DVDs
-    * Bugfix: File sizes corrected (should use unit size instead of cell size)
-    * Bugfix: "Full scan" (AKA really check files on disk) was not completely implemented...
+  * Added physical/virtual view check box to Qt example.
+  * Library internal code: Changed several pointers to const where they should be
+  * Library internal code: Changed several declarations to their typedef
+  * Same for examples
+  * Tested parser with some 500 DVDs (without obvious errors and no crashes :)
+  * Bugfix: Last chapter/program had no cells for multiangle program chains
+  * Bugfix: DVDPTT program chain number field was duplicate
+  * Bugfix: File size/playtime are added several times for multi angle DVDs
+  * Bugfix: File sizes corrected (should use unit size instead of cell size)
+  * Bugfix: "Full scan" (AKA really check files on disk) was not completely implemented...
 
+2012-06-10 nschlia V0.21
+
+  * Bugfix: fix crash when more virtual titles exist than defined by video manager (DVD authoring flaw)
+      Happened e.g. with "King of Queens" Season 5 Disk 3 (seven virtual titles in VMG, but eight on disk)
+  * Added command line options to examples (-d PATH, -p Physical View, -h Help)
+  * Examples now also support physical/virtual view
+  * Bugfix: Missing error messages added if target directory not acessible or empty 
+  * Changed Qt example dialog name from expressionless "MainWindow" to better matching "dvdexplorerdlg"
+  * Bugfix: Title menu VOBs were duplicate in full scan

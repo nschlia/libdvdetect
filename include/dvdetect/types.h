@@ -652,7 +652,8 @@ typedef const DVDPTTVMG* LPCDVDPTTVMG;
 typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
-    uint16_t    m_wPttNo;                                                   //!< PTT number
+    uint16_t    m_wPttTitleSetNo;                                           //!< PTT (virtual) title number
+    uint16_t    m_wPttNo;                                                   //!< PTT (virtual) chapter number
 
     uint16_t    m_wProgramChainNo;                                          //!< Program Chain (PGCN)
     uint16_t	m_wProgram;                                                 //!< Program (PGN)
@@ -670,8 +671,11 @@ typedef const DVDPTTVTS* LPCDVDPTTVTS;
 typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
-    uint16_t    m_wProgramChainNo;                                          //!< Owner PGC number
+    uint16_t    m_wProgramChainNo;                                          //!< Owner program chain (PGC) number
     uint16_t    m_wProgramNo;                                               //!< Program number
+
+    uint16_t    m_wPTTTitleSetNo;                                           //!< PTT (virtual) title number
+    uint16_t    m_wPTTProgramNo;                                            //!< PTT (virtual) program/chapter number
 
     uint16_t    m_wCells;                                                   //!< Number of cells in program
 

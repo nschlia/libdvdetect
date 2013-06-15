@@ -1,3 +1,3 @@
 #/bin/bash
 
-./dvdinfo "/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/"
+./dvdinfo $1 -d "/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS/"

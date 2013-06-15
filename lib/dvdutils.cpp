@@ -30,7 +30,7 @@
 
 DLL_PUBLIC uint64_t dvdSector2bytes(uint32_t dwSectorAddress)
 {
-    return ((uint64_t)DVD_SECTOR_SIZE * dwSectorAddress);
+    return ((uint64_t)DVD_SECTOR_SIZE * (uint64_t)dwSectorAddress);
 }
 
 DLL_PUBLIC const char * dvdGetExtension(DVDFILETYPE eFileType)

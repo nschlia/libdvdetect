@@ -27,9 +27,9 @@ EXTRA_DIST = \
 	Qt/README \
 	Qt/guiexample/guiexample.pro \
 	Qt/guiexample/main.cpp \
-	Qt/guiexample/mainwindow.cpp \
-	Qt/guiexample/mainwindow.h \
-	Qt/guiexample/mainwindow.ui 
+	Qt/guiexample/dvdexplorerdlg.cpp \
+	Qt/guiexample/dvdexplorerdlg.h \
+	Qt/guiexample/dvdexplorerdlg.ui 
 #	VS2010/dllmain.cpp \
 #	VS2010/libdvdetect.sln \
 #	VS2010/libdvdetect.vcxproj \
