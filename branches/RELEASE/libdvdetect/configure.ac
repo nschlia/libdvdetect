@@ -5,7 +5,7 @@ dnl ---------------------------------------------
 dnl May work with pre 2.67, but this is not tested
 dnl ---------------------------------------------
 AC_PREREQ([2.67])
-AC_INIT(libdvdetect library, 0.20, bugs@dvdetect.de,,http://www.dvdetect.de)
+AC_INIT(libdvdetect library, 0.21, bugs@dvdetect.de,,http://www.dvdetect.de)
 AC_CONFIG_SRCDIR(configure.ac)
 #AC_CONFIG_SRCDIR(config.h.in)
 AC_CONFIG_HEADERS(config.h)

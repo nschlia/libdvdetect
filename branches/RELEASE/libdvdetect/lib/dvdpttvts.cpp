@@ -50,7 +50,7 @@ const dvdprogram * dvdpttvts::getDvdChapter() const
         return NULL;
     }
 
-    return m_pDvdParse->getDvdProgram(m_DVDPTTVTS.m_wTitleSetNo, m_DVDPTTVTS.m_wProgramChainNo, m_DVDPTTVTS.m_wProgram);
+    return m_pDvdParse->getDvdProgram(&m_DVDPTTVTS);
 }
 
 uint64_t dvdpttvts::getSize() const

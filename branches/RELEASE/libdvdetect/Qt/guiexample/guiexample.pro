@@ -12,14 +12,14 @@ TARGET = guiexample
 TEMPLATE = app
 
 SOURCES += main.cpp \
-        mainwindow.cpp
+    dvdexplorerdlg.cpp
 INCLUDEPATH += \
     ../.. \
     ../../lib \
     ../../include \
     ../../include/dvdetect
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     ../../config.h \
     ../../include/dvdetect/dvdcell.h \
     ../../include/dvdetect/dvdetect.h \
@@ -30,12 +30,14 @@ HEADERS  += mainwindow.h \
     ../../include/dvdetect/dvdparse.h \
     ../../include/dvdetect/dvdpgc.h \
     ../../include/dvdetect/dvdprogram.h \
-    ../../include/dvdetect/dvdptt.h \
+    ../../include/dvdetect/dvdpttvts.h \
+    ../../include/dvdetect/dvdpttvmg.h \
     ../../include/dvdetect/dvdtitle.h \
     ../../include/dvdetect/dvdunit.h \
     ../../include/dvdetect/dvdutils.h \
     ../../include/dvdetect/types.h \
-    ../../include/dvdetect/version.h
+    ../../include/dvdetect/version.h \
+    dvdexplorerdlg.h
 
 DEFINES += HAVE_CONFIG_H
 win32:DEFINES -= UNICODE
@@ -49,9 +51,10 @@ DEFINES += NDEBUG
 
 win32:LIBS += -lws2_32
 
-LIBS += -L"$$PWD/../../../libdvdetect/lib/.libs/" -ldvdetect
+LIBS += -L"$$PWD/../../lib/.libs/" -ldvdetect
 
-FORMS    += mainwindow.ui
+FORMS    += \
+    dvdexplorerdlg.ui
 
 # SPÄTER WEG!
 DEFINES += BUILDING_STATIC

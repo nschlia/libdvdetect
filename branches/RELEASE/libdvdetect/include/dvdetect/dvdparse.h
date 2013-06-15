@@ -41,12 +41,14 @@
 typedef enum
 {
     DVDERRORCODE_NOERROR,
+    DVDERRORCODE_DIROPEN,
     DVDERRORCODE_FILEOPEN,
     DVDERRORCODE_FILESTAT,
     DVDERRORCODE_FILEREAD,
     DVDERRORCODE_OPEN_DVD,
     DVDERRORCODE_VMG_IFO,
-    DVDERRORCODE_VTS_IFO
+    DVDERRORCODE_VTS_IFO,
+    DVDERRORCODE_EMPTY_PATH
 
 } DVDERRORCODE, *LPDVDERRORCODE;
 
@@ -146,6 +148,14 @@ public:
      *  \return Fail: NULL if parameter out of bounds.
      */
     const dvdprogram *  getDvdProgram(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram) const;
+
+    //! Get a DVD program chain (PGC) on this DVD.
+    /*!
+     *  \param pDVDPTTVTS LPCDVDPTTVTS Pointer to DVDPTT class to get virtual chapter
+     *  \return Success: Pointer to dvdprogram class
+     *  \return Fail: NULL if parameter out of bounds.
+     */
+    const dvdprogram *  getDvdProgram(LPCDVDPTTVTS pDVDPTTVTS) const;
 
     //! Get a DVD part-of-program (PTT) for a video title set on this DVD.
     /*!
@@ -279,6 +289,7 @@ public:
     virtual const std::type_info & classtype() const;
 
 protected:
+
     // Parse Video Manager
     void                getVmgPtt(const uint8_t* pData);
     void                getVmgMain(const uint8_t *pData);

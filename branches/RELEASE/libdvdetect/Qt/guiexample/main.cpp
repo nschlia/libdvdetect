@@ -23,12 +23,12 @@
  */
 
 #include <QApplication>
-#include "mainwindow.h"
+#include "dvdexplorerdlg.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
+    dvdexplorerdlg w;
     w.show();
 
     return a.exec();

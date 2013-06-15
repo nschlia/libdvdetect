@@ -68,13 +68,14 @@ bool dvdparse::locateDVD()
 #ifdef _WIN32
     if (*m_strPath.rbegin() == ':')
     {
-   		::addSeparator(m_strPath);
-	}
+        ::addSeparator(m_strPath);
+    }
 #endif
 
     if (stat(getWin32ShortFilePath(m_strPath).c_str(), &buf) == -1)
     {
-		return false;
+        setError(((std::string)"Error reading directory '" + m_strPath + "': ") + strerror(errno), DVDERRORCODE_DIROPEN);
+        return false;
     }
 
     if (!S_ISDIR(buf.st_mode))
@@ -82,7 +83,7 @@ bool dvdparse::locateDVD()
         ::removeFileSpec(m_strPath);
     }
 
-   	::addSeparator(m_strPath);
+    ::addSeparator(m_strPath);
 
     std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
 
@@ -108,17 +109,18 @@ int dvdparse::parse(const std::string & strPath)
         if (m_strPath.empty())
         {
             // Path cannot be empty
-            throw (int)1;
+            setError("Path cannot be empty.", DVDERRORCODE_EMPTY_PATH);
+            throw (int)-1;
         }
 
         if (!locateDVD())
         {
-            throw (int)2;
-       	}
+            throw (int)-1;
+        }
 
         if (!parseVideoManager())
         {
-            throw (int)3;
+            throw (int)-1;
         }
 
         m_dvdTitleLst.resize(m_DVDVMGM.m_wNumberOfTitleSets);
@@ -127,7 +129,7 @@ int dvdparse::parse(const std::string & strPath)
         {
             if (!parseTitleSet(wTitleSetNo))
             {
-                throw (int)4;
+                throw (int)-1;
             }
         }
     }
@@ -771,10 +773,19 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                 LPCVTS_PTT_SRPT pVTS_PTT_SRPT = (LPCVTS_PTT_SRPT)(pData + dwStartAddressVTS_PTT_SRPT + sizeof(VTS_PTT_SRPT_HEADER) + (wPttVmgNo - 1) * sizeof(VTS_PTT_SRPT));
                 int16_t dwOffsetToPTT                       = be2native(pVTS_PTT_SRPT->m_dwOffsetToPTT);
                 uint32_t dwBlockSize = 0;
+                uint16_t wVirtualPttNo = wPttVmgNo - 1 + m_nVirtTitleCount;
+
+                if (wVirtualPttNo >= m_dvdPttVmgLst.size())
+                {
+                    // Badly authored DVD: Contains more virtual titles than defined in video manager.
+                    // This means maybe there's at least one hidden title set.
+                    wNumberOfTitles = 0;
+                    break;
+                }
 
                 if (wPttVmgNo < wNumberOfTitles)
                 {
-                    LPCVTS_PTT_SRPT pVTS_PTT_SRPT2 = (LPCVTS_PTT_SRPT)(pData + dwStartAddressVTS_PTT_SRPT + sizeof(VTS_PTT_SRPT_HEADER) + wPttVmgNo * sizeof(VTS_PTT_SRPT));
+                    LPCVTS_PTT_SRPT pVTS_PTT_SRPT2          = (LPCVTS_PTT_SRPT)(pData + dwStartAddressVTS_PTT_SRPT + sizeof(VTS_PTT_SRPT_HEADER) + wPttVmgNo * sizeof(VTS_PTT_SRPT));
                     dwBlockSize = be2native(pVTS_PTT_SRPT2->m_dwOffsetToPTT) - dwOffsetToPTT;
                 }
                 else
@@ -789,7 +800,7 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                     continue;
                 }
 
-                dvdpttvmg & dvdPttVmg = m_dvdPttVmgLst[wPttVmgNo - 1 + m_nVirtTitleCount];
+                dvdpttvmg & dvdPttVmg = m_dvdPttVmgLst[wVirtualPttNo];
 
                 for (uint16_t wPttVmgVts = 1; wPttVmgVts <= dwCounter; wPttVmgVts++)
                 {
@@ -798,6 +809,7 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                     LPCVTS_PTT pVTS_PTT = (LPCVTS_PTT)(pData + dwStartAddressVTS_PTT_SRPT + dwOffsetToPTT + (wPttVmgVts - 1) * sizeof(VTS_PTT));
 
                     dvdPttVts.m_DVDPTTVTS.m_wTitleSetNo     = wTitleSetNo;
+                    dvdPttVts.m_DVDPTTVTS.m_wPttTitleSetNo  = wVirtualPttNo + 1;
                     dvdPttVts.m_DVDPTTVTS.m_wPttNo          = wPttVmgVts;
 
                     dvdPttVts.m_DVDPTTVTS.m_wProgramChainNo = be2native(pVTS_PTT->m_wProgramChain);
@@ -829,7 +841,7 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                 // Menu VOB
                 getVtsMenuVob(dvdTitle, wTitleSetNo);
 
-                for (uint16_t wVobNo = 0; wVobNo <= DVD_MAX_VOB; wVobNo++)
+                for (uint16_t wVobNo = 1; wVobNo <= DVD_MAX_VOB; wVobNo++)
                 {
                     getVtsVob(dvdTitle, wVobNo, wTitleSetNo);
                 }
@@ -944,6 +956,16 @@ const dvdprogram * dvdparse::getDvdProgram(uint16_t wTitleSetNo, uint16_t wProgr
     }
 
     return pDvdPgc->getDvdProgram(wProgram);
+}
+
+const dvdprogram * dvdparse::getDvdProgram(LPCDVDPTTVTS pDVDPTTVTS) const
+{
+    /*const*/ dvdprogram *pDvdProgram = (dvdprogram *)getDvdProgram(pDVDPTTVTS->m_wTitleSetNo, pDVDPTTVTS->m_wProgramChainNo, pDVDPTTVTS->m_wProgram);
+
+    pDvdProgram->m_DVDPROGRAM.m_wPTTTitleSetNo      = pDVDPTTVTS->m_wPttTitleSetNo;
+    pDvdProgram->m_DVDPROGRAM.m_wPTTProgramNo       = pDVDPTTVTS->m_wPttNo;
+
+    return pDvdProgram;
 }
 
 const dvdpttvmg * dvdparse::getDvdPttVmg(uint16_t wTitleSetNo) const
@@ -1543,7 +1565,7 @@ uint64_t dvdparse::getVirtPlayTime() const
 
 const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
 {
-	string strError;
+    string strError;
     std::FILE *fpi = NULL;
     struct stat buf;
     uint8_t* pData = NULL;
@@ -1555,7 +1577,7 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
     {
         strError = "Error opening file: " + strFilePath + "\n";
         strError += strerror(errno);
-		setError(strError, DVDERRORCODE_FILEOPEN);
+        setError(strError, DVDERRORCODE_FILEOPEN);
         return NULL;
     }
 
@@ -1565,7 +1587,7 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
     {
         strError = "Cannot stat file: " + strFilePath + "\n";
         strError += strerror(errno);
-		setError(strError, DVDERRORCODE_FILEOPEN);
+        setError(strError, DVDERRORCODE_FILEOPEN);
     }
     else
     {
@@ -1575,9 +1597,9 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
             memset(pData, 0, buf.st_size);
             if (std::fread(pData, 1, buf.st_size, fpi) != (size_t)buf.st_size)
             {
-        		strError = "Error reading file: " + strFilePath + "\n";
-		        strError += strerror(errno);
-				setError(strError, DVDERRORCODE_FILEOPEN);
+                strError = "Error reading file: " + strFilePath + "\n";
+                strError += strerror(errno);
+                setError(strError, DVDERRORCODE_FILEOPEN);
                 delete pData;
                 pData = NULL;
             }
