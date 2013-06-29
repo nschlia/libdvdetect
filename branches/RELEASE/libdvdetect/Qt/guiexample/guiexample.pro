@@ -14,7 +14,9 @@ TEMPLATE = app
 SOURCES += main.cpp \
     aboutdlg.cpp \
     dvdexplorerdlg.cpp \
-    searchtextdlg.cpp 
+    searchtextdlg.cpp \ 
+    explorerutils.cpp \
+    editdetailsdlg.cpp
 INCLUDEPATH += \
     ../.. \
     ../../lib \
@@ -42,7 +44,9 @@ HEADERS  += \
     ../../include/dvdetect/version.h \
     aboutdlg.h \
     dvdexplorerdlg.h \
-    searchtextdlg.h 
+    searchtextdlg.h \ 
+    explorerutils.h \
+    editdetailsdlg.h
 
 DEFINES += HAVE_CONFIG_H
 win32:DEFINES -= UNICODE
@@ -61,7 +65,8 @@ LIBS += -L"$$PWD/../../lib/.libs/" -ldvdetect
 FORMS    += \
     dvdexplorerdlg.ui \
     searchtextdlg.ui \
-    aboutdlg.ui
+    aboutdlg.ui \
+    editdetailsdlg.ui
 
 # SPÄTER WEG!
 DEFINES += BUILDING_STATIC
