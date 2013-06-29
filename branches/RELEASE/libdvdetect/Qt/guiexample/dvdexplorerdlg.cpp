@@ -360,7 +360,7 @@ int dvdexplorerdlg::queryDVD()
 
     ui->statusBar->showMessage(tr("Querying DVD..."));
 
-    dvdDatabase.setProxy("proxyserver:3128");
+    //dvdDatabase.setProxy("proxyserver:3128");
 
     res = dvdDatabase.query(dvdParseLst, m_DVD);
 
@@ -399,7 +399,7 @@ int dvdexplorerdlg::searchDVD()
 
         dvdParseLst.push_back(m_DVD);
 
-        dvdDatabase.setProxy("proxyserver:3128");
+        //dvdDatabase.setProxy("proxyserver:3128");
 
         res = dvdDatabase.search(dvdParseLst, (const char *)searchTextDlg.getSearch().toUtf8());
 
@@ -466,7 +466,7 @@ int dvdexplorerdlg::submitDVD()
 
     dvdParseLst.push_back(m_DVD);
 
-    dvdDatabase.setProxy("proxyserver:3128");
+    //dvdDatabase.setProxy("proxyserver:3128");
 
     res = dvdDatabase.submit(dvdParseLst);
 
