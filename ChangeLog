@@ -29,7 +29,7 @@
   * Changed Qt example dialog name from expressionless "MainWindow" to better matching "dvdexplorerdlg"
   * Bugfix: Title menu VOBs were duplicate in full scan
   
-2012-06-XX nschlia V0.22
+2012-06-29 nschlia V0.30
 
   * Bugfix: sealed memory leak in getString function
   * Bugfix: closed memory leak in Qt example
@@ -41,11 +41,10 @@
   * Bugfix: http problems were not properly reported (empty error message)
   * Bugfix: library version number did not change (remained 0.10.0)
   * Added DVD lookup from database
-  - Added DVD search in database
   * Added DVD submit to database
   * Created server side PHP scripts for query, search, submit
   * Implemented data exchange with database using XML
-  - Implemented DVD lookup example
+  * Implemented DVD lookup example
   * Implemented DVD data editing inside GUI example
-  
+  * Added cygwin support
   
