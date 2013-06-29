@@ -37,6 +37,17 @@ dvdtitle::~dvdtitle()
 {
 }
 
+dvdtitle& dvdtitle::operator= (dvdtitle const& rhs)
+{
+    if (this != &rhs)
+    {
+        memcpy(&m_DVDVTS, &rhs.m_DVDVTS, sizeof(DVDVTS));
+        m_dvdPgcLst     = rhs.m_dvdPgcLst;
+        m_dvdFileLst    = rhs.m_dvdFileLst;
+    }
+    return *this;
+}
+
 LPCDVDVTS dvdtitle::getDVDVTS() const
 {
     return &m_DVDVTS;
@@ -95,9 +106,3 @@ uint64_t dvdtitle::getPlayTime() const
 
     return qwPlayTime;
 }
-
-const std::type_info & dvdtitle::classtype() const
-{
-    return typeid(*this);
-}
-

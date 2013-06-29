@@ -77,11 +77,11 @@ typedef struct
     uint8_t     m_byPadding15[164];                         //!< Offset 0x15C Size 164
 
     uint8_t     m_byVideoAttributesOfVTS_VOBS[2];         	//!< Offset 0x200 Size 2	video attributes of VTS_VOBS
-    uint16_t    m_wNumberOfAudioStreamsInVTS_VOBS;      	//!< Offset 0x202 Size 2	number of audio streams in VTS_VOBS
+    uint16_t    m_wNumberOfAudioStreamsInVTS_VOBS;      	//!< Offset 0x202 Size 2	number of audio streams in VTS_VOBS (0...8)
     uint8_t     m_byAudioAttributesOfVTS_VOBS[8][8];        //!< Offset 0x204 Size 8*8	audio attributes of VTS_VOBS
     uint8_t     m_byPadding16[16];                          //!< Offset 0x244 Size 16
     uint16_t    m_wNumberOfSubpictureStreamsInVTS_VOBS;     //!< Offset 0x254 Size 2	number of subpicture streams in VTS_VOBS
-    uint8_t     m_bySubpictureAttributesOfVTS_VOBS[32][6];  //!< Offset 0x256 Size 32*6	subpicture attributes of VTS_VOBS
+    uint8_t     m_bySubpictureAttributesOfVTS_VOBS[32][6];  //!< Offset 0x256 Size 32*6	subpicture attributes of VTS_VOBS (0...32)
     uint8_t     m_byPadding17[2];                           //!< Offset 0x316 Size 2
 
     uint8_t     m_byMultichannelExtension[8][24];         	//!< Offset 0x318 Size 8*24	multichannel extension

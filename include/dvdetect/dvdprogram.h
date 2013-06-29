@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDPROGRAM_H
-
 #define DVDPROGRAM_H
-
 
 #include <dvdetect/dvdcell.h>
 #include <dvdetect/dvdfile.h>
@@ -100,13 +98,7 @@ public:
      */
     uint32_t            getEndSector() const;
 
-//    dvdprogram& operator= (dvdprogram const& rhs);
-
-    //! Get the type_info of this class.
-    /*!
-     *  \return type_info of this class.
-     */
-    virtual const std::type_info & classtype() const;
+    dvdprogram& operator= (dvdprogram const& rhs);
 
 protected:
     DVDPROGRAM          m_DVDPROGRAM;				//!< DVDPROGRAM structure (DVD program)

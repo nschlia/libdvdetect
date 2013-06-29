@@ -31,7 +31,7 @@
 
 #include <stdio.h>
 
-bool getLoggingEnabled(int) { return true; }
+bool getLoggingEnabled(int) { return false; }
 
 http::http()
     : m_nResponse(0)
@@ -150,13 +150,13 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
             iResult = ::string2IP(strProxyUrl.c_str(), &SocketAddr);
         }
         else
-            {
-                iResult = ::string2IP(strHost.c_str(), &SocketAddr);
-            }
+        {
+            iResult = ::string2IP(strHost.c_str(), &SocketAddr);
+        }
 
         if (iResult != 0)
         {
-            setError(_T("getaddrinfo"));
+            setError(_T("getaddrinfo"), iResult);
             throw -1;
         }
 
@@ -276,7 +276,7 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
             {
                 TCHAR szBuffer[100];
 
-                WSPRINTF(szBuffer, _T("%lu"), strData.size());
+                WSPRINTF(szBuffer, _T("%lu"), (unsigned long)strData.size());
                 //	strSendBuf += _T("Referer: $referer\n");
                 strSendBuf += _T("Content-type: application/x-www-form-urlencoded\r\n");
                 strSendBuf += _T("Content-length: ");
@@ -309,7 +309,6 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
         iResult = recv( ConnectSocket, m_strContent, 0 );
         if (iResult == SOCKET_ERROR)
         {
-            setError(_T("recv"));
             throw -1;
         }
     }
@@ -331,14 +330,17 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
         if ((iPos = strHeaders.find(_T("HTTP/1.0"))) != TSTRING::npos)
         {
             m_nResponse = ::WTOL(strHeaders.substr(9).c_str());
+            setError(strHeaders);
         }
         else if ((iPos = strHeaders.find(_T("HTTP/1.1"))) != TSTRING::npos)
         {
             m_nResponse = ::WTOL(strHeaders.substr(9).c_str());
+            setError(strHeaders);
         }
         else
         {
             m_nResponse = 400;
+            setError("HTTP Error 400");
         }
     }
 
@@ -350,14 +352,16 @@ int http::send(SOCKET s, const TSTRING & strBuffer, int flags) const
     return ::send(s, wstringToString(strBuffer).c_str(), (int)strBuffer.length(), flags);
 }
 
-int http::recv(SOCKET s, TSTRING & strBuffer, int /* flags */) const
+int http::recv(SOCKET s, TSTRING & strBuffer, int /* flags */)
 {
-    char recvbuf[1024];
+    char recvbuf[1024*50];
     int recvbuflen = countof(recvbuf);
     int iResult = 0;
     int iRetBytes = 0;
     struct pollfd ufds[1];
     int rv;
+
+    memset(&ufds, 0, sizeof(ufds));
 
     ufds[0].fd = s;
     ufds[0].events = POLLIN; // check for just normal data
@@ -373,18 +377,18 @@ int http::recv(SOCKET s, TSTRING & strBuffer, int /* flags */) const
         {
             // error occurred in poll()
             iRetBytes = SOCKET_ERROR;
-            printf(_T("poll has failed"));
+            setError(_T("poll has failed"));
             break;
         }
         else if (rv == 0)
         {
-            if (iRetBytes)
-            {
-                // Data received, ending loop
-                //// Timeout, leaving loop
-                ////printf(_T("recv has timed out"));
-                break;
-            }
+            //            if (iRetBytes)
+            //            {
+            //                // Data received, ending loop
+            //                //// Timeout, leaving loop
+            //                ////printf(_T("recv has timed out"));
+            //                break;
+            //            }
             // No data received yet, continueing
             iResult = 1;
         }
@@ -422,7 +426,7 @@ int http::recv(SOCKET s, TSTRING & strBuffer, int /* flags */) const
             {
                 if (!iRetBytes)
                 {
-                    printf(_T("poll reported no data"));
+                    setError(_T("poll reported no data"));
                     iRetBytes = SOCKET_ERROR;
                     iResult = -1;
                 }
@@ -466,18 +470,37 @@ int http::getResponse() const
     return m_nResponse;
 }
 
-void http::setError(const TSTRING & strError)
+void http::setError(const TSTRING & strError, int nErrorCode)
 {
 #ifdef WIN32
     TCHAR szBuffer[1024] = _T("");
 
-    WSPRINTF(szBuffer, STRTOKEN _T(": %i"), strError.c_str(), WSAGetLastError());
+    if (!nErrorCode)
+    {
+        nErrorCode = WSAGetLastError();
+    }
+
+    if (!nErrorCode)
+    {
+        WSPRINTF(szBuffer, STRTOKEN, strError.c_str());
+    }
+    else
+    {
+        WSPRINTF(szBuffer, STRTOKEN _T(": %i"), strError.c_str(), nErrorCode);
+    }
 
     m_strErrorString = szBuffer;
 #else
     m_strErrorString = strError;
     m_strErrorString += _T(": ");
-    m_strErrorString += TSTRERROR(errno);
+    if (!nErrorCode)
+    {
+        m_strErrorString += TSTRERROR(errno);
+    }
+    else
+    {
+        m_strErrorString += TSTRERROR(nErrorCode);
+    }
 #endif
 }
 

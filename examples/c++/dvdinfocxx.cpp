@@ -34,16 +34,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <dvdetect/dvdetectc++.h>
 
+const char *pszProgramName = NULL;
+
 using namespace std;
+
+static const char * getFileName(const char *pszFilePath)
+{
+    const char *ptr = strrchr(pszFilePath, '\\');
+    if (ptr != NULL)
+    {
+        return ++ptr;
+    }
+    ptr = strrchr(pszFilePath, '/');
+    if (ptr != NULL)
+    {
+        return ++ptr;
+    }
+    return pszFilePath;
+}
+
 /*!
  * Print playtime (and optionally frame rate)
  *
- *  @param qwPlaytimems uint32_t Play time in milliseconds
- *  @param wFrameRate uint16_t Frame rate (25/30) or -1 to not display
- *  @return Adress in bytes
+ *  \param qwPlaytimems uint32_t Play time in milliseconds
+ *  \param wFrameRate uint16_t Frame rate (25/30) or -1 to not display
+ *  \return Adress in bytes
  */
 static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate = (uint16_t)-1)
 {
@@ -69,17 +88,17 @@ static void usage()
 {
     cout << endl;
     cout << "Usage:" << endl << endl;
-    cout << "dvdinfo [-p] -d PATH-TO-DVD   list DVD structure" << endl;
-    cout << "dvdinfo -h                    show help" << endl;
+    cout << pszProgramName << " -d PATH-TO-DVD        list DVD structure" << endl;
+    cout << pszProgramName << " -h                    show help" << endl;
     cout << endl << "To list the physical structure, use \"-p\", otherwise the virtual structure will" << endl << "be shown." << endl;
     cout << endl;
 
     cout << "Example:" << endl << endl;
 
 #ifdef _WIN32
-    cout << "dvdinfo -d F:" << endl;
+    cout << pszProgramName << " -d F:" << endl;
 #else
-    cout << "dvdinfo -d /mnt/cdrom1/" << endl;
+    cout << pszProgramName << " -d /mnt/cdrom1/" << endl;
 #endif
 }
 
@@ -281,8 +300,10 @@ int main(int argc, char *argv[])
     int res = 0;
     int c;
 
-    cout << "dvdinfo/c++ V" << LIBDVDETECT_VERSION << endl;
-    cout << DVDETECT_COPYRIGHT << endl << endl;
+    pszProgramName = getFileName(argv[0]);
+
+    cout << pszProgramName << "/c++ V" << LIBDVDETECT_VERSION << endl;
+    cout << LIBDVDETECT_COPYRIGHT << endl << endl;
 
     opterr = 0;
 

@@ -37,6 +37,15 @@ dvdunit::~dvdunit()
 {
 }
 
+dvdunit& dvdunit::operator= (dvdunit const& rhs)
+{
+    if (this != &rhs)
+    {
+        memcpy(&m_DVDUNIT, &rhs.m_DVDUNIT, sizeof(DVDUNIT));
+    }
+    return *this;
+}
+
 LPCDVDUNIT dvdunit::getDVDUNIT() const
 {
     return &m_DVDUNIT;
@@ -45,18 +54,4 @@ LPCDVDUNIT dvdunit::getDVDUNIT() const
 uint64_t dvdunit::getSize() const
 {
     return (dvdSector2bytes((m_DVDUNIT.m_dwEndSector - m_DVDUNIT.m_dwStartSector)));
-}
-
-//dvdunit& dvdunit::operator= (dvdunit const& rhs)
-//{
-//    if (this != &rhs)  //oder if (*this != rhs)
-//    {
-//        memcpy(&m_DVDUNIT, &rhs.m_DVDUNIT, sizeof(DVDUNIT));
-//    }
-//    return *this;
-//}
-
-const std::type_info & dvdunit::classtype() const
-{
-    return typeid(*this);
 }

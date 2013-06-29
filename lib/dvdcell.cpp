@@ -37,6 +37,16 @@ dvdcell::~dvdcell()
 {
 }
 
+dvdcell& dvdcell::operator= (dvdcell const& rhs)
+{
+    if (this != &rhs)
+    {
+        memcpy(&m_DVDCELL, &rhs.m_DVDCELL, sizeof(DVDCELL));
+        m_dvdUnitLst = rhs.m_dvdUnitLst;
+    }
+    return *this;
+}
+
 LPCDVDCELL dvdcell::getDVDCELL() const
 {
     return &m_DVDCELL;
@@ -69,18 +79,4 @@ uint64_t dvdcell::getSize() const
     return size;
 
     //return (dvdSector2bytes((m_DVDCELL.m_dwLastVOBUEndSector - m_DVDCELL.m_dwFirstVOBUStartSector)));
-}
-
-//dvdcell& dvdcell::operator= (dvdcell const& rhs)
-//{
-//    if (this != &rhs)  //oder if (*this != rhs)
-//    {
-//        memcpy(&m_DVDCELL, &rhs.m_DVDCELL, sizeof(DVDCELL));
-//    }
-//    return *this;
-//}
-
-const std::type_info & dvdcell::classtype() const
-{
-    return typeid(*this);
 }

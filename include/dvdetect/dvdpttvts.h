@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDPTTVTS_H
-
 #define DVDPTTVTS_H
-
 
 #include <dvdetect/dvdprogram.h>
 
@@ -43,6 +41,7 @@ class dvdparse;
 class DLL_PUBLIC dvdpttvts : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldoc;
 
 public:
     //! Constructor.
@@ -65,7 +64,6 @@ public:
 
     //! Get a DVD chapter (aka program) in this part of title (PTT).
     /*!
-     *  \param wChapterNo uint16_t Index of chapter (1...n)
      *  \return Success: Pointer to dvdprogram class.
      *  \return Fail: NULL if wChapterNo out of bounds.
      */
@@ -89,17 +87,47 @@ public:
      */
     uint64_t            getPlayTime() const;
 
-//    dvdpttvts& operator= (dvdpttvts const& rhs);
-
-    //! Get the type_info of this class.
+    //! Get title artist
     /*!
-     *  \return type_info of this class.
+     * If DVD was successfully looked up, return the title artist
+     *
+     *  \return title artist or empty string if unknown
      */
-    virtual const std::type_info & classtype() const;
+    std::string         getArtist() const;
+
+    //! Set title artist
+    /*!
+     * Sets the title artist
+     *
+     *  \param strArtist const std::string & title artist
+     */
+    void                setArtist(const std::string & strArtist);
+
+    //! Get title
+    /*!
+     * If DVD was successfully looked up, return the title
+     *
+     *  \return title or empty string if unknown
+     */
+    std::string         getTitle() const;
+
+    //! Set title
+    /*!
+     * Sets the title
+     *
+     *  \param strTitle const std::string & Title
+     */
+    void                setTitle(const std::string & strTitle);
+
+    dvdpttvts& operator= (dvdpttvts const& rhs);
 
 protected:
     DVDPTTVTS           m_DVDPTTVTS;            //!< DVDPTTVTS structure (DVD part of title)
-    dvdparse *          m_pDvdParse;            //!< DVD parse object
+    dvdparse *          m_pDvdParse;            //!< Owner DVD parse object
+
+    // database data
+    std::string         m_strArtist;                //!< Title artist
+    std::string         m_strTitle;                 //!< Title
 };
 
 typedef std::vector<dvdpttvts> dvdpttvtslst;	//!< shortcut for a list of dvdpttvts's

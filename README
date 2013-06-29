@@ -34,6 +34,7 @@ Tested environments:
 * Suse 11.4
 * Debian (Debian 2.6.32-48squeeze1)
 * Windows 7 (using GNU MSYS)
+* Windows Cygwin
 
 See INSTALL for instructions.
 

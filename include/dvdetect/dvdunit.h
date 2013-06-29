@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDUNIT_H
-
 #define DVDUNIT_H
-
 
 /*!
  * \brief dvdunit class
@@ -38,6 +36,7 @@
 class DLL_PUBLIC dvdunit : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldoc;
 
 public:
     //! Constructor.
@@ -64,13 +63,7 @@ public:
      */
     uint64_t            getSize() const;
 
-    //    dvdunit& operator= (dvdunit const& rhs);
-
-    //! Get the type_info of this class.
-    /*!
-     *  \return type_info of this class.
-     */
-    virtual const std::type_info & classtype() const;
+    dvdunit& operator= (dvdunit const& rhs);
 
 protected:
     DVDUNIT             m_DVDUNIT;          //!< DVDUNIT structure (DVD unit information)

@@ -33,13 +33,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <inttypes.h>
+
+const char *pszProgramName = NULL;
+
+static const char * getFileName(const char *pszFilePath)
+{
+    const char *ptr = strrchr(pszFilePath, '\\');
+    if (ptr != NULL)
+    {
+        return ++ptr;
+    }
+    ptr = strrchr(pszFilePath, '/');
+    if (ptr != NULL)
+    {
+        return ++ptr;
+    }
+    return pszFilePath;
+}
 
 /*!
  * Print playtime (and optionally frame rate)
  *
- *  @param qwPlaytimems uint32_t Play time in milliseconds
- *  @param wFrameRate uint16_t Frame rate (25/30) or 0 to not display
- *  @return Adress in bytes
+ *  \param qwPlaytimems uint32_t Play time in milliseconds
+ *  \param wFrameRate uint16_t Frame rate (25/30) or 0 to not display
+ *  \return Adress in bytes
  */
 static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate)
 {
@@ -65,8 +84,8 @@ static void usage()
 {
     printf("\n");
     printf("Usage:\n\n");
-    printf("dvdinfo [-p] -f PATH-TO-DVD   list DVD structure\n");
-    printf("dvdinfo -h                    show help\n");
+    printf("%s [-p] -f PATH-TO-DVD   list DVD structure\n", pszProgramName);
+    printf("%s -h                    show help\n", pszProgramName);
     printf("\nTo list the physical structure, use \"-p\", otherwise the virtual structure will\nbe shown.\n");
     printf("\n");
 
@@ -212,9 +231,9 @@ static int showPhysicalStructure(LPDVDETECTHANDLE pDvDetectHandle)
         }
     }
 
-    // 	  printf("\n");
-    //    printf("Size                : %l MB\n", dvd.getSize() / (1024*1024));
-    //    playTime(dvd.getPlayTime(), -1);
+    printf("\n");
+    printf("Size                : %"PRIu64" MB\n", dvdGetSize(pDvDetectHandle) / (1024*1024));
+    playTime(dvdGetPlayTime(pDvDetectHandle), -1);
 
     printf("**************************************************************************\n");
 
@@ -256,9 +275,9 @@ static int showVirtualStructure(LPDVDETECTHANDLE pDvDetectHandle)
         }
     }
 
-    //    cout << endl;
-    //    printf("Size                : " << dvd.getVirtSize() / (1024*1024) << " MB" << endl;
-    //    playTime(dvd.getVirtPlayTime());
+    printf("\n");
+    printf("Size                : %"PRIu64" MB\n", dvdGetVirtSize(pDvDetectHandle) / (1024*1024));
+    playTime(dvdGetVirtPlayTime(pDvDetectHandle), -1);
 
     printf("**************************************************************************\n");
 
@@ -274,8 +293,10 @@ int main(int argc, char *argv[])
     int res = 0;
     int c;
 
-    printf("dvdinfo V%s\n", LIBDVDETECT_VERSION);
-    printf("%s\n\n", DVDETECT_COPYRIGHT);
+    pszProgramName = getFileName(argv[0]);
+
+    printf("%s V%s\n", pszProgramName, LIBDVDETECT_VERSION);
+    printf("%s\n\n", LIBDVDETECT_COPYRIGHT);
 
     opterr = 0;
 

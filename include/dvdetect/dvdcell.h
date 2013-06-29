@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDCELL_H
-
 #define DVDCELL_H
-
 
 #include <dvdetect/dvdunit.h>
 
@@ -41,6 +39,7 @@
 class DLL_PUBLIC dvdcell : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldoc;
 
 public:
     //! Constructor.
@@ -81,13 +80,7 @@ public:
      */
     uint64_t            getSize() const;
 
-//    dvdcell& operator= (dvdcell const& rhs);
-
-    //! Get the type_info of this class.
-    /*!
-     *  \return type_info of this class.
-     */
-    virtual const std::type_info & classtype() const;
+    dvdcell& operator= (dvdcell const& rhs);
 
 protected:
     DVDCELL             m_DVDCELL;			//!< DVDCELL structure (DVD cell information)

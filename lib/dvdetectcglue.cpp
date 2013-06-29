@@ -20,6 +20,8 @@
 /*! \file dvdetectcglue.cpp
  *
  *  \brief Collection of C API functions for libdvdetect
+ *
+ * TODO: This file is still quite ugly. A bit of refactoring could do well...
  */
 
 #include "compat.h"
@@ -34,7 +36,41 @@ static dvdparse *getSafeDvdParse(LPDVDETECTHANDLE pDvDetectHandle)
         return NULL;
     }
 
-    return (dvdparse*)pDvDetectHandle->m_pClass;
+    return (dvdparse*)pDvDetectHandle->m_pClassDvdParse;
+}
+
+static dvddatabase *getSafeDvDatabase(LPDVDBHANDLE pDvDBHandle)
+{
+    if (pDvDBHandle == NULL)
+    {
+        return NULL;
+    }
+
+    return (dvddatabase*)pDvDBHandle->m_pClassDvdDatabase;
+}
+
+static dvdparselst *getSafeDvdParseLst(LPDVDBHANDLE pDvDBHandle)
+{
+    if (pDvDBHandle == NULL)
+    {
+        return NULL;
+    }
+
+    return (dvdparselst*)pDvDBHandle->m_pClassDvdParseLst;
+}
+
+DLL_PUBLIC void *dvdMalloc(size_t size)
+{
+    return malloc(size);
+}
+
+DLL_PUBLIC void dvdFree(void ** ppMemory)
+{
+    if (*ppMemory != NULL)
+    {
+        free(*ppMemory);
+        ppMemory = NULL;
+    }
 }
 
 DLL_PUBLIC LPDVDETECTHANDLE dvdOpenLib()
@@ -46,16 +82,16 @@ DLL_PUBLIC LPDVDETECTHANDLE dvdOpenLib()
         return NULL;
     }
 
-    pDvDetectHandle->m_pClass = new dvdparse;
+    pDvDetectHandle->m_pClassDvdParse = new dvdparse;
 
-    if (pDvDetectHandle->m_pClass == NULL)
+    if (pDvDetectHandle->m_pClassDvdParse == NULL)
     {
         delete pDvDetectHandle;
         return NULL;
     }
 
     return pDvDetectHandle;
-} 
+}
 
 DLL_PUBLIC int dvdParse(LPDVDETECTHANDLE pDvDetectHandle, const char *pszPath)
 {
@@ -214,6 +250,543 @@ DLL_PUBLIC LPCDVDUNIT dvdGetDVDUNIT(LPDVDETECTHANDLE pDvDetectHandle, uint16_t w
     return pDvdUnit->getDVDUNIT();
 }
 
+DLL_PUBLIC uint64_t	dvdGetVirtSize(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return 0;
+    }
+
+    return pDvdParse->getVirtSize();
+}
+
+DLL_PUBLIC uint64_t	dvdGetVirtPlayTime(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return 0;
+    }
+
+    return pDvdParse->getVirtPlayTime();
+}
+
+DLL_PUBLIC uint64_t dvdGetSize(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return 0;
+    }
+
+    return pDvdParse->getSize();
+}
+
+DLL_PUBLIC uint64_t	 dvdGetPlayTime(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return 0;
+    }
+
+    return pDvdParse->getPlayTime();
+}
+
+DLL_PUBLIC const char *dvdGetPttVmgTitle(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTitleSetNo)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    const dvdpttvmg *pDvdPttVmg = pDvdParse->getDvdPttVmg(wTitleSetNo);
+
+    if (pDvdPttVmg == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdPttVmg->getTitle().c_str());
+}
+
+DLL_PUBLIC const char *dvdGetPttVtsArtist(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTitleSetNo, uint16_t wPtt)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    const dvdpttvts *pDvdPttVts = pDvdParse->getDvdPttVts(wTitleSetNo, wPtt);
+
+    if (pDvdPttVts == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdPttVts->getArtist().c_str());
+}
+
+DLL_PUBLIC const char *dvdGetPttVtsTitle(LPDVDETECTHANDLE pDvDetectHandle, uint16_t wTitleSetNo, uint16_t wPtt)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    const dvdpttvts *pDvdPttVts = pDvdParse->getDvdPttVts(wTitleSetNo, wPtt);
+
+    if (pDvdPttVts == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdPttVts->getTitle().c_str());
+}
+
+DLL_PUBLIC const char *dvdGetCode(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getCode().c_str());
+}
+
+DLL_PUBLIC const char *dvdGetHash(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getHash().c_str());
+}
+
+DLL_PUBLIC const char *dvdGetAlbumArtist(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getAlbumArtist().c_str());
+}
+
+DLL_PUBLIC void dvdSetAlbumArtist(LPDVDETECTHANDLE pDvDetectHandle, const char * pszAlbumArtist)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+     pDvdParse->setAlbumArtist(pszAlbumArtist);
+}
+
+DLL_PUBLIC const char *dvdGetAlbum(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getAlbum().c_str());
+}
+
+DLL_PUBLIC void dvdSetAlbum(LPDVDETECTHANDLE pDvDetectHandle, const char * pszAlbum)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setAlbum(pszAlbum);
+}
+
+DLL_PUBLIC const char *dvdGetGenre(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getGenre().c_str());
+}
+
+DLL_PUBLIC void dvdSetGenre(LPDVDETECTHANDLE pDvDetectHandle, const char * pszGenre)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setGenre(pszGenre);
+}
+
+DLL_PUBLIC const char *dvdGetCast(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getCast().c_str());
+}
+
+DLL_PUBLIC void dvdSetCast(LPDVDETECTHANDLE pDvDetectHandle, const char * pszCast)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setCast(pszCast);
+}
+
+DLL_PUBLIC const char *dvdGetCrew(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getCrew().c_str());
+}
+
+DLL_PUBLIC void dvdSetCrew(LPDVDETECTHANDLE pDvDetectHandle, const char * pszCrew)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setCrew(pszCrew);
+}
+
+DLL_PUBLIC const char *dvdGetDirector(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getDirector().c_str());
+}
+
+DLL_PUBLIC void dvdSetDirector(LPDVDETECTHANDLE pDvDetectHandle, const char * pszDirector)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setDirector(pszDirector);
+}
+
+DLL_PUBLIC const char *dvdGetCountry(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getCountry().c_str());
+}
+
+DLL_PUBLIC void dvdSetCountry(LPDVDETECTHANDLE pDvDetectHandle, const char * pszCountry)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setCountry(pszCountry);
+}
+
+DLL_PUBLIC const char *dvdGetReleaseDate(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getReleaseDate().c_str());
+}
+
+DLL_PUBLIC void dvdSetReleaseDate(LPDVDETECTHANDLE pDvDetectHandle, const char * pszReleaseDate)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setReleaseDate(pszReleaseDate);
+}
+
+DLL_PUBLIC const char *dvdGetSpecialFeatures(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getSpecialFeatures().c_str());
+}
+
+DLL_PUBLIC void dvdSetSpecialFeatures(LPDVDETECTHANDLE pDvDetectHandle, const char * pszFeatures)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setSpecialFeatures(pszFeatures);
+}
+
+DLL_PUBLIC const char *dvdGetEAN_UPC(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getEAN_UPC().c_str());
+}
+
+DLL_PUBLIC void dvdSetEAN_UPC(LPDVDETECTHANDLE pDvDetectHandle, const char * pszEAN_UPC)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setEAN_UPC(pszEAN_UPC);
+}
+
+DLL_PUBLIC const char *dvdGetStoryline(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getStoryline().c_str());
+}
+
+DLL_PUBLIC void dvdSetStoryline(LPDVDETECTHANDLE pDvDetectHandle, const char * pszStoryline)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setStoryline(pszStoryline);
+}
+
+DLL_PUBLIC const char *dvdGetRemarks(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getRemarks().c_str());
+}
+
+DLL_PUBLIC void dvdSetRemarks(LPDVDETECTHANDLE pDvDetectHandle, const char * pszRemarks)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setRemarks(pszRemarks);
+}
+
+DLL_PUBLIC int dvdGetRevision(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return 0;
+    }
+
+    return pDvdParse->getRevision();
+}
+
+DLL_PUBLIC void dvdSetRevision(LPDVDETECTHANDLE pDvDetectHandle, int nRevision)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setRevision(nRevision);
+}
+
+DLL_PUBLIC const char *dvdGetSubmitter(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getSubmitter().c_str());
+}
+
+DLL_PUBLIC void dvdSetSubmitter(LPDVDETECTHANDLE pDvDetectHandle, const char * pszSubmitter)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setSubmitter(pszSubmitter);
+}
+
+DLL_PUBLIC const char *dvdGetSubmitterIP(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getSubmitterIP().c_str());
+}
+
+DLL_PUBLIC const char *dvdGetClient(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getClient().c_str());
+}
+
+DLL_PUBLIC void dvdSetKeywords(LPDVDETECTHANDLE pDvDetectHandle, const char * pszKeywords)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setKeywords(pszKeywords);
+}
+
+DLL_PUBLIC const char * dvdGetKeywords(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getKeywords().c_str());
+}
+
+DLL_PUBLIC const char * dvdGetDateCreated(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getDateCreated().c_str());
+}
+
+DLL_PUBLIC const char * dvdGetDateLastChanged(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getDateLastChanged().c_str());
+}
+
 DLL_PUBLIC const char * dvdGetErrorString(LPDVDETECTHANDLE pDvDetectHandle)
 {
     dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
@@ -228,5 +801,121 @@ DLL_PUBLIC const char * dvdGetErrorString(LPDVDETECTHANDLE pDvDetectHandle)
 
 DLL_PUBLIC void dvdCloseLib(LPDVDETECTHANDLE pDvDetectHandle)
 {
+    delete (dvdparse*)pDvDetectHandle->m_pClassDvdParse;
     delete pDvDetectHandle;
+}
+
+DLL_PUBLIC LPDVDBHANDLE dvdOpenDB(const char * pszPogramName)
+{
+    LPDVDBHANDLE pDvDBHandle = new DVDBHANDLE;
+
+    if (pDvDBHandle == NULL)
+    {
+        return NULL;
+    }
+
+    pDvDBHandle->m_pClassDvdDatabase = new dvddatabase(pszPogramName);
+
+    if (pDvDBHandle->m_pClassDvdDatabase == NULL)
+    {
+        delete pDvDBHandle;
+        return NULL;
+    }
+
+    pDvDBHandle->m_pClassDvdParseLst = new dvdparselst;
+
+    if (pDvDBHandle->m_pClassDvdParseLst == NULL)
+    {
+        delete (dvddatabase*)pDvDBHandle->m_pClassDvdDatabase;
+        delete pDvDBHandle;
+        return NULL;
+    }
+
+    return pDvDBHandle;
+}
+
+DLL_PUBLIC void dvdSetDBProxy(LPDVDBHANDLE pDvDBHandle, const char * pszProxyName)
+{
+    if (pszProxyName == NULL)
+    {
+        return;
+    }
+
+    dvddatabase *pDvdDatabase = getSafeDvDatabase(pDvDBHandle);
+
+    if (pDvdDatabase == NULL)
+    {
+        return; // "Invalid handle";
+    }
+
+    pDvdDatabase->setProxy(pszProxyName);
+}
+
+DLL_PUBLIC int dvdDBResults(LPDVDBHANDLE pDvDBHandle)
+{
+    dvdparselst *pDvdParseLst = getSafeDvdParseLst(pDvDBHandle);
+
+    if (pDvdParseLst == NULL)
+    {
+        return 0;
+    }
+
+    return pDvdParseLst->size();
+}
+
+DLL_PUBLIC int dvdQueryDB(LPDVDBHANDLE pDvDBHandle, LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return -1;
+    }
+
+    dvddatabase *pDvdDatabase = getSafeDvDatabase(pDvDBHandle);
+
+    if (pDvdDatabase == NULL)
+    {
+        return -1;
+    }
+
+    dvdparselst *pDvdParseLst = getSafeDvdParseLst(pDvDBHandle);
+
+    if (pDvdParseLst == NULL)
+    {
+        return -1;
+    }
+
+    return pDvdDatabase->query(*pDvdParseLst, *pDvdParse);
+}
+
+DLL_PUBLIC void dvdUpdate(LPDVDBHANDLE pDvDBHandle, LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    dvdparselst *pDvdParseLst = getSafeDvdParseLst(pDvDBHandle);
+
+    if (pDvdParseLst == NULL)
+    {
+        return;
+    }
+
+    if (!pDvdParseLst->size())
+    {
+        return;
+    }
+
+    pDvdParse->update((*pDvdParseLst)[0]);
+}
+
+DLL_PUBLIC void dvdCloseDB(LPDVDBHANDLE pDvDBHandle)
+{
+    delete (dvddatabase*)pDvDBHandle->m_pClassDvdDatabase;
+    delete (dvdparselst*)pDvDBHandle->m_pClassDvdParseLst;
+    delete pDvDBHandle;
 }

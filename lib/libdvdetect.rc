@@ -1,0 +1,31 @@
+// IDI_ICON1   ICON    DISCARDABLE "images/BullysPlayer.ico"
+
+#include <windows.h>
+#include "version.h"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     DVDETECT_FILEVERSION
+PRODUCTVERSION  DVDETECT_PRODUCTVERSION
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",        DVDETECT_COMPANYNAME_STR
+            VALUE "FileDescription",    DVDETECT_FILEDESCRIPTION_STR
+            VALUE "FileVersion",        DVDETECT_FILEVERSION_STR
+            VALUE "InternalName",       DVDETECT_INTERNALNAME_STR
+            VALUE "LegalCopyright",     DVDETECT_LEGALCOPYRIGHT_STR
+            VALUE "LegalTrademarks1",   DVDETECT_LEGALTRADEMARKS1_STR
+            VALUE "LegalTrademarks2",   DVDETECT_LEGALTRADEMARKS2_STR
+            VALUE "OriginalFilename",   DVDETECT_ORIGINALFILENAME_STR
+            VALUE "ProductName",        DVDETECT_PRODUCTNAME_STR
+            VALUE "ProductVersion",     DVDETECT_PRODUCTVERSION_STR
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END

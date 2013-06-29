@@ -197,9 +197,13 @@
 #define MAX_PATH    PATH_MAX
 #endif // MAX_PATH
 
-#ifndef DVDETECT_COPYRIGHT
-#define DVDETECT_COPYRIGHT "Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>"
-#endif // DVDETECT_COPYRIGHT
+#ifndef LIBDVDETECT_COPYRIGHT
+#define LIBDVDETECT_COPYRIGHT "Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>"
+#endif // LIBDVDETECT_COPYRIGHT
+
+#ifndef LIBDVDETECT_LIBRARYNAME
+#define LIBDVDETECT_LIBRARYNAME "libdvdetect library"
+#endif // LIBDVDETECT_LIBRARYNAME
 
 // -------------------------------------------------------------------------------------------------------
 
@@ -215,7 +219,7 @@ typedef enum
 
 } DVDVIDEOCODINGMODE, *LPDVDVIDEOCODINGMODE;
 
-typedef const DVDVIDEOCODINGMODE* LPCDVDVIDEOCODINGMODE;
+typedef const DVDVIDEOCODINGMODE* LPCDVDVIDEOCODINGMODE;                //!< constant version
 
 //! TV Standard
 /*!
@@ -252,9 +256,9 @@ typedef const DVDVIDEOASPECT* LPCDVDVIDEOASPECT;
 typedef struct
 {
     uint8_t             m_byID;                                         //!< Video stream ID, fixed to 0xE0
-    DVDVIDEOCODINGMODE  m_eDvdVideoCodingMode;                          //!< Video coding mode (MPEG-1 or MPEG-2)
-    DVDVIDEOTVSTANDARD  m_eDvdVideoStandard;                            //!< Video standard (NTSC, PAL)
-    DVDVIDEOASPECT      m_eDvdVideoAspect;                              //!< Video aspect ratio (16:9, 4:3)
+    DVDVIDEOCODINGMODE  m_eCodingMode;                                  //!< Video coding mode (MPEG-1 or MPEG-2)
+    DVDVIDEOTVSTANDARD  m_eStandard;                                    //!< Video standard (NTSC, PAL)
+    DVDVIDEOASPECT      m_eAspect;                                      //!< Video aspect ratio (16:9, 4:3)
     bool                m_bAutomaticPanScanDisallowed;                  //!< Automatic Pan/Scan
     bool                m_bAutomaticLetterboxDisallowed;                //!< Automatic Letterbox
     bool                m_bCCForLine21Field1InGOP;                      //!< CC for line 21 field 1 in GOP (NTSC only)
@@ -321,16 +325,16 @@ typedef const DVDAUDIOQUANTISATION* LPCDVDAUDIOQUANTISATION;
 
 typedef enum
 {
-    DVDAUDIOCODEEXTENSION_INVALID,                                      //!< invalid
-    DVDAUDIOCODEEXTENSION_UNSPECIFIED,                                  //!< 0 = unspecified
-    DVDAUDIOCODEEXTENSION_NORMAL,                                       //!< 1 = normal
-    DVDAUDIOCODEEXTENSION_VISUALLY_IMPAIRED,                            //!< 2 = for visually impaired
-    DVDAUDIOCODEEXTENSION_DIRECTORS_COMMENTS,                           //!< 3 = director's comments
-    DVDAUDIOCODEEXTENSION_ALT_DIRECTORS_COMMENTS                        //!< 4 = alternate director's comments
+    DVDAUDIOCODEEXT_INVALID,                                            //!< invalid
+    DVDAUDIOCODEEXT_UNSPECIFIED,                                        //!< 0 = unspecified
+    DVDAUDIOCODEEXT_NORMAL,                                             //!< 1 = normal
+    DVDAUDIOCODEEXT_VISUALLY_IMPAIRED,                                  //!< 2 = for visually impaired
+    DVDAUDIOCODEEXT_DIRECTORS_COMMENTS,                                 //!< 3 = director's comments
+    DVDAUDIOCODEEXT_ALT_DIRECTORS_COMMENTS                              //!< 4 = alternate director's comments
 
-} DVDAUDIOCODEEXTENSION, *LPDVDAUDIOCODEEXTENSION;
+} DVDAUDIOCODEEXT, *LPDVDAUDIOCODEEXT;
 
-typedef const DVDAUDIOCODEEXTENSION* LPCDVDAUDIOCODEEXTENSION;
+typedef const DVDAUDIOCODEEXT* LPCDVDAUDIOCODEEXT;
 
 //! Channel assignments (karaoke mode)
 /*!
@@ -370,7 +374,7 @@ typedef const DVDAKARAOKEMODE* LPCDVDAKARAOKEMODE;
  */
 typedef struct
 {
-/*@{*/
+    /*@{*/
     //! Audio Stream Id
     /*!
      * <table><tr>
@@ -386,13 +390,13 @@ typedef struct
      * </tr></table>
      */
     uint8_t                     m_byID;
-    DVDAUDIOCODINGMODE          m_eAudioCodingMode;                     //!< Audio coding mode (AC3, MPEG1, MPEG2, LPCM, DTS)
-    bool                        m_bMultichannelExtensionPresent;        //!< True if multichannel extension present
-    DVDAUDIOAPPLICATIONMODE     m_eAudioApplicationMode;                //!< Audio application mode: undefined, karaoke, surround
-    DVDAUDIOQUANTISATION        m_eAudioQuantisation;                   //!< Quantisation: 16/20/24 bits per sample or DRC
+    DVDAUDIOCODINGMODE          m_eCodingMode;                          //!< Audio coding mode (AC3, MPEG1, MPEG2, LPCM, DTS)
+    bool                        m_bMultichannelExtPresent;              //!< True if multichannel extension present
+    DVDAUDIOAPPLICATIONMODE     m_eApplicationMode;                     //!< Audio application mode: undefined, karaoke, surround
+    DVDAUDIOQUANTISATION        m_eQuantisation;                        //!< Quantisation: 16/20/24 bits per sample or DRC
     uint32_t                    m_dwSampleRate;                         //!< Sample rate: 48 Kbps or 96 Kbps
     uint16_t                    m_wChannels;                            //!< Number of channels (1...6)
-/*@}*/
+    /*@}*/
 } DVDAUDIOATTRIBUTESMENU, *LPDVDAUDIOATTRIBUTESMENU;
 
 typedef const DVDAUDIOATTRIBUTESMENU* LPCDVDAUDIOATTRIBUTESMENU;
@@ -418,19 +422,19 @@ typedef struct
      * </tr></table>
      */
     uint8_t                     m_byID;
-    DVDAUDIOCODINGMODE          m_eAudioCodingMode;                     //!< Audio coding mode (AC3, MPEG1, MPEG2, LPCM, DTS)
-    bool                        m_bMultichannelExtensionPresent;        //!< True if multichannel extension present
+    DVDAUDIOCODINGMODE          m_eCodingMode;                          //!< Audio coding mode (AC3, MPEG1, MPEG2, LPCM, DTS)
+    bool                        m_bMultichannelExtPresent;              //!< True if multichannel extension present
     //!< If true, language code present
     /*!
      * Not really reliable: even if true, m_szLanguageCode can be empty.
      */
     bool                        m_bLanguageTypePresent;
-    DVDAUDIOAPPLICATIONMODE     m_eAudioApplicationMode;                //!< Audio application mode: undefined, karaoke, surround
-    DVDAUDIOQUANTISATION        m_eAudioQuantisation;                   //!< Quantisation: 16/20/24 bits per sample or DRC
+    DVDAUDIOAPPLICATIONMODE     m_eApplicationMode;                     //!< Audio application mode: undefined, karaoke, surround
+    DVDAUDIOQUANTISATION        m_eQuantisation;                        //!< Quantisation: 16/20/24 bits per sample or DRC
     uint32_t                    m_dwSampleRate;                         //!< Sample rate: 48 Kbps or 96 Kbps
     uint16_t                    m_wChannels;                            //!< Number of channels (1...6)
     char                        m_szLanguageCode[3];                    //!< 2 byte language code, e.g. de, en
-    bool                        m_bLanguageCodeExtension;               //!< Language code extension present
+    bool                        m_bLanguageCodeExt;                     //!< Language code extension present
     //!< Audio Code Extension
     /*!
      * unspecified
@@ -439,7 +443,7 @@ typedef struct
      * director's comments
      * alternate director's comments
      */
-    DVDAUDIOCODEEXTENSION       m_eAudioCodeExtension;
+    DVDAUDIOCODEEXT             m_eCodeExt;
     //!< Audio Channel Assignment
     /*!
      * 2/0 L,R
@@ -449,7 +453,7 @@ typedef struct
      * 2/2 L,R,V1,V2
      * 3/2 L,M,R,V1,V2
      */
-    DVDAUDIOCHANNELASSIGNMENT   m_eAudioChannelAssignment;
+    DVDAUDIOCHANNELASSIGNMENT   m_eChannelAssignment;
     uint16_t                    m_wKaraokeVersion;                      //!< Karaoke version
     bool                        m_bMCIntroPresent;                      //!< MC intro present
     DVDAKARAOKEMODE             m_eKaraokeMode;                         //!< Karaoke mode: solo or duet
@@ -499,7 +503,7 @@ typedef struct
      */
     bool                        m_bLanguageTypePresent;
     char                        m_szLanguageCode[3];                    //!< 2 byte language code, e.g. de, en
-    bool                        m_bLanguageCodeExtension;               //!< Language code extension present
+    bool                        m_bLanguageCodeExt;                     //!< Language code extension present
     //!< Language code extension
     /*!
      * not specified
@@ -514,7 +518,7 @@ typedef struct
      * large director comments
      * director comments for children
      */
-    DVDSUBPICTURECODEEXT        m_eSubpictureCodeExtension;
+    DVDSUBPICTURECODEEXT        m_eCodeExt;
 
 } DVDSUBPICTUREATTRIBUTES, *LPDVDSUBPICTUREATTRIBUTES;
 

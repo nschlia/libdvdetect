@@ -25,9 +25,7 @@
 #pragma once
 
 #ifndef DVDETECTCPP_H
-
 #define DVDETECTCPP_H
-
 
 #ifndef __cplusplus
 #error "Please include this file in C++ mode only"
@@ -40,6 +38,7 @@
 
 #include <dvdetect/dvdetectbase.h>
 #include <dvdetect/dvdparse.h>
+#include <dvdetect/dvddatabase.h>
 #include <dvdetect/dvdfile.h>
 
 #endif // DVDETECTCPP_H

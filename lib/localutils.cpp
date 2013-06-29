@@ -28,10 +28,7 @@
 
 #include "localutils.h"
 
-#include <sstream>
 #include <iostream>
-//#include <fstream>
-#include <iomanip>
 #include <limits.h>
 #include <stdio.h>
 
@@ -398,40 +395,39 @@ uint16_t getbyte(uint8_t bData)
 uint64_t BCDtime(const uint8_t * ptr)
 {
     const uint8_t * pTime = ptr;
-    uint8_t        time[4];
-    double          dblFrameRate = 0;
+    uint8_t         time[4];
+    int             nFrameRate = 30;    // assume 30fps
 
-    time[0] = pTime[0];
-    time[1] = pTime[1];
-    time[2] = pTime[2];
-    time[3] = pTime[3] & 0x3F;
+    time[0] = pTime[0];                 // Hour
+    time[1] = pTime[1];                 // Minute
+    time[2] = pTime[2];                 // Second
+    time[3] = pTime[3] & 0x3F;          // Number of frame
 
     switch (pTime[3] >> 6)
     {
     case 1: // PAL
     {
-        dblFrameRate = 25.0;
+        nFrameRate = 25; // fps
         break;
     }
     case 3: // NTSC
     {
-        dblFrameRate = 30000.0 / 1001.0;
+        nFrameRate = 30; // fps
         break;
     }
     default: //Invalid code
     {
-        dblFrameRate = 30000.0 / 1001.0;
         break;
     }
     }
 
-    // convert bcd(two digits) to binary
+    // convert bcd (two digits) to binary
     for (int j = 0; j < 4; j++)
     {
         time[j] = ((time[j] & 0xf0) >> 4) * 10 + (time[j] & 0x0f);
     }
 
-    return (1000 * (double(int(time[0] * 3600 + time[1] * 60 + time[2])) + double(time[3]) / dblFrameRate));
+    return (1000 * ((int)time[0] * 3600 + (int)time[1] * 60 + time[2]) + (1000 * (int)time[3]) / nFrameRate);
 }
 
 uint16_t frameRate(const uint8_t * ptr)

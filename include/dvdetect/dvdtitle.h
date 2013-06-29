@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDTITLE_H
-
 #define DVDTITLE_H
-
 
 #include <vector>
 
@@ -106,13 +104,7 @@ public:
      */
     uint64_t            getPlayTime() const;
 
-//    dvdtitle& operator= (dvdtitle const& rhs);
-
-    //! Get the type_info of this class.
-    /*!
-     *  \return type_info of this class.
-     */
-    virtual const std::type_info & classtype() const;
+    dvdtitle& operator= (dvdtitle const& rhs);
 
 protected:
     DVDVTS              m_DVDVTS;				//!< DVDVTS structure (DVD video title set)

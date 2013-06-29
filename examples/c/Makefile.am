@@ -15,19 +15,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#AM_CPPFLAGS = $(all_includes)
-#CPPFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
+#METASOURCES = AUTO
 
 AM_CFLAGS = -pipe -Wall -Wextra -fexceptions  
 AM_CPPFLAGS = -pipe -Wall -Wextra -fexceptions 
-CFLAGS = -O2
-CXXFLAGS = -O2
-#CFLAGS = -g -O2
-#CXXFLAGS = -g -O2
+CFLAGS = -O3
+CXXFLAGS = -O3
+#-g 
 
 DEFS += -DNDEBUG
 
-INCLUDES	= -I$(top_srcdir)/include -I$(top_builddir)/include $(LIBDVDETECT_FLAGS) 
+LDFLAGS = 
+
+if HAVE_WIN32
+# For Cygwin, build static library. For general Windows, build DLL.
+# C API uses C++ API, so C++ library is required as well
+if HAVE_CYGWIN
+#DEFS += -DBUILDING_STATIC
+LIBDVDETECT_LIBS = -lstdc++
+#else
+#DEFS += -DDLL_IMPORT
+endif
+DEFS += -DDLL_IMPORT
+endif
+
+AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include $(LIBDVDETECT_FLAGS) 
 
 bin_PROGRAMS = dvdinfo dvdlookup
 

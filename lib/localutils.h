@@ -25,15 +25,15 @@
 #pragma once
 
 #ifndef LOCALUTILS_H
-
 #define LOCALUTILS_H
-
 
 using namespace std;
 
 #include "compat.h"
 
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
     //! Split a string by a delimiter
@@ -204,12 +204,23 @@ std::string         getWin32ShortFilePath(const string & strFilePath);
      */
 template <size_t size> std::string getString(const uint8_t (&byDataIn)[size])
 {
+    std::string buffer;
     char * p = new char[size + 1];
 
     memcpy(p, byDataIn, size);
     *(p + size) = '\0';
 
-    return p;
+    // Clear if invalid
+    if (*p == (char)0xFF)
+    {
+        memset(p, 0, size);
+    }
+
+    buffer = p;
+
+    delete [] p;
+
+    return buffer;
 }
 
     //! Get string
@@ -227,6 +238,12 @@ template <size_t sizeout, size_t sizein> void getString(char (&szDataOut)[sizeou
 
     memcpy(szDataOut, byDataIn, size);
     szDataOut[sizeout - 1] = '\0';
+
+    // Clear if invalid
+    if (szDataOut[0] == (char)0xFF)
+    {
+        memset(szDataOut, 0, sizeof(szDataOut));
+    }
 }
 
     //! Get string
@@ -241,6 +258,12 @@ template <size_t sizeout> void getString2(char (&szDataOut)[sizeout], const uint
 {
     memcpy(szDataOut, pbyDataIn, sizeout);
     szDataOut[sizeout - 1] = '\0';
+
+    // Clear if invalid
+    if (szDataOut[0] == (char)0xFF)
+    {
+        memset(szDataOut, 0, sizeof(szDataOut));
+    }
 }
 
     //! Safely copy input string to output
@@ -279,5 +302,34 @@ void                addSeparator(std::string & strPath);
      */
 std::string         getDvdFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo = 0, uint16_t wVtsNo = 0);
 
-#endif // LOCALUTILS_H
+//! Convert (preferrably a numeric value) to std::string
+/*!
+ * \param i T Value to convert
+ * \return String representation
+ */
+template<class T> std::string toString(T i)
+{
+    std::stringstream ss;
+    std::string s;
+    ss << i;
+    s = ss.str();
 
+    return s;
+}
+
+//! Convert numeric value into hexadecimal represented std::string
+/*!
+ * \param i T Value to convert
+ * \return String representation
+ */
+template<class T> std::string toHexString(T i)
+{
+    std::stringstream ss;
+    std::string s;
+    ss << hex << std::setw(sizeof(i)) << std::setfill('0') << (uint64_t)i;
+    s = ss.str();
+
+    return s;
+}
+
+#endif // LOCALUTILS_H

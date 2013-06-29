@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDETECTBASE_H
-
 #define DVDETECTBASE_H
-
 
 #include <typeinfo>
 
@@ -55,13 +53,11 @@ public:
      */
     virtual ~dvdetectbase();
 
-//    dvdetectbase& operator= (dvdetectbase const& rhs);
-
     //! Get the type_info of this class.
     /*!
      *  \return type_info of this class.
      */
-     virtual const std::type_info & classtype() const = 0;
+    virtual const std::type_info & classtype() const;
 };
 
 #endif // DVDETECTBASE_H
