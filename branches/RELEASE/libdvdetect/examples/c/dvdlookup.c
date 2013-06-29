@@ -87,16 +87,16 @@ static void usage()
 {
     printf("\n");
     printf("Usage:\n\n");
-    printf("%s [-p] -f PATH-TO-DVD   list DVD structure\n", pszProgramName);
+    printf("%s [-p] -d PATH-TO-DVD   list DVD structure\n", pszProgramName);
     printf("%s -h                    show help\n", pszProgramName);
     printf("\n");
 
     printf("Example:\n\n");
 
 #ifdef _WIN32
-    printf("dvdinfo -f F:\n");
+    printf("dvdinfo -d F:\n");
 #else
-    printf("dvdinfo -f /mnt/cdrom1/\n");
+    printf("dvdinfo -d /mnt/cdrom1/\n");
 #endif
 }
 
