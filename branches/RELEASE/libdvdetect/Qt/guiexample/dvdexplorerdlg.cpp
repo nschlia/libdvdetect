@@ -353,7 +353,7 @@ int dvdexplorerdlg::parseDVD(const QString & strPath)
 }
 
 int dvdexplorerdlg::queryDVD()
-{    
+{
     dvddatabase dvdDatabase(PROGRAM_NAME);
     dvdparselst dvdParseLst;
     int res = 0;
@@ -1501,19 +1501,6 @@ void dvdexplorerdlg::on_action_Open_triggered()
 {
     QString dir;
 
-<<<<<<< .working
-=======
-    QString dir("/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS");
-    //QString dir("/files/mp3base2/DVD/Musik/Metallica/Live Shit Binge & Purge DVD 1 - San Diego/DVD1/VIDEO_TS/");
-    //QString dir("/files/mp3base2/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/");
-    //QString dir("D:/temp/DVD/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS");
-    //QString dir("T:/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS");
-    //QString dir("T:/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS");
-    //QString dir("/files/mp3base2/DVD/Serien/King of Queens/Season 5 3");
-    //QString dir("D:/mmedia/#DVD");
-    //QString dir;
-
->>>>>>> .merge-right.r10071
     dir = QFileDialog::getExistingDirectory(this, tr("Open DVD drive or directory with DVD files"),
                                             dir,
                                             QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);

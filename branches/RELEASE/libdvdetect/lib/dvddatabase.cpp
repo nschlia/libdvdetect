@@ -31,8 +31,7 @@
 #include "xmldoc.h"
 #include "http.h"
 
-#define SERVER_URL      "http://intranet.oblivion-software.de/develop/dvdetect/"
-//#define SERVER_URL      "http://db.dvdetect.de/"
+#define SERVER_URL      "http://db.dvdetect.de/"
 
 dvddatabase::dvddatabase(const std::string &strClientName) :
     m_eErrorCode(DVDERRORCODE_NOERROR),
