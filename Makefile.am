@@ -36,6 +36,11 @@ EXTRA_DIST = \
 	Qt/guiexample/aboutdlg.cpp \
 	Qt/guiexample/aboutdlg.h \
 	Qt/guiexample/aboutdlg.ui \
+	Qt/guiexample/editdetailsdlg.cpp \
+	Qt/guiexample/editdetailsdlg.h \
+	Qt/guiexample/editdetailsdlg.ui \
+	Qt/guiexample/explorerutils.cpp \
+	Qt/guiexample/explorerutils.h \
 	sql/dbdvdetect.mysql.sql \
 	php/index.php \
 	php/query.php \
