@@ -85,4 +85,4 @@ pkginclude_HEADERS = \
 	vmg_ifo.h \
 	vts_ifo.h \
 	xmldoc.h \
-	md5.h
+	md5/md5.h
