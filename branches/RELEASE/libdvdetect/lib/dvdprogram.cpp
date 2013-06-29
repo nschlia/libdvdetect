@@ -37,6 +37,16 @@ dvdprogram::~dvdprogram()
 {
 }
 
+dvdprogram& dvdprogram::operator= (dvdprogram const& rhs)
+{
+    if (this != &rhs)
+    {
+        memcpy(&m_DVDPROGRAM, &rhs.m_DVDPROGRAM, sizeof(DVDPROGRAM));
+        m_dvdCellLst = rhs.m_dvdCellLst;
+    }
+    return *this;
+}
+
 LPCDVDPROGRAM dvdprogram::getDVDPROGRAM() const
 {
     return &m_DVDPROGRAM;
@@ -113,10 +123,3 @@ uint32_t dvdprogram::getEndSector() const
     }
     return m_dvdCellLst[nCell- 1].getDVDCELL()->m_dwLastVOBUEndSector;
 }
-
-const std::type_info & dvdprogram::classtype() const
-{
-    return typeid(*this);
-}
-
-

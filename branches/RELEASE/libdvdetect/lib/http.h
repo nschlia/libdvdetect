@@ -64,7 +64,7 @@ public:
     /*!
      *  @brief Set proxy name
      *
-     *  @param strProxy TSTRING & DNS name or IP of proxy and optional port (e.g. proxy:3128)
+     *  \param strProxy TSTRING & DNS name or IP of proxy and optional port (e.g. proxy:3128)
      */
     void		setProxy(const TSTRING & strProxy);
 
@@ -73,10 +73,10 @@ public:
      *
      * Send a request to the server with optional data.
      *
-     *  @param eMethod METHOD Request method (post or get)
-     *  @param strUrl TSTRING & Url to send request to
-     *  @param strData TSTRING & Data to send
-     *  @return http result code, e.g, 404 not found or 200 OK.
+     *  \param eMethod METHOD Request method (post or get)
+     *  \param strUrl TSTRING & Url to send request to
+     *  \param strData TSTRING & Data to send
+     *  \return http result code, e.g, 404 not found or 200 OK.
      */
     int         request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strData = _T(""));
 
@@ -85,7 +85,7 @@ public:
      *
      * Gets the http headers returned by the server.
      *
-     *  @return Header
+     *  \return Header
      */
     TSTRING		getHeaders() const;
 
@@ -94,7 +94,7 @@ public:
      *
      * Get the http content (aka the web page) without any headers
      *
-     *  @return Content
+     *  \return Content
      */
     TSTRING		getContent() const;
 
@@ -103,7 +103,7 @@ public:
      *
      * Get the http response code, e.g. 404 (not found), 200 (OK) etc.
      *
-     *  @return Response code
+     *  \return Response code
      */
     int         getResponse() const;
 
@@ -112,7 +112,7 @@ public:
      *
      * If an error occurred, returns the last error in text form.
      *
-     *  @return Error text
+     *  \return Error text
      */
     TSTRING		getErrorString() const;
 
@@ -133,8 +133,8 @@ protected:
      *
      * Port part can be omitted and will be set to default (80).
      *
-     *  @return Success: 0
-     *  @return Fail: nonzero
+     *  \return Success: 0
+     *  \return Fail: nonzero
      *
      */
     static int	splitUrl(TSTRING & strUrl, TSTRING & strHost, TSTRING & strUri, int & iPort);
@@ -142,9 +142,9 @@ protected:
     /*!
      *  @brief Set the error text
      *
-     *  @param strError TSTRING & Error text
+     *  \param strError TSTRING & Error text
      */
-    void		setError(const TSTRING & strError);
+    void		setError(const TSTRING & strError, int nErrorCode = 0);
 
 
     /*!
@@ -152,11 +152,11 @@ protected:
      *
      * Encapsulates the low level send() function
      *
-     *  @param s SOCKET Connected socket to send data on
-     *  @param strBuffer const TSTRING & Data to sent
-     *  @param flags int Flags (see "man send" for details)
-     *  @return Success: Number of bytes sent
-     *  @return Fail: -1
+     *  \param s SOCKET Connected socket to send data on
+     *  \param strBuffer const TSTRING & Data to sent
+     *  \param flags int Flags (see "man send" for details)
+     *  \return Success: Number of bytes sent
+     *  \return Fail: -1
      */
     int         send(SOCKET s, const TSTRING & strBuffer, int flags) const;
 
@@ -168,12 +168,12 @@ protected:
      * no more data to receive (that means, it is almost guaranteed that the
      * complete web page transmitted will be returned).
      *
-     *  @param s SOCKET Connected socket to send data on
-     *  @param strBuffer TSTRING & Buffer to store received data in
-     *  @param flags int Flags (see "man recv" for details)
-     *  @return Number of bytes received
+     *  \param s SOCKET Connected socket to send data on
+     *  \param strBuffer TSTRING & Buffer to store received data in
+     *  \param flags int Flags (see "man recv" for details)
+     *  \return Number of bytes received
      */
-    int         recv(SOCKET s, TSTRING & strBuffer, int flags) const;
+    int         recv(SOCKET s, TSTRING & strBuffer, int flags);
 
 protected:
     TSTRING		m_strProxyServer;       //!< Proxy server name

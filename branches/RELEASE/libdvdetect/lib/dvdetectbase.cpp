@@ -35,3 +35,9 @@ dvdetectbase::dvdetectbase()
 dvdetectbase::~dvdetectbase()
 {
 }
+
+const std::type_info & dvdetectbase::classtype() const
+{
+    return typeid(*this);
+}
+

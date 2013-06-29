@@ -29,12 +29,10 @@
 #pragma once
 
 #ifndef DVDUTILS_H
-
 #define DVDUTILS_H
 
-
 #ifdef __cplusplus
-    extern "C" {
+extern "C" {
 #endif
 
 /*!

@@ -43,6 +43,7 @@ class dvdparse;
 class DLL_PUBLIC dvdpttvmg : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldoc;
 
 public:
     //! Constructor.
@@ -96,18 +97,31 @@ public:
      */
     uint64_t            getPlayTime() const;
 
-    //    dvdpttvmg& operator= (dvdpttvmg const& rhs);
-
-    //! Get the type_info of this class.
+    //! Get disk chapter title
     /*!
-     *  \return type_info of this class.
+     * If DVD was successfully looked up, return the chapter title
+     *
+     *  \return chapter title or empty string if unknown
      */
-    virtual const std::type_info & classtype() const;
+    std::string         getTitle() const;
+
+    //! Set chapter title
+    /*!
+     * Sets the chapter title
+     *
+     *  \param strTitle const std::string & chapter title
+     */
+    void                setTitle(const std::string & strTitle);
+
+    dvdpttvmg& operator= (dvdpttvmg const& rhs);
 
 protected:
     DVDPTTVMG           m_DVDPTTVMG;			//!< DVDPTTVMG structure (DVD part of title)
-    dvdparse *          m_pDvdParse;			//!< DVD parse object
+    dvdparse *          m_pDvdParse;			//!< Owner DVD parse object
     dvdpttvtslst        m_dvdPttVtsLst;			//!< list of DVD part-of-programs (PTT)
+
+    // database data
+    std::string         m_strTitle;             //!<
 };
 
 typedef std::vector<dvdpttvmg> dvdpttvmglst;	//!< shortcut for a list of dvdpttvmgs

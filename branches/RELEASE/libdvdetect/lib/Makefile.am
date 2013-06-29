@@ -15,56 +15,66 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#AM_CPPFLAGS = $(all_includes)
-#AM_CFLAGS = -DNDEBUG -c -pipe -fno-keep-inline-dllexport -g -frtti -Wall -Wextra -fexceptions -mthreads
-#CPPFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
-#AM_CPPFLAGS = -DNDEBUG -c -pipe -fno-keep-inline-dllexport -g -frtti -Wall -Wextra -fexceptions -mthreads 
+#METASOURCES = AUTO
 
-#AM_CFLAGS = -c -pipe -g -frtti -Wall -Wextra -fexceptions 
-#AM_CPPFLAGS = -c -pipe -g -frtti -Wall -Wextra -fexceptions
-AM_CFLAGS = -c -pipe -frtti -Wall -Wextra -fexceptions -pedantic-errors
+AM_CFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
 AM_CPPFLAGS = -c -pipe -frtti -Wall -Wextra -fexceptions -pedantic-errors
-#-g -O2 -MT -MD -MP -MF 
-CFLAGS = -O2
-CXXFLAGS = -O2
-#CFLAGS = -g -O2
-#CXXFLAGS = -g -O2
+CFLAGS = -O3
+CXXFLAGS = -O3
+#-g 
 
-DEFS += -DNDEBUG
+DEFS += -DNDEBUG -DTINYXML_USE_STL -DTIXML_USE_STL 
 
-LDFLAGS =cd  
+LDFLAGS = 
+INCLUDES = 
+
 if HAVE_WIN32
-LDFLAGS += -lWs2_32 --enable-auto-import -fno-keep-inline-dllexport -mthreads
-#AM_CFLAGS += -DDLL_EXPORT
-#AM_CPPFLAGS += -DDLL_EXPORT
+# Some extra stuff required for Windows
+LDFLAGS += -lws2_32 --enable-auto-import -fno-keep-inline-dllexport -mthreads
+# For Cygwin, build static library. For general Windows, build DLL.
+#if HAVE_CYGWIN
+#DEFS += -DBUILDING_STATIC
+#else
 DEFS += -DDLL_EXPORT
+#endif
+INCLUDES += -I../win/tinyxml/
+else
+# Under *nix, tinyxml should be part of the distribution, so simply link
+LDFLAGS += -ltinyxml 
 endif
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
+INCLUDES += -I$(top_srcdir)/include -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libdvdetect.la
 libdvdetect_la_SOURCES = \
-	dvdetectcglue.cpp \
 	dvdcell.cpp \
+	dvddatabase.cpp \
 	dvdetectbase.cpp \
+	dvdetectcglue.cpp \
 	dvdfile.cpp \
 	dvdparse.cpp \
 	dvdpgc.cpp \
 	dvdprogram.cpp \
-        dvdpttvmg.cpp \
-        dvdpttvts.cpp \
-        dvdtitle.cpp \
+	dvdpttvmg.cpp \
+	dvdpttvts.cpp \
+	dvdtitle.cpp \
 	dvdunit.cpp \
 	dvdutils.cpp \
 	http.cpp \
-	localutils.cpp 
-	
-#libdvdetect_la_CPPFLAGS = -O2
-libdvdetect_la_LDFLAGS = -no-undefined -version-info 0:10:0
-#libdvdetect_la_LIBADD = $(WS2_32)
-#libdvdetect_la_ldflags = -version-info $(libdvdetect_la_CURRENT):$(libdvdetect_la_REVISION):$(libdvdetect_la_AGE) @LT_NO_UNDEFINED@
+	localutils.cpp \
+	xmldoc.cpp \
+	md5/md5.c \
+	libdvdetect.rc
 
-#METASOURCES = AUTO
+if HAVE_WIN32
+nodist_libdvdetect_la_SOURCES = \
+	../win/tinyxml/tinystr.cpp \
+	../win/tinyxml/tinyxml.cpp \
+	../win/tinyxml/tinyxmlerror.cpp \
+	../win/tinyxml/tinyxmlparser.cpp
+endif
+
+libdvdetect_la_LDFLAGS = -no-undefined -version-info $(libdvdetect_la_CURRENT):$(libdvdetect_la_REVISION):$(libdvdetect_la_AGE)
 
 pkginclude_HEADERS = \
 	common.h \
@@ -73,4 +83,6 @@ pkginclude_HEADERS = \
 	http.h \
 	localutils.h \
 	vmg_ifo.h \
-	vts_ifo.h
+	vts_ifo.h \
+	xmldoc.h \
+	md5.h

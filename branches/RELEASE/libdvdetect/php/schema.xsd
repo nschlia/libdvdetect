@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="xml">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="DVD">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" name="title">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="chapter">
+                      <xs:complexType>
+                        <xs:attribute name="Number" type="xs:unsignedByte" use="required" />
+                        <xs:attribute name="PlayTime" type="xs:unsignedInt" use="required" />
+                        <xs:attribute name="Artist" type="xs:string" use="required" />
+                        <xs:attribute name="Title" type="xs:string" use="required" />
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                  <xs:attribute name="TitleSetNo" type="xs:unsignedByte" use="required" />
+                  <xs:attribute name="Angles" type="xs:unsignedByte" use="required" />
+                  <xs:attribute name="Title" type="xs:string" use="required" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="Hash" type="xs:string" use="required" />
+            <xs:attribute name="Album" type="xs:string" use="required" />
+            <xs:attribute name="AlbumArtist" type="xs:string" use="required" />
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="XmlMode" type="xs:unsignedByte" use="required" />
+      <xs:attribute name="XmlVersion" type="xs:unsignedByte" use="required" />
+      <xs:attribute name="LibraryVersion" type="xs:string" use="required" />
+      <xs:attribute name="LibraryName" type="xs:string" use="required" />
+      <xs:attribute name="ClientName" type="xs:string" use="required" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

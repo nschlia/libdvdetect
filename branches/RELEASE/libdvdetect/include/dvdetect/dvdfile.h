@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDFILE_H
-
 #define DVDFILE_H
-
 
 /*!
  *  @brief dvdfile class
@@ -59,13 +57,7 @@ public:
      */
     LPCDVDFILE          getDVDFILE() const;
 
-//    dvdfile& operator= (dvdfile const& rhs);
-
-    //! Get the type_info of this class.
-    /*!
-     *  \return type_info of this class.
-     */
-    virtual const std::type_info & classtype() const;
+    dvdfile& operator= (dvdfile const& rhs);
 
 protected:
     DVDFILE             m_DVDFILE;				//!< DVDFILE structure (DVD part of title)

@@ -37,6 +37,16 @@ dvdpgc::~dvdpgc()
 {
 }
 
+dvdpgc& dvdpgc::operator= (dvdpgc const& rhs)
+{
+    if (this != &rhs)
+    {
+        memcpy(&m_DVDPGC, &rhs.m_DVDPGC, sizeof(DVDPGC));
+        m_dvdProgramLst = rhs.m_dvdProgramLst;
+    }
+    return *this;
+}
+
 LPCDVDPGC dvdpgc::getDVDPGC() const
 {
     return &m_DVDPGC;
@@ -85,9 +95,3 @@ uint64_t dvdpgc::getPlayTime() const
 
     return qwPlayTime;
 }
-
-const std::type_info & dvdpgc::classtype() const
-{
-    return typeid(*this);
-}
-

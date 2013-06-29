@@ -18,6 +18,7 @@
 pkgincludedir=$(includedir)/dvdetect
 pkginclude_HEADERS = \
 	dvdcell.h \
+	dvddatabase.h \
 	dvdetect.h \
 	dvdetectbase.h \
 	dvdetectc++.h \
@@ -26,9 +27,9 @@ pkginclude_HEADERS = \
 	dvdparse.h \
 	dvdpgc.h \
 	dvdprogram.h \
-        dvdpttvmg.h \
-        dvdpttvts.h \
-        dvdtitle.h \
+	dvdpttvmg.h \
+	dvdpttvts.h \
+	dvdtitle.h \
 	dvdunit.h \
 	dvdutils.h \
 	types.h \

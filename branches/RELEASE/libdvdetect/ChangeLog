@@ -2,7 +2,7 @@
 
   * Created
 
-2012-06-08 nschlia V0.20
+2012-06-09 nschlia V0.20
 
   * Bugfix: Removed VS2010 solution from distribution (not ready for release yet.
       BTW it is perfectly OK to use the regular gcc compiled dll with VS projects anyways).
@@ -19,7 +19,7 @@
   * Bugfix: File sizes corrected (should use unit size instead of cell size)
   * Bugfix: "Full scan" (AKA really check files on disk) was not completely implemented...
 
-2012-06-10 nschlia V0.21
+2012-06-15 nschlia V0.21
 
   * Bugfix: fix crash when more virtual titles exist than defined by video manager (DVD authoring flaw)
       Happened e.g. with "King of Queens" Season 5 Disk 3 (seven virtual titles in VMG, but eight on disk)
@@ -28,3 +28,24 @@
   * Bugfix: Missing error messages added if target directory not acessible or empty 
   * Changed Qt example dialog name from expressionless "MainWindow" to better matching "dvdexplorerdlg"
   * Bugfix: Title menu VOBs were duplicate in full scan
+  
+2012-06-XX nschlia V0.22
+
+  * Bugfix: sealed memory leak in getString function
+  * Bugfix: closed memory leak in Qt example
+  * Syntax: changed some "delete" to "delete []" (although this is a formal change only without effect,
+      because the array is of type char and not an array of classes.)
+  * Bugfix: library version number stayed at 0.10.0 (was accidentally hardcoded in makefile.am).
+  * Added about dialog
+  * Added cygwin support
+  * Bugfix: http problems were not properly reported (empty error message)
+  * Bugfix: library version number did not change (remained 0.10.0)
+  * Added DVD lookup from database
+  - Added DVD search in database
+  * Added DVD submit to database
+  * Created server side PHP scripts for query, search, submit
+  * Implemented data exchange with database using XML
+  - Implemented DVD lookup example
+  * Implemented DVD data editing inside GUI example
+  
+  

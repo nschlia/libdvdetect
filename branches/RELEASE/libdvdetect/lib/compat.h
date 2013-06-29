@@ -28,7 +28,6 @@
 
 #define COMPAT_H
 
-
 /*!
  * \def PROTOCOL
  * \brief Defines the supported IP protocol family (families): IPv4 or IPv4/IPv6
@@ -127,6 +126,10 @@
 #include <string.h>
 #endif
 
+#ifdef HAVE_ASSERT_H
+#include <assert.h>
+#endif
+
 /*
 #ifndef __cplusplus
 #ifdef HAVE_STDBOOL_H
@@ -193,9 +196,11 @@ typedef const INET_ADDRESS* LPCINET_ADDRESS;
 #ifdef WORDS_BIGENDIAN
 #define O32_ORDER_STR               "BE"
 #define O32_ORDER_STR_LONG          "big endian"
+#define ARCH_IS_BIG_ENDIAN          1
 #else
 #define O32_ORDER_STR               "LE"
 #define O32_ORDER_STR_LONG          "little endian"
+#define ARCH_IS_BIG_ENDIAN          0
 #endif
 
 #define native2be                   be2native

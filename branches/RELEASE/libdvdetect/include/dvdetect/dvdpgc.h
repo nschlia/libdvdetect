@@ -27,9 +27,7 @@
 #pragma once
 
 #ifndef DVDPGC_H
-
 #define DVDPGC_H
-
 
 #include <dvdetect/dvdprogram.h>
 #include <dvdetect/dvdpttvts.h>
@@ -42,6 +40,7 @@
 class DLL_PUBLIC dvdpgc : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldoc;
 
 public:
     //! Constructor.
@@ -93,13 +92,7 @@ public:
      */
     uint64_t            getPlayTime() const;
 
-//    dvdpgc& operator= (dvdpgc const& rhs);
-
-    //! Get the type_info of this class.
-    /*!
-     *  \return type_info of this class.
-     */
-    virtual const std::type_info & classtype() const;
+    dvdpgc& operator= (dvdpgc const& rhs);
 
 protected:
     DVDPGC              m_DVDPGC;				//!< DVDPGC structure (DVD program chain information)

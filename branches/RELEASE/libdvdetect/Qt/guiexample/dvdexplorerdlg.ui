@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>880</width>
-    <height>503</height>
+    <width>990</width>
+    <height>688</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,41 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_5">
-    <item row="0" column="0">
+    <item row="2" column="1">
+     <widget class="QGroupBox" name="groupBox_8">
+      <property name="title">
+       <string>Selected Files</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <widget class="QTreeView" name="treeViewFiles">
+         <property name="statusTip">
+          <string>List files in current selection.</string>
+         </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::NoSelection</enum>
+         </property>
+         <property name="indentation">
+          <number>0</number>
+         </property>
+         <property name="animated">
+          <bool>true</bool>
+         </property>
+         <attribute name="headerVisible">
+          <bool>false</bool>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="2">
      <widget class="QGroupBox" name="groupBox_1">
       <property name="title">
        <string>DVD Tree</string>
@@ -23,8 +57,14 @@
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
         <widget class="QTreeView" name="treeViewDVD">
+         <property name="contextMenuPolicy">
+          <enum>Qt::CustomContextMenu</enum>
+         </property>
+         <property name="statusTip">
+          <string>View DVD structure. </string>
+         </property>
          <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
+          <set>QAbstractItemView::AllEditTriggers</set>
          </property>
          <property name="alternatingRowColors">
           <bool>true</bool>
@@ -46,41 +86,7 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QGroupBox" name="groupBox_7">
-      <property name="title">
-       <string>Selection Details</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <widget class="QTreeView" name="treeViewDetails">
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="alternatingRowColors">
-          <bool>true</bool>
-         </property>
-         <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
-         </property>
-         <property name="indentation">
-          <number>0</number>
-         </property>
-         <property name="animated">
-          <bool>true</bool>
-         </property>
-         <attribute name="headerVisible">
-          <bool>false</bool>
-         </attribute>
-         <attribute name="headerStretchLastSection">
-          <bool>true</bool>
-         </attribute>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="1" column="0">
+    <item row="2" column="0">
      <widget class="QGroupBox" name="groupBox_6">
       <property name="title">
        <string>Streams</string>
@@ -88,6 +94,9 @@
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="0">
         <widget class="QTreeView" name="treeViewStreams">
+         <property name="statusTip">
+          <string>View DVD audio, video and subtitle streams.</string>
+         </property>
          <property name="editTriggers">
           <set>QAbstractItemView::NoEditTriggers</set>
          </property>
@@ -111,14 +120,17 @@
       </layout>
      </widget>
     </item>
-    <item row="1" column="1">
-     <widget class="QGroupBox" name="groupBox_8">
+    <item row="1" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_7">
       <property name="title">
-       <string>Selected Files</string>
+       <string>Selection Details</string>
       </property>
-      <layout class="QGridLayout" name="gridLayout_4">
+      <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <widget class="QTreeView" name="treeViewFiles">
+        <widget class="QTreeView" name="treeViewDetails">
+         <property name="statusTip">
+          <string>Show details about select title, chapter, cell etc.</string>
+         </property>
          <property name="editTriggers">
           <set>QAbstractItemView::NoEditTriggers</set>
          </property>
@@ -137,13 +149,19 @@
          <attribute name="headerVisible">
           <bool>false</bool>
          </attribute>
+         <attribute name="headerStretchLastSection">
+          <bool>true</bool>
+         </attribute>
         </widget>
        </item>
       </layout>
      </widget>
     </item>
-    <item row="2" column="0">
+    <item row="3" column="0">
      <widget class="QCheckBox" name="checkBoxPhysicalView">
+      <property name="statusTip">
+       <string>Switch between physical and virtual view.</string>
+      </property>
       <property name="text">
        <string>Show physical view</string>
       </property>
@@ -156,7 +174,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>880</width>
+     <width>990</width>
      <height>20</height>
     </rect>
    </property>
@@ -167,7 +185,25 @@
     <addaction name="action_Open"/>
     <addaction name="actionE_xit"/>
    </widget>
+   <widget class="QMenu" name="menuDatabase">
+    <property name="title">
+     <string>Database</string>
+    </property>
+    <addaction name="actionQuery_DVD"/>
+    <addaction name="actionSearch_DVD"/>
+    <addaction name="actionSubmit_DVD"/>
+    <addaction name="separator"/>
+    <addaction name="action_Edit_View_Details"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuDatabase"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -182,10 +218,83 @@
    <property name="text">
     <string>&amp;Open</string>
    </property>
+   <property name="statusTip">
+    <string>Open DVD from drive or disk.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="actionE_xit">
    <property name="text">
     <string>E&amp;xit</string>
+   </property>
+   <property name="statusTip">
+    <string>Exit example application.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="actionQuery_DVD">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Query DVD</string>
+   </property>
+   <property name="statusTip">
+    <string>Query DVD from libdvdetect database.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionSearch_DVD">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Search DVD</string>
+   </property>
+   <property name="statusTip">
+    <string>Search DVD in libdvdetect database.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSubmit_DVD">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>S&amp;ubmit DVD</string>
+   </property>
+   <property name="statusTip">
+    <string>Submit DVD to libdvdetect database.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="statusTip">
+    <string>About this application.</string>
+   </property>
+  </action>
+  <action name="action_Edit_View_Details">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Edit/View Details</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
    </property>
   </action>
  </widget>

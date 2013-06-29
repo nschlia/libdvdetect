@@ -19,7 +19,7 @@
 
 /** \file dvdexplorerdlg.h
  *
- *  \brief Qt GUI example main window code
+ *  \brief Qt GUI example main window declaration
  */
 
 #pragma once
@@ -79,9 +79,10 @@ protected:
 
     void                setDVDColumnSize();
     void                setDetailsColumnSize();
-    void                setStreamColumneSize();
+    void                setStreamColumnSize();
     void                setFilesColumnSize();
 
+    virtual void        clearDetails();
     virtual bool        showDetails(const dvdparse *pDvdParse);
     virtual bool        showDetails(const dvdtitle* pDvdTitle);
     virtual bool        showDetails(const dvdpgc* pDvdPgc);
@@ -97,6 +98,7 @@ protected:
     QString         	getVideoStandard(DVDVIDEOTVSTANDARD eDvdVideoStandard) const;
     QString         	getVideoAspect(DVDVIDEOASPECT eDvdVideoAspect) const;
     QString           	getAudioCodingMode(DVDAUDIOCODINGMODE eAudioCodingMode) const;
+    QString             getAudioQuantisation(DVDAUDIOQUANTISATION eQuantisation) const;
     QString            	getLanguage(const char *pszLanguage) const;
     QString             getCellType(CELLTYPE eCellType) const;
     QString             getBlockType(BLOCKTYPE eBlockType) const;
@@ -106,14 +108,26 @@ protected:
     QString             getFormattedDate(time_t unixTime) const;
     QString             getPlayTime(uint64_t qwPlaytimems, uint16_t wFrameRate = (uint16_t)-1) const;
 
+    int                 queryDVD();
+    int                 searchDVD();
+    int                 submitDVD();
+    int                 editDetails();
+
 private slots:
     void                on_action_Open_triggered();
     void                on_actionE_xit_triggered();
     void                on_treeViewDVD_clicked(const QModelIndex &index);
     void                on_checkBoxPhysicalView_clicked();
+    void                on_actionQuery_DVD_triggered();
+    void                on_actionSearch_DVD_triggered();
+    void                on_actionSubmit_DVD_triggered();
+    void                on_action_Edit_View_Details_triggered();
+    void                on_actionAbout_triggered();
+    void                on_treeViewDVD_customContextMenuRequested(const QPoint &pos);
+    void                handleContextMenuEditDetails();
 
 protected:
-    dvdparse            m_dvd;              //!< dvdparse parser object
+    dvdparse            m_DVD;              //!< dvdparse parser object
 
 private:
     Ui::dvdexplorerdlg *ui;

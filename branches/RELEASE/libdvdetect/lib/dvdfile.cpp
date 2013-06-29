@@ -37,13 +37,16 @@ dvdfile::~dvdfile()
 {
 }
 
+dvdfile& dvdfile::operator= (dvdfile const& rhs)
+{
+    if (this != &rhs)
+    {
+        memcpy(&m_DVDFILE, &rhs.m_DVDFILE, sizeof(DVDFILE));
+    }
+    return *this;
+}
+
 LPCDVDFILE dvdfile::getDVDFILE() const
 {
     return &m_DVDFILE;
 }
-
-const std::type_info & dvdfile::classtype() const
-{
-    return typeid(*this);
-}
-

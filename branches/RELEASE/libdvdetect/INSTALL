@@ -66,6 +66,32 @@ The simplest way to compile this package is:
      all sorts of other programs in order to regenerate files that came
      with the distribution.
 
+Windows
+=======
+
+To build under windows, either Cygwin is required (see Cygwin section 
+under "Compilers and Options". To build a generic windows version (that 
+does not require cywin dlls), a *nix like shell must be available to do 
+the ./configure and ./make sequence.
+
+There is a MinGW toolchain available for windows:
+
+GNU MSYS/MinGW can be downloaded from http://www.mingw.org/wiki/MSYS.
+
+It provides all necessary tools, including a shell prompt that can be used
+to execute ./configure. This will build a "real" windows DLL that can be
+used by any program code that supports using DLLs.
+
+To be able to use the DLL, include the following DLLs:
+
+libdvdetect-0.dll  	well, off course
+libgcc_s_sjlj-1.dll  	for MinGW exception handling
+libstdc++-6.dll  	the c++ stdlib
+libwinpthread-1.dll	for threading
+
+Because the C API is a wrapper around the C++ library, the c++ dll is
+required in any case.
+
 Compilers and Options
 =====================
 
@@ -78,6 +104,30 @@ this:
 
 Or on systems that have the `env' program, you can do it like this:
      env CPPFLAGS=-I/usr/local/include LDFLAGS=-s ./configure
+     
+Cygwin     
+======
+
+You need to install libtool. This will normally also install automake as
+well, which is also needed. gcc-g++ C++ compiler is also required.
+
+Then you should be ready to do the usual
+
+./configure
+./make -s
+
+If this does not work, you may regenerate the whole configure script:
+
+./aclocal
+./autoconf
+./autoheader
+./libtoolize
+./automake --add-missing -a --foreign
+
+and then do
+
+./configure
+./make -s
 
 Compiling For Multiple Architectures
 ====================================

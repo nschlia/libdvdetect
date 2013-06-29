@@ -29,7 +29,22 @@ EXTRA_DIST = \
 	Qt/guiexample/main.cpp \
 	Qt/guiexample/dvdexplorerdlg.cpp \
 	Qt/guiexample/dvdexplorerdlg.h \
-	Qt/guiexample/dvdexplorerdlg.ui 
+	Qt/guiexample/dvdexplorerdlg.ui \
+	Qt/guiexample/searchtextdlg.cpp \
+	Qt/guiexample/searchtextdlg.h \
+	Qt/guiexample/searchtextdlg.ui \
+	Qt/guiexample/aboutdlg.cpp \
+	Qt/guiexample/aboutdlg.h \
+	Qt/guiexample/aboutdlg.ui \
+	sql/dbdvdetect.mysql.sql \
+	php/index.php \
+	php/query.php \
+	php/search.php \
+	php/submit.php \
+	php/robots.txt \
+	win/tinyxml_2_6_2.zip \
+	win/readme.txt
+	
 #	VS2010/dllmain.cpp \
 #	VS2010/libdvdetect.sln \
 #	VS2010/libdvdetect.vcxproj \

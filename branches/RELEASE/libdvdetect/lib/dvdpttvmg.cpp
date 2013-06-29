@@ -38,6 +38,17 @@ dvdpttvmg::~dvdpttvmg()
 {
 }
 
+dvdpttvmg& dvdpttvmg::operator= (dvdpttvmg const& rhs)
+{
+    if (this != &rhs)
+    {
+        memcpy(&m_DVDPTTVMG, &rhs.m_DVDPTTVMG, sizeof(DVDPTTVMG));
+        m_pDvdParse     = rhs.m_pDvdParse;
+        m_dvdPttVtsLst  = rhs.m_dvdPttVtsLst;
+    }
+    return *this;
+}
+
 LPCDVDPTTVMG dvdpttvmg::getDVDPTTVMG() const
 {
     return &m_DVDPTTVMG;
@@ -92,7 +103,12 @@ uint64_t dvdpttvmg::getPlayTime() const
     return qwPlayTime;
 }
 
-const std::type_info & dvdpttvmg::classtype() const
+std::string dvdpttvmg::getTitle() const
 {
-    return typeid(*this);
+    return m_strTitle;
+}
+
+void dvdpttvmg::setTitle(const std::string & strTitle)
+{
+    m_strTitle = strTitle;
 }
