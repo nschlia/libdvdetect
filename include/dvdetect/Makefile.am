@@ -33,6 +33,7 @@ pkginclude_HEADERS = \
 	dvdunit.h \
 	dvdutils.h \
 	types.h \
+	vector_ptr.h \
 	version.h
 noinst_HEADERS = 
 

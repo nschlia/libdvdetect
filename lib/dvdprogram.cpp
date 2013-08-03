@@ -37,12 +37,12 @@ dvdprogram::~dvdprogram()
 {
 }
 
-dvdprogram& dvdprogram::operator= (dvdprogram const& rhs)
+dvdprogram& dvdprogram::operator= (dvdprogram const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDPROGRAM, &rhs.m_DVDPROGRAM, sizeof(DVDPROGRAM));
-        m_dvdCellLst = rhs.m_dvdCellLst;
+        memcpy(&m_DVDPROGRAM, &source.m_DVDPROGRAM, sizeof(DVDPROGRAM));
+        m_lstDvdCell = source.m_lstDvdCell;
     }
     return *this;
 }
@@ -52,28 +52,34 @@ LPCDVDPROGRAM dvdprogram::getDVDPROGRAM() const
     return &m_DVDPROGRAM;
 }
 
-const dvdcell * dvdprogram::getDvdCell(uint16_t wCell) const
+dvdcell * dvdprogram::getDvdCell(uint16_t wCellNo) const
 {
-    if (!wCell || wCell > m_dvdCellLst.size())
+    if (!wCellNo || wCellNo > m_lstDvdCell.size())
     {
         return NULL;
     }
 
-    return &m_dvdCellLst[wCell - 1];
+    return m_lstDvdCell[wCellNo - 1];
 }
 
 uint16_t dvdprogram::getCellCount() const
 {
-    return m_DVDPROGRAM.m_wCells;
+    return m_lstDvdCell.size();
 }
 
 uint64_t dvdprogram::getSize() const
 {
     uint64_t size = 0;
 
-    for (uint16_t wCell = 1; wCell <= m_DVDPROGRAM.m_wCells; wCell++)
+    for (uint16_t wCellNo = 1; wCellNo <= getCellCount(); wCellNo++)
     {
-        const dvdcell *pDvdCell = getDvdCell(wCell);
+        const dvdcell *pDvdCell = getDvdCell(wCellNo);
+
+        if (pDvdCell == NULL)	// Safety net
+        {
+            break;
+        }
+
         LPCDVDCELL pDVDCELL = pDvdCell->getDVDCELL();
 
         if (pDVDCELL->m_eCellType == CELLTYPE_NORMAL || pDVDCELL->m_eCellType == CELLTYPE_FIRST)
@@ -90,9 +96,9 @@ uint64_t dvdprogram::getPlayTime() const
 {
     uint64_t qwPlayTime = 0;
 
-    for (uint16_t wCell = 1; wCell <= m_DVDPROGRAM.m_wCells; wCell++)
+    for (uint16_t wCellNo = 1; wCellNo <= getCellCount(); wCellNo++)
     {
-        const dvdcell *pDvdCell = getDvdCell(wCell);
+        const dvdcell *pDvdCell = getDvdCell(wCellNo);
         LPCDVDCELL pDVDCELL = pDvdCell->getDVDCELL();
 
         if (pDVDCELL->m_eCellType == CELLTYPE_NORMAL || pDVDCELL->m_eCellType == CELLTYPE_FIRST)
@@ -107,19 +113,19 @@ uint64_t dvdprogram::getPlayTime() const
 
 uint32_t dvdprogram::getStartSector() const
 {
-    if (!m_dvdCellLst.size())
+    if (!m_lstDvdCell.size())
     {
         return 0;
     }
-    return m_dvdCellLst[0].getDVDCELL()->m_dwFirstVOBUStartSector;
+    return m_lstDvdCell[0]->getDVDCELL()->m_dwFirstVOBUStartSector;
 }
 
 uint32_t dvdprogram::getEndSector() const
 {
-    int nCell = m_dvdCellLst.size();
+    int nCell = m_lstDvdCell.size();
     if (!nCell)
     {
         return 0;
     }
-    return m_dvdCellLst[nCell- 1].getDVDCELL()->m_dwLastVOBUEndSector;
+    return m_lstDvdCell[nCell- 1]->getDVDCELL()->m_dwLastVOBUEndSector;
 }

@@ -17,8 +17,8 @@
 
 #METASOURCES = AUTO
 
-AM_CFLAGS = -c -pipe -frtti -Wall -Wextra -fexceptions -pedantic-errors
-AM_CPPFLAGS = -c -pipe -frtti -Wall -Wextra -fexceptions -pedantic-errors
+#AM_CFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
+AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
 CFLAGS = -O3
 CXXFLAGS = -O3
 #-g 
@@ -38,12 +38,15 @@ endif
 
 AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include $(LIBDVDETECT_FLAGS) 
 
-bin_PROGRAMS = dvdinfocxx dvdlookupcxx
+bin_PROGRAMS = dvdinfocxx dvdlookupcxx dvdsubmitcxx
 
 dvdinfocxx_SOURCES = dvdinfocxx.cpp
 dvdinfocxx_LDADD = $(top_builddir)/lib/libdvdetect.la $(LIBDVDETECT_LIBS) 
 
 dvdlookupcxx_SOURCES = dvdlookupcxx.cpp 
 dvdlookupcxx_LDADD = $(top_builddir)/lib/libdvdetect.la $(LIBDVDETECT_LIBS) 
+
+dvdsubmitcxx_SOURCES = dvdsubmitcxx.cpp 
+dvdsubmitcxx_LDADD = $(top_builddir)/lib/libdvdetect.la $(LIBDVDETECT_LIBS) 
 
 pkginclude_HEADERS = 

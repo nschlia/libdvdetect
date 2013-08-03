@@ -8,3 +8,31 @@ Next: Actual DVD database lookup will be added.
 
 This is a humongous task: Not only that the code needs to be written, but I will also have to
 type in some of my DVDs for lookup testing. So please stay tuned.
+
+2012-XX-XX V0.40 released!
+
+This is a huge update, a lot of changes have been made (thus the release took very long).
+
+Database search has been implemented, it is possible to search a DVD by album or artist name.
+This is to be refined in a future release (e.g., allow to select the fields to be searched).
+
+The biggest modification, however, is a concept change:
+
+In the beginning it was planned to only store a small subset of a DVD in the database. This was
+the so-called "virtual structure", which is the most interesting look at the DVD from a user's
+point of view. It seemed to be sufficient in the first place, but it turned out, without the real
+"physical structure", it is not possible to allow the database to be searched and to properly
+display the results. Some required pieces of information are stored with the physical structure
+data on the DVD, so it would have been required to at least preserve some of it - that turned
+out to be a tedious task with ominous results.
+
+Therefore the decision was taken to alter the concept and store the whole DVD structure in the
+database, that way allowing to display it properly even if the DVD is not in a local drive (that
+was required with the old concept to be able to display the search results).
+
+Alas, that required several core parts to be rewritten, and that took some time.
+
+But as we are still in beta phase, the impact on the final release is not too big, as changing
+that after the release was out would have been quite a big problem to do while not breaking
+compatibility.
+

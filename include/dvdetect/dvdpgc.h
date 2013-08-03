@@ -40,7 +40,8 @@
 class DLL_PUBLIC dvdpgc : public dvdetectbase
 {
     friend class dvdparse;
-    friend class xmldoc;
+    friend class xmldocbuilder;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
@@ -63,22 +64,17 @@ public:
 
     //! Get a DVD program in this program chain (PGC).
     /*!
-     *  \param wProgram uint16_t Index of program (1...n)
-     *  \return Success: Pointer to dvdprogram class; Fail: NULL if wProgram out of bounds.
+     *  \param wProgramNo uint16_t Index of program (1...n)
+     *  \return Success: Pointer to dvdprogram class;
+     *  \return Fail: NULL if wProgramNo out of bounds.
      */
-    const dvdprogram *  getDvdProgram(uint16_t wProgram) const;
+    dvdprogram *        getDvdProgram(uint16_t wProgramNo) const;
 
     //! Get the number of programs in this program chain (PGC).
     /*!
      *  \return Number of programs (1...n)
      */
     uint16_t            getProgramCount() const;
-
-    //! Get the number of cells in this program chain (PGC).
-    /*!
-     *  \return Number of cells (1...n)
-     */
-    uint16_t            getCellCount() const;
 
     //! Get the size (in bytes) of this program chain (PGC).
     /*!
@@ -92,13 +88,13 @@ public:
      */
     uint64_t            getPlayTime() const;
 
-    dvdpgc& operator= (dvdpgc const& rhs);
+    dvdpgc& operator= (dvdpgc const & source);
 
 protected:
     DVDPGC              m_DVDPGC;				//!< DVDPGC structure (DVD program chain information)
-    dvdprogramlst       m_dvdProgramLst;		//!< list of DVD programs of this PGC
+    dvdprogramlst       m_lstDvdProgram;		//!< list of DVD programs of this PGC
 };
 
-typedef std::vector<dvdpgc> dvdpgclst;			//!< shortcut for a list of dvdpgcs
+typedef vector_ptr<dvdpgc> dvdpgclst;			//!< shortcut for a list of dvdpgcs
 
 #endif // DVDPGC_H

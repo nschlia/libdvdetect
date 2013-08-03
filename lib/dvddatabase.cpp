@@ -26,15 +26,18 @@
 
 #include <dvdetect/dvdetectc++.h>
 #include <stdio.h>
+#include <fstream>
 
 #include "localutils.h"
-#include "xmldoc.h"
+#include "xmldocbuilder.h"
+#include "xmldocparser.h"
 #include "http.h"
 
 #define SERVER_URL      "http://db.dvdetect.de/"
 
 dvddatabase::dvddatabase(const std::string &strClientName) :
     m_eErrorCode(DVDERRORCODE_NOERROR),
+    m_strServerUrl(SERVER_URL),
     m_strClientName(strClientName)
 {
 }
@@ -49,10 +52,16 @@ void dvddatabase::setError(const std::string & strErrorString, DVDERRORCODE eErr
     m_eErrorCode        = eErrorCode;
 }
 
-void dvddatabase::setError(const xmldoc & xmlDoc)
+void dvddatabase::setError(const xmldocbuilder & xmlDoc)
 {
     m_strErrorString    = xmlDoc.getErrorString();
-    m_eErrorCode        = DVDERRORCODE_XML_ERROR;
+    m_eErrorCode        = xmlDoc.getErrorCode();
+}
+
+void dvddatabase::setError(const xmldocparser & xmlDoc)
+{
+    m_strErrorString    = xmlDoc.getErrorString();
+    m_eErrorCode        = xmlDoc.getErrorCode();
 }
 
 void dvddatabase::setError(const http & httpServer)
@@ -61,15 +70,24 @@ void dvddatabase::setError(const http & httpServer)
     m_eErrorCode        = DVDERRORCODE_HTML_ERROR;
 }
 
-int dvddatabase::query(dvdparselst & dvdParseLstIn, const dvdparse & dvdParseOut)
+int dvddatabase::query(dvdparselst *pLstDvdParse, const dvdparse * pDvdParse)
 {
     std::string strXML;
-    xmldoc xmlDoc(m_strClientName);
+    xmldocbuilder xmlDoc(m_strClientName);
 
-    int res = xmlDoc.query(strXML, dvdParseOut);
+    int res = xmlDoc.buildXml(strXML, XMLMODE_QUERY, pDvdParse);
 
     if (!res)
     {
+#ifdef DEBUG
+        FILE *fpo = fopen("query.out.xml", "wt");
+        if (fpo != NULL)
+        {
+            fprintf(fpo, "%s", strXML.c_str());
+            fclose(fpo);
+        }
+#endif
+
         http httpServer;
 
         if (!m_strProxy.empty())
@@ -77,7 +95,7 @@ int dvddatabase::query(dvdparselst & dvdParseLstIn, const dvdparse & dvdParseOut
             httpServer.setProxy(m_strProxy);
         }
 
-        res = httpServer.request(http::POST, SERVER_URL "query.php", "xml=" + uriEncode(strXML));
+        res = httpServer.request(http::POST, m_strServerUrl + "/query.php", "xml=" + uriEncode(strXML));
 
         if (res == 200)
         {
@@ -91,12 +109,12 @@ int dvddatabase::query(dvdparselst & dvdParseLstIn, const dvdparse & dvdParseOut
 #endif
             res = 0;
 
-            xmldoc xmlDoc(m_strClientName);
+            xmldocparser xmlDoc(m_strClientName);
             XMLMODE eXmlMode = XMLMODE_INVALID;
 
-            dvdParseLstIn.clear();
+            pLstDvdParse->clear();
 
-            res  = xmlDoc.parseXml(httpServer.getContent(), eXmlMode, dvdParseLstIn);
+            res  = xmlDoc.parseXml(httpServer.getContent(), eXmlMode, pLstDvdParse);
 
             if (res)
             {
@@ -116,15 +134,23 @@ int dvddatabase::query(dvdparselst & dvdParseLstIn, const dvdparse & dvdParseOut
     return res;
 }
 
-int dvddatabase::search(dvdparselst & dvdParseLstIn, const std::string & strSearchOut)
+int dvddatabase::search(dvdparselst *pLstDvdParse, const std::string & strSearch)
 {
     std::string strXML;
-    xmldoc xmlDoc(m_strClientName);
+    xmldocbuilder xmlDoc(m_strClientName);
 
-    int res = xmlDoc.search(strXML, dvdParseLstIn, strSearchOut);
+    int res = xmlDoc.buildXml(strXML, XMLMODE_SEARCH, pLstDvdParse, strSearch);
 
     if (!res)
     {
+#ifdef DEBUG
+        FILE *fpo = fopen("search.out.xml", "wt");
+        if (fpo != NULL)
+        {
+            fprintf(fpo, "%s", strXML.c_str());
+            fclose(fpo);
+        }
+#endif
         http httpServer;
 
         if (!m_strProxy.empty())
@@ -132,7 +158,7 @@ int dvddatabase::search(dvdparselst & dvdParseLstIn, const std::string & strSear
             httpServer.setProxy(m_strProxy);
         }
 
-        res = httpServer.request(http::POST, SERVER_URL "search.php", "xml=" + uriEncode(strXML));
+        res = httpServer.request(http::POST, m_strServerUrl + "/search.php", "xml=" + uriEncode(strXML));
 
         if (res == 200)
         {
@@ -146,12 +172,12 @@ int dvddatabase::search(dvdparselst & dvdParseLstIn, const std::string & strSear
 #endif
             res = 0;
 
-            xmldoc xmlDoc(m_strClientName);
+            xmldocparser xmlDoc(m_strClientName);
             XMLMODE eXmlMode = XMLMODE_INVALID;
 
-            dvdParseLstIn.clear();
+            pLstDvdParse->clear();
 
-            res  = xmlDoc.parseXml(httpServer.getContent(), eXmlMode, dvdParseLstIn);
+            res  = xmlDoc.parseXml(httpServer.getContent(), eXmlMode, pLstDvdParse);
 
             if (res)
             {
@@ -171,12 +197,24 @@ int dvddatabase::search(dvdparselst & dvdParseLstIn, const std::string & strSear
     return res;
 }
 
-int dvddatabase::submit(const dvdparselst & dvdParseLstOut)
+int dvddatabase::submit(const dvdparse *pDvdParse)
+{
+    dvdparselst lstDvdParse;
+    dvdparse *pDvdParseTmp = new dvdparse; // No leak: gets deleted by dvdparselst destructor
+
+    *pDvdParseTmp = *pDvdParse;
+
+    lstDvdParse.push_back(pDvdParseTmp);
+
+    return submit(&lstDvdParse);
+}
+
+int dvddatabase::submit(const dvdparselst *pLstDvdParse)
 {
     std::string strXML;
-    xmldoc xmlDoc(m_strClientName);
+    xmldocbuilder xmlDoc(m_strClientName);
 
-    int res = xmlDoc.submit(strXML, dvdParseLstOut, true);
+    int res = xmlDoc.buildXml(strXML, XMLMODE_SUBMIT, pLstDvdParse);
 
     if (!res)
     {
@@ -187,6 +225,7 @@ int dvddatabase::submit(const dvdparselst & dvdParseLstOut)
             httpServer.setProxy(m_strProxy);
         }
 
+
 #ifdef DEBUG
         FILE *fpo = fopen("submit.out.xml", "wt");
         if (fpo != NULL)
@@ -196,7 +235,7 @@ int dvddatabase::submit(const dvdparselst & dvdParseLstOut)
         }
 #endif
 
-        res = httpServer.request(http::POST, SERVER_URL "submit.php", "xml=" + uriEncode(strXML));
+        res = httpServer.request(http::POST, m_strServerUrl + "/submit.php", "xml=" + uriEncode(strXML));
 
         if (res == 200)
         {
@@ -210,7 +249,7 @@ int dvddatabase::submit(const dvdparselst & dvdParseLstOut)
 #endif
             res = 0;
 
-            xmldoc xmlDoc(m_strClientName);
+            xmldocparser xmlDoc(m_strClientName);
             XMLMODE eXmlMode = XMLMODE_INVALID;
 
             res  = xmlDoc.parseXmlResponse(httpServer.getContent(), eXmlMode);
@@ -229,7 +268,110 @@ int dvddatabase::submit(const dvdparselst & dvdParseLstOut)
     return res;
 }
 
-std::string dvddatabase::getErrorString() const
+int dvddatabase::read(dvdparselst *pLstDvdParse, const std::string & strInFile)
+{
+    string strShortFilePath(getWin32ShortFilePath(strInFile));
+    int res = 0;
+
+    struct stat buf;
+
+    std::FILE *fpi = std::fopen(strShortFilePath.c_str(), "rb");
+    if (fpi == NULL)
+    {
+        std::string strError = "Error opening file: " + strInFile + "\n";
+        strError += strerror(errno);
+        setError(strError, DVDERRORCODE_FILEOPEN);
+        res = -1;
+    }
+    else if (stat(strShortFilePath.c_str(), &buf) == -1) // fstat(fileno(fpi), &buf) == -1)
+    {
+        std::string strError = "Cannot stat file: " + strInFile + "\n";
+        strError += strerror(errno);
+        setError(strError, DVDERRORCODE_FILESTAT);
+        res = -1;
+    }
+    else
+    {
+        char *pszData = new char [buf.st_size];
+        if (pszData != NULL)
+        {
+            memset(pszData, 0, buf.st_size);
+            if (std::fread(pszData, 1, buf.st_size, fpi) != (size_t)buf.st_size)
+            {
+                std::string strError = "Error reading file: " + strInFile + "\n";
+                strError += strerror(errno);
+                setError(strError, DVDERRORCODE_FILEREAD);
+                res = -1;
+            }
+            else
+            {
+                xmldocparser xmlDoc(m_strClientName);
+                XMLMODE eXmlMode = XMLMODE_EXPORT;
+
+                pLstDvdParse->clear();
+
+                res  = xmlDoc.parseXml(pszData, eXmlMode, pLstDvdParse);
+
+                if (res)
+                {
+                    setError(xmlDoc);
+                }
+            }
+
+            delete [] pszData;
+            pszData = NULL;
+        }
+    }
+
+    if (fpi != NULL)
+    {
+        std::fclose(fpi);
+    }
+
+    return res;
+}
+
+int dvddatabase::write(const dvdparse *pDvdParse, const std::string & strOutFile)
+{
+    dvdparselst lstDvdParse;
+    dvdparse *pDvdParseTmp = new dvdparse; // No leak: gets deleted by dvdparselst destructor
+
+    *pDvdParseTmp = *pDvdParse;
+
+    lstDvdParse.push_back(pDvdParseTmp);
+
+    return write(&lstDvdParse, strOutFile);
+}
+
+int dvddatabase::write(const dvdparselst *pLstDvdParse, const std::string & strOutFile)
+{
+    std::string strXML;
+    xmldocbuilder xmlDoc(m_strClientName);
+
+    int res = xmlDoc.buildXml(strXML, XMLMODE_EXPORT, pLstDvdParse);
+
+    if (!res)
+    {
+        std::FILE *fpo = NULL;
+        fpo = std::fopen(getWin32ShortFilePath(strOutFile).c_str(), "wb");
+        if (fpo == NULL)
+        {
+            std::string strError = "Error opening file: " + strOutFile + "\n";
+            strError += strerror(errno);
+            setError(strError, DVDERRORCODE_FILEOPEN);
+            res = -1;
+        }
+        else
+        {
+            std::fwrite(strXML.c_str(), 1, strXML.size(), fpo);
+            std::fclose(fpo);
+        }
+    }
+
+    return res;
+}
+
+const std::string & dvddatabase::getErrorString() const
 {
     return m_strErrorString;
 }
@@ -239,14 +381,14 @@ DVDERRORCODE dvddatabase::getErrorCode() const
     return m_eErrorCode;
 }
 
-dvddatabase& dvddatabase::operator= (dvddatabase const& rhs)
+dvddatabase& dvddatabase::operator= (dvddatabase const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        m_strClientName     = rhs.m_strClientName;
-        m_eErrorCode        = rhs.m_eErrorCode;
-        m_strErrorString    = rhs.m_strErrorString;
-        m_strProxy          = rhs.m_strProxy;
+        m_strClientName     = source.m_strClientName;
+        m_eErrorCode        = source.m_eErrorCode;
+        m_strErrorString    = source.m_strErrorString;
+        m_strProxy          = source.m_strProxy;
     }
     return *this;
 }
@@ -256,7 +398,7 @@ void dvddatabase::setClientName(const std::string & strClientName)
     m_strClientName = strClientName;
 }
 
-std::string dvddatabase::getClientName() const
+const std::string & dvddatabase::getClientName() const
 {
     return m_strClientName;
 }
@@ -266,5 +408,14 @@ void dvddatabase::setProxy(const std::string & strProxy)
     m_strProxy = strProxy;
 }
 
+const std::string & dvddatabase::getServerUrl() const
+{
+    return m_strServerUrl;
+}
+
+void dvddatabase::setServerUrl(const std::string & strServerUrl)
+{
+    m_strServerUrl = strServerUrl;
+}
 
 

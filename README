@@ -38,6 +38,16 @@ Tested environments:
 
 See INSTALL for instructions.
 
+CHARSETS
+
+Internally the library uses utf-8 only. This is used to communicate with
+the web server (all xml documents are utf-8 encoded) and on the server
+side for the database. If you call any text oriented function of the API,
+be prepared that it returns utf-8 code or expects texts in that coding.
+
+If you want to support international character sets (cyrillic, Japanese,
+sanskrit - whatever) you must be able to handle utf-8.
+
 WARNING
 
 THIS IS AN EARLY STAGE BETA WHICH WILL UNDERGO A LOT OF CHANGES ON THE

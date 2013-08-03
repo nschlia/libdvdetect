@@ -37,6 +37,7 @@
 class DLL_PUBLIC dvdfile : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
@@ -57,12 +58,18 @@ public:
      */
     LPCDVDFILE          getDVDFILE() const;
 
-    dvdfile& operator= (dvdfile const& rhs);
+    //! Get the corresponding filename.
+    /*!
+     *  \return Name of file
+     */
+    std::string			getFileName() const;
+
+    dvdfile& operator= (dvdfile const & source);
 
 protected:
     DVDFILE             m_DVDFILE;				//!< DVDFILE structure (DVD part of title)
 };
 
-typedef std::vector<dvdfile> dvdfilelst;		//!< shortcut for a list of dvdfiles
+typedef vector_ptr<dvdfile> dvdfilelst;         //!< shortcut for a list of dvdfiles
 
 #endif // DVDFILE_H

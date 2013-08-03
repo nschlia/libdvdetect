@@ -33,6 +33,6 @@ class QStandardItem;
 class QString;
 
 QStandardItem *     getItem(const QString & text, bool bEditable = false);
-QStandardItem *     getItemFromUtf8(const std::string & text, bool bEditable = false);
+QStandardItem *     getItemFromStdString(const std::string & text, bool bEditable = false);
 
 #endif // EXPLORERUTILS_H

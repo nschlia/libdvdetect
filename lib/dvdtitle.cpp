@@ -37,13 +37,13 @@ dvdtitle::~dvdtitle()
 {
 }
 
-dvdtitle& dvdtitle::operator= (dvdtitle const& rhs)
+dvdtitle& dvdtitle::operator= (dvdtitle const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDVTS, &rhs.m_DVDVTS, sizeof(DVDVTS));
-        m_dvdPgcLst     = rhs.m_dvdPgcLst;
-        m_dvdFileLst    = rhs.m_dvdFileLst;
+        memcpy(&m_DVDVTS, &source.m_DVDVTS, sizeof(DVDVTS));
+        m_lstDvdPgc     = source.m_lstDvdPgc;
+        m_lstDvdFile    = source.m_lstDvdFile;
     }
     return *this;
 }
@@ -53,43 +53,43 @@ LPCDVDVTS dvdtitle::getDVDVTS() const
     return &m_DVDVTS;
 }
 
-const dvdpgc *dvdtitle::getDvdPgc(uint16_t wProgramChainNo) const
+dvdpgc *dvdtitle::getDvdPgc(uint16_t wProgramChainNo) const
 {
-    if (!wProgramChainNo || wProgramChainNo > m_dvdPgcLst.size())
+    if (!wProgramChainNo || wProgramChainNo > getPgcCount())
     {
         return NULL;
     }
 
-    return &m_dvdPgcLst[wProgramChainNo - 1];
+    return m_lstDvdPgc[wProgramChainNo - 1];
 }
 
 uint16_t dvdtitle::getPgcCount() const
 {
-    return m_DVDVTS.m_wNumberOfProgramChains;
+    return m_lstDvdPgc.size();
 }
 
-const dvdfile * dvdtitle::getDvdFile(uint16_t wFileNo) const
+dvdfile * dvdtitle::getDvdFile(uint16_t wFileNo) const
 {
-    if (wFileNo >= m_dvdFileLst.size())
+    if (wFileNo >= m_lstDvdFile.size())
     {
         return NULL;
     }
 
-    return &m_dvdFileLst[wFileNo];
+    return m_lstDvdFile[wFileNo];
 }
 
 uint16_t dvdtitle::getFileCount() const
 {
-    return (uint16_t)m_dvdFileLst.size();
+    return (uint16_t)m_lstDvdFile.size();
 }
 
 uint64_t dvdtitle::getSize() const
 {
     uint64_t size = 0;
 
-    for (uint16_t wProgramChainNo = 1; wProgramChainNo <= m_DVDVTS.m_wNumberOfProgramChains;  wProgramChainNo++)
+    for (uint16_t wProgramChainNo = 1; wProgramChainNo <= getPgcCount(); wProgramChainNo++)
     {
-        size += m_dvdPgcLst[wProgramChainNo - 1].getSize();
+        size += m_lstDvdPgc[wProgramChainNo - 1]->getSize();
     }
 
     return size;
@@ -99,9 +99,9 @@ uint64_t dvdtitle::getPlayTime() const
 {
     uint64_t qwPlayTime = 0;
 
-    for (uint16_t wProgramChainNo = 1; wProgramChainNo <= m_DVDVTS.m_wNumberOfProgramChains;  wProgramChainNo++)
+    for (uint16_t wProgramChainNo = 1; wProgramChainNo <= getPgcCount(); wProgramChainNo++)
     {
-        qwPlayTime += m_dvdPgcLst[wProgramChainNo - 1].getPlayTime();
+        qwPlayTime += m_lstDvdPgc[wProgramChainNo - 1]->getPlayTime();
     }
 
     return qwPlayTime;

@@ -1,0 +1,22 @@
+These are three small C examples that demonstrate how to:
+
+* read a DVD structure (dvdinfo) 
+* query a DVD from the libdvdetect server (dvdlookup)
+* submit a DVD from the libdvdetect server (dvdsubmit)
+
+To read a DVD structure:
+
+dvdinfo -d f:\
+
+To query a DVD from the database:
+
+dvdlookup -d f:\
+
+To submit a DVD, first run dvdlookup to query the server and write the result
+as xml:
+
+dvdlookup -d f: -o mydvd.xml
+
+If not found, edit the xml file an submit the DVD to the server:
+
+dvsubmit -i mydvd.xml

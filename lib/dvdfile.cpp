@@ -37,11 +37,11 @@ dvdfile::~dvdfile()
 {
 }
 
-dvdfile& dvdfile::operator= (dvdfile const& rhs)
+dvdfile& dvdfile::operator= (dvdfile const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDFILE, &rhs.m_DVDFILE, sizeof(DVDFILE));
+        memcpy(&m_DVDFILE, &source.m_DVDFILE, sizeof(DVDFILE));
     }
     return *this;
 }
@@ -49,4 +49,9 @@ dvdfile& dvdfile::operator= (dvdfile const& rhs)
 LPCDVDFILE dvdfile::getDVDFILE() const
 {
     return &m_DVDFILE;
+}
+
+std::string	dvdfile::getFileName() const
+{
+    return getDvdFileName(m_DVDFILE.m_eDvdFileType, m_DVDFILE.m_wTitleSetNo, m_DVDFILE.m_wVobNo);
 }

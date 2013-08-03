@@ -37,11 +37,11 @@ dvdunit::~dvdunit()
 {
 }
 
-dvdunit& dvdunit::operator= (dvdunit const& rhs)
+dvdunit& dvdunit::operator= (dvdunit const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDUNIT, &rhs.m_DVDUNIT, sizeof(DVDUNIT));
+        memcpy(&m_DVDUNIT, &source.m_DVDUNIT, sizeof(DVDUNIT));
     }
     return *this;
 }

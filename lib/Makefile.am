@@ -17,8 +17,8 @@
 
 #METASOURCES = AUTO
 
-AM_CFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
-AM_CPPFLAGS = -c -pipe -frtti -Wall -Wextra -fexceptions -pedantic-errors
+#AM_CFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
+AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
 CFLAGS = -O3
 CXXFLAGS = -O3
 #-g 
@@ -31,16 +31,11 @@ INCLUDES =
 if HAVE_WIN32
 # Some extra stuff required for Windows
 LDFLAGS += -lws2_32 --enable-auto-import -fno-keep-inline-dllexport -mthreads
-# For Cygwin, build static library. For general Windows, build DLL.
-#if HAVE_CYGWIN
-#DEFS += -DBUILDING_STATIC
-#else
 DEFS += -DDLL_EXPORT
-#endif
 INCLUDES += -I../win/tinyxml/
 else
 # Under *nix, tinyxml should be part of the distribution, so simply link
-LDFLAGS += -ltinyxml 
+LDFLAGS += -ltinyxml
 endif
 
 INCLUDES += -I$(top_srcdir)/include -I$(top_builddir)/include
@@ -63,9 +58,23 @@ libdvdetect_la_SOURCES = \
 	http.cpp \
 	localutils.cpp \
 	xmldoc.cpp \
-	md5/md5.c \
+	xmldocparser.cpp \
+	xmldocbuilder.cpp \
 	libdvdetect.rc
 
+# If no native md5 code, use ours.
+if !HAVE_MD5
+libdvdetect_la_SOURCES += \
+        md5/md5.c
+endif
+
+# If no native strptime, use ours.
+if !HAVE_STRPTIME
+libdvdetect_la_SOURCES += \
+        emu/strptime.c
+endif
+
+# Windows has no tinyxml, so use our code.
 if HAVE_WIN32
 nodist_libdvdetect_la_SOURCES = \
 	../win/tinyxml/tinystr.cpp \
@@ -85,4 +94,6 @@ pkginclude_HEADERS = \
 	vmg_ifo.h \
 	vts_ifo.h \
 	xmldoc.h \
+	xmldocbuilder.h \
+	xmldocparser.h \
 	md5/md5.h

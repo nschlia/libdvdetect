@@ -30,11 +30,18 @@ QStandardItem * getItem(const QString & text, bool bEditable /*= false*/)
 {
     QStandardItem *item = new QStandardItem(text);
     if (!bEditable)
+    {
         item->setEditable(false);
+    }
     return item;
 }
 
-QStandardItem * getItemFromUtf8(const std::string & text, bool bEditable /*= false*/)
+QStandardItem * getItemFromStdString(const std::string & text, bool bEditable /*= false*/)
 {
-    return getItem(QString::fromUtf8(text.c_str()), bEditable);
+    QStandardItem *item = new QStandardItem(text.c_str());
+    if (!bEditable)
+    {
+        item->setEditable(false);
+    }
+    return item;
 }

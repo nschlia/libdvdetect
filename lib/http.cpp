@@ -20,6 +20,10 @@
 /*! \file http.cpp
  *
  *  \brief HTTP web server access class implementation
+ *
+ * TODO:
+ * - Enable chunked transfer coding (see http://en.wikipedia.org/wiki/Chunked_transfer_encoding)
+ * - Use Content-Size header
  */
 
 #include "compat.h"
@@ -274,13 +278,9 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
 
             if (strData.size())
             {
-                TCHAR szBuffer[100];
-
-                WSPRINTF(szBuffer, _T("%lu"), (unsigned long)strData.size());
                 //	strSendBuf += _T("Referer: $referer\n");
                 strSendBuf += _T("Content-type: application/x-www-form-urlencoded\r\n");
-                strSendBuf += _T("Content-length: ");
-                strSendBuf += szBuffer;
+                strSendBuf += _T("Content-length: ") + toString(strData.size());
                 strSendBuf += _T("\r\n");
                 strSendBuf += _T("Connection: close\r\n\r\n");
                 strSendBuf += strData;

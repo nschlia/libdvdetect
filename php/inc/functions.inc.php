@@ -23,29 +23,20 @@
  *  \brief PHP function collection
  */
 
+// Settings
 define("MYSQLSERVER",                       "localhost");
 define("MYSQLDATABASE",                     "dbdvdetect");
 define("MYSQLUSERNAME",                     "dvdetect");
 define("MYSQLPASSWORD",                     "hZBCvEtHJ3T6GyqJ");
 
-define("XMLVERSION",                        1);
-define("LIBRARYVERSION",                    "0.22 PHP");
-define("LIBRARYNAME",                       "libdvdetect library PHP");
-define("CLIENTNAME",                        "libDVDetect PHP server");
+if (!defined('PHP_VERSION_ID'))
+{
+    $version = explode('.', PHP_VERSION);
 
-define("XMLMODE_INVALID",                   0);
-define("XMLMODE_QUERY",                     1);
-define("XMLMODE_SEARCH",                    2);
-define("XMLMODE_SUBMIT_CONDENSED",          3);
-define("XMLMODE_SUBMIT_VERBOSE",            4);
-define("XMLMODE_RESPONSE",                  5);
+    define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
+}
 
-define("XMLRESULT_SUCCESS",                 0);
-define("XMLRESULT_NOTFOUND",                1);
-define("XMLRESULT_NOT_IMPLEMENTED",         2);
-define("XMLRESULT_SQL_ERROR",               3);
-define("XMLRESULT_DUPLICATE_SUBMISSION",    4);
-define("XMLRESULT_XML_ERROR",               5);
+define("QUERY_SET", "idDVDVMGM, Album, AlbumArtist, Revision, RowCreationDate, Genre, Cast, Crew, Director, Country, ReleaseDate, SpecialFeatures, EAN_UPC, Storyline, Submitter, SubmitterIP, Client, Remarks, RowLastChanged, Keywords, Hash, RegionProhibited1, RegionProhibited2, RegionProhibited3, RegionProhibited4, RegionProhibited5, RegionProhibited6, RegionProhibited7, RegionProhibited8, VersionNumberMajor, VersionNumberMinor, NumberOfVolumes, VolumeNumber, SideID");
 
 function connect_server()
 {
@@ -55,14 +46,14 @@ function connect_server()
     {
         $mysqli = null;
     }
-	
-	if (!$mysqli->set_charset("utf8")) 
-	{
-    	// printf("Error loading character set utf8: %s\n", $mysqli->error);
+
+    if (!$mysqli->set_charset("utf8"))
+    {
+        // printf("Error loading character set utf8: %s\n", $mysqli->error);
         $mysqli->close;
         $mysqli = null;
-	}	
-	
+    }
+
     return $mysqli;
 }
 
@@ -71,10 +62,25 @@ function query_server($mysqli, $strSQL)
     $rs = $mysqli->query($strSQL);                               // Send query
     if (!$rs)
     {
-        die('Invalid query: ' . $mysqli->error);
+        $ResponseText = "Error executing command:\n\n" . $strSQL . "\n\nSQL Error: " . $mysqli->error . "\nSQL State: " . $mysqli->sqlstate;
+        throw new Exception($ResponseText, XMLRESULT_SQL_ERROR);
     }
 
     return $rs;
+}
+
+function getPrimaryKey($mysqli, $table, $field, $where)
+{
+    $strSQL = "SELECT `$field` FROM `$table` WHERE $where;";
+
+    $rs = query_server($mysqli, $strSQL);
+
+    if (!is_array($Cols = $rs->fetch_row()))
+    {
+        return -1;
+    }
+
+    return $Cols[0];
 }
 
 function disconnect_server($mysqli)
@@ -87,7 +93,7 @@ function disconnect_server($mysqli)
 
 function mask_sql($value)
 {
-    if (!isset($value))
+    if (!isset($value) || (empty($value) && !is_numeric($value)))
     {
         return "NULL";
     }
@@ -102,7 +108,7 @@ function mask_sql($value)
 
 function mask_datetime($value)
 {
-    if (!isset($value))
+    if (!isset($value) || (empty($value) && !is_numeric($value)))
     {
         return "NULL";
     }
@@ -117,7 +123,8 @@ function mask_datetime($value)
 
 function value_or_null($value)
 {
-    if (!isset($value))
+    $value = trim($value);
+    if (!isset($value) || (empty($value) && !is_numeric($value)))
     {
         return null;
     }
@@ -127,7 +134,8 @@ function value_or_null($value)
 
 function date_or_null($value)
 {
-    if (!isset($value))
+    $value = trim($value);
+    if (!isset($value) || (empty($value) && !is_numeric($value)))
     {
         return null;
     }
@@ -142,7 +150,8 @@ function date_or_null($value)
 
 function datetime_or_null($value)
 {
-    if (!isset($value))
+    $value = trim($value);
+    if (!isset($value) || (empty($value) && !is_numeric($value)))
     {
         return null;
     }
@@ -157,6 +166,7 @@ function datetime_or_null($value)
 
 function isValidDate($dateTime)
 {
+    $dateTime = trim($dateTime);
     if (preg_match("/^(\d{4})-(\d{2})-(\d{2})$/", $dateTime, $matches))
     {
         if (checkdate($matches[2], $matches[3], $matches[1]))
@@ -170,6 +180,7 @@ function isValidDate($dateTime)
 
 function isValidDateTime($dateTime)
 {
+    $dateTime = trim($dateTime);
     if (preg_match("/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/", $dateTime, $matches))
     {
         if (checkdate($matches[2], $matches[3], $matches[1]))
@@ -181,66 +192,4 @@ function isValidDateTime($dateTime)
     return false;
 }
 
-function get_xml_error($xmlstr)
-{
-	if (is_array($xmlstr))
-	{
-		$xml = $xmlstr;
-	}
-	else
-	{
-		$xml = explode("\n", $xmlstr);
-	}
-	
-	$xmlerrortext = "";
-	
-    	$errors = libxml_get_errors();
-
-    	foreach ($errors as $error) 
-    	{
-        	$xmlerrortext = eval_xml_error($error, $xml);
-    	}
-
-    	libxml_clear_errors();
-	
-	return $xmlerrortext;
-}
-
-function eval_xml_error($error, $xml)
-{
-	$return  = $xml[$error->line - 1] . "\n";
-    	$return .= str_repeat('-', $error->column) . "^\n";
-
-    	switch ($error->level) 
-    	{
-        case LIBXML_ERR_WARNING:
-		$return .= "Warning $error->code: ";
-            	break;
-        case LIBXML_ERR_ERROR:
-        	$return .= "Error $error->code: ";
-            	break;
-        case LIBXML_ERR_FATAL:
-            	$return .= "Fatal Error $error->code: ";
-            	break;
-    	}
-
-    	$return .= trim($error->message) .
-               		"\n  Line: $error->line" .
-               		"\n  Column: $error->column";
-
-    	if ($error->file) 
-    	{
-        	$return .= "\n  File: $error->file";
-	}
-
-    return $return;
-}
-
-function safeSetAttribute($Tag, $field, $value)
-{
-    if (isset($value))
-    {
-        $Tag->setAttribute($field, $value);
-    }
-}
 ?>

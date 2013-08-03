@@ -70,6 +70,7 @@
 #define _WIN32_WINNT    0x0600
 #endif
 
+#ifndef __CYGWIN__
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
@@ -77,6 +78,7 @@
 #ifdef HAVE_WS2TCPIP_H
 #include <Ws2tcpip.h>
 #endif
+#endif //!__CYGWIN__
 
 // ***************** Special *nix stuff goes here *****************
 
@@ -205,5 +207,9 @@ typedef const INET_ADDRESS* LPCINET_ADDRESS;
 
 #define native2be                   be2native
 #define native2le                   le2native
+
+#ifndef HAVE_STRPTIME
+extern "C" char * strptime (const char *buf, const char *format, struct tm *tm);
+#endif
 
 #endif // COMPAT_H

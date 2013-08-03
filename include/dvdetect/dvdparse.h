@@ -34,29 +34,37 @@
 
 //! DVD error code
 /*!
- * DVD error code
+ * DVD error codes that can be used for localised messages.
  */
 typedef enum
 {
-    DVDERRORCODE_NOERROR,
-    DVDERRORCODE_DIROPEN,
-    DVDERRORCODE_FILEOPEN,
-    DVDERRORCODE_FILESTAT,
-    DVDERRORCODE_FILEREAD,
-    DVDERRORCODE_OPEN_DVD,
-    DVDERRORCODE_VMG_IFO,
-    DVDERRORCODE_VTS_IFO,
-    DVDERRORCODE_EMPTY_PATH,
-    DVDERRORCODE_NOT_IMPLEMENTED,
-    DVDERRORCODE_NOT_INITIALISED,
-    DVDERRORCODE_XML_ERROR,
-    DVDERRORCODE_HTML_ERROR
+    DVDERRORCODE_NOERROR,                       //!< Success/no error
+    DVDERRORCODE_DIROPEN,                       //!< Error opening directory
+    DVDERRORCODE_FILEOPEN,                      //!< Error opening file
+    DVDERRORCODE_FILESTAT,                      //!< Error getting file status
+    DVDERRORCODE_FILEREAD,                      //!< Error reading file
+    DVDERRORCODE_OPEN_DVD,                      //!< Error opening DVD
+    DVDERRORCODE_VMG_IFO,                       //!< Error reading video manager IFO
+    DVDERRORCODE_VTS_IFO,                       //!< Error reading video title set IFO
+    DVDERRORCODE_EMPTY_PATH,                    //!< Path empty
+    DVDERRORCODE_NOT_IMPLEMENTED,               //!< Function not implemented
+    DVDERRORCODE_NOT_INITIALISED,               //!< Class not initialised
+    DVDERRORCODE_INVALID_PARAMETER,             //!< Invalid parameter
+    DVDERRORCODE_INTERNAL_ERROR,                //!< libdvdetect internal error
+    DVDERRORCODE_HTML_ERROR,                    //!< HTML error (see text for details)
+    DVDERRORCODE_XML_ERROR,                     //!< XML error (see text for details)
+    DVDERRORCODE_XML_WRONG_MODE,                //!< Wrong XML mode
+    DVDERRORCODE_XML_UNKNOWN_MODE,              //!< Unknown XML mode
+    DVDERRORCODE_XML_INCONSISTENT_DATA,         //!< Inconsistent data in XML (see text for details)
+    DVDERRORCODE_XML_RESPONSE,                  //!< Response (error text verbatim as send from server)
+    DVDERRORCODE_XML_UNSUPPORTED_VERSION        //!< XML protocol version not supported
 
 } DVDERRORCODE, *LPDVDERRORCODE;
 
 typedef const DVDERRORCODE* LPCDVDERRORCODE;
 
-class xmldoc;
+class xmldocbuilder;
+class xmldocparser;
 
 /*!
  *  @brief dvdparse class
@@ -84,7 +92,8 @@ class xmldoc;
  */
 class DLL_PUBLIC dvdparse : public dvdetectbase
 {
-    friend class xmldoc;
+    friend class xmldocbuilder;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
@@ -103,7 +112,7 @@ public:
 
     //! Parse a directory with DVD files and fill in the DVD structure.
     /*!
-     *  \param strPath std::string Path to files
+     *  \param strPath std::string Path to files. VIDEO_TS will be automatically added if necessesary.
      *  \return Success: 0
      *  \return Error: non zero
      */
@@ -122,13 +131,13 @@ public:
      *  \return Success: Pointer to dvdtitle class
      *  \return Fail: NULL if wTitleSetNo out of bounds.
      */
-    const dvdtitle *    getDvdTitle(uint16_t wTitleSetNo) const;
+    dvdtitle *          getDvdTitle(uint16_t wTitleSetNo) const;
 
     //! Get the number of title sets in this on this DVD.
     /*!
      *  \return Number of number of title sets (1...n)
      */
-    uint16_t            getTitleCount() const;
+    uint16_t            getTitleSetCount() const;
 
     //! Get a DVD file on this DVD.
     /*!
@@ -136,7 +145,7 @@ public:
      *  \return Success: Pointer to dvdfile class
      *  \return Fail: NULL if wFileNo out of bounds.
      */
-    const dvdfile *     getDvdFile(uint16_t wFileNo) const;
+    dvdfile *           getDvdFile(uint16_t wFileNo) const;
 
     //! Get the number of files in this on this DVD.
     /*!
@@ -153,25 +162,25 @@ public:
      *  \return Success: Pointer to dvdpgc class
      *  \return Fail: NULL if parameter out of bounds.
      */
-    const dvdpgc *      getDvdPgc(uint16_t wTitleSetNo, uint16_t wProgramChainNo) const;
+    dvdpgc *            getDvdPgc(uint16_t wTitleSetNo, uint16_t wProgramChainNo) const;
 
     //! Get a DVD program chain (PGC) on this DVD.
     /*!
      *  \param wTitleSetNo uint16_t Index of title set number (1...n)
      *  \param wProgramChainNo uint16_t Index of program chain (1...n)
-     *  \param wProgram uint16_t Index of program (1...n)
+     *  \param wProgramNo uint16_t Index of program (1...n)
      *  \return Success: Pointer to dvdprogram class
      *  \return Fail: NULL if parameter out of bounds.
      */
-    const dvdprogram *  getDvdProgram(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram) const;
+    dvdprogram *        getDvdProgram(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgramNo) const;
 
     //! Get a DVD program chain (PGC) on this DVD.
     /*!
      *  \param pDVDPTTVTS LPCDVDPTTVTS Pointer to DVDPTT class to get virtual chapter
      *  \return Success: Pointer to dvdprogram class
-     *  \return Fail: NULL if parameter out of bounds.
+     *  \return Fail: NULL if not found.
      */
-    const dvdprogram *  getDvdProgram(LPCDVDPTTVTS pDVDPTTVTS) const;
+    dvdprogram *        getDvdProgram(LPCDVDPTTVTS pDVDPTTVTS) const;
 
     //! Get a DVD part-of-program (PTT) for a video title set on this DVD.
     /*!
@@ -179,52 +188,60 @@ public:
      *  \return Success: Pointer to dvdpttvmg class
      *  \return Fail: NULL if wTitleSetNo out of bounds.
      */
-    const dvdpttvmg *   getDvdPttVmg(uint16_t wTitleSetNo) const;
+    dvdpttvmg *         getDvdPttVmg(uint16_t wTitleSetNo) const;
 
     //! Get the PTT count.
     /*!
      *  \return Number of PTTs
      */
-    uint16_t            getDvdPttCount() const;
+    uint16_t            getDvdPttVmgCount() const;
 
     //! Get a DVD PTT on this DVD.
     /*!
      *  \param wTitleSetNo uint16_t Index of title set number (1...n)
-     *  \param wProgramChainNo uint16_t Index of program chain (1...n)
-     *  \param wPtt uint16_t Index of part of title (1...n)
+     *  \param wPttNo uint16_t Index of part of title (1...n)
      *  \return Success: Pointer to dvdpttvts class
      *  \return Fail: NULL if parameter out of bounds.
      */
-    const dvdpttvts *   getDvdPttVts(uint16_t wTitleSetNo, uint16_t wPtt) const;
+    dvdpttvts *         getDvdPttVts(uint16_t wTitleSetNo, uint16_t wPttNo) const;
+
+    //! Get a DVD PTT on this DVD.
+    /*!
+     *  \param pDvdProgram dvdprogram * dvdprogram object to search for
+     *  \return Success: Pointer to dvdpttvts class
+     *  \return Fail: NULL if parameter out of bounds.
+     */
+    dvdpttvts *         getDvdPttVts(const dvdprogram *pDvdProgram) const;
 
     //! Get a DVD cell on this DVD.
     /*!
      *  \param wTitleSetNo uint16_t Index of title set number (1...n)
      *  \param wProgramChainNo uint16_t Index of program chain (1...n)
-     *  \param wProgram uint16_t Index of program (1...n)
-     *  \param wCell uint16_t Index of cell (1...n)
+     *  \param wProgramNo uint16_t Index of program (1...n)
+     *  \param wCellNo uint16_t Index of cell (1...n)
      *  \return Success: Pointer to dvdcell class
      *  \return Fail: NULL if parameter out of bounds.
      */
-    const dvdcell *     getDvdCell(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram, uint16_t wCell) const;
+    dvdcell *           getDvdCell(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgramNo, uint16_t wCellNo) const;
 
     //! Get a DVD unit on this DVD.
     /*!
      *  \param wTitleSetNo uint16_t Index of title set number (1...n)
      *  \param wProgramChainNo uint16_t Index of program chain (1...n)
-     *  \param wProgram uint16_t Index of program (1...n)
-     *  \param wCell uint16_t Index of cell (1...n)
-     *  \param wUnit uint16_t Index of unit (1...n)
+     *  \param wProgramNo uint16_t Index of program (1...n)
+     *  \param wCellNo uint16_t Index of cell (1...n)
+     *  \param wUnitNo uint16_t Index of unit (1...n)
      *  \return Success: Pointer to dvdunit class
      *  \return Fail: NULL if parameter out of bounds.
      */
-    const dvdunit *     getDvdUnit(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram, uint16_t wCell, uint16_t wUnit) const;
+    dvdunit *           getDvdUnit(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgramNo, uint16_t wCellNo, uint16_t wUnitNo) const;
 
     //! Get the size (in bytes) on this DVD.
-    //! This is not the combined size of all VOBS. This is calculated
-    //! by the size of all cells in this program, so this may (and will)
-    //! differ from the file size.
-    /*!
+    /*! Get the size (in bytes) on this DVD.
+     * This is not the combined size of all VOBS. This is calculated
+     * by the size of all cells in this program, so this may (and will)
+     * differ from the file size.
+     *
      *  \return Size (in bytes) on this DVD.
      */
     uint64_t            getSize() const;
@@ -236,10 +253,11 @@ public:
     uint64_t            getPlayTime() const;
 
     //! Get the virtual size (in bytes) on this DVD.
-    //! This is not the combined size of all VOBS. This is calculated
-    //! by the size of all cells in this program, so this may (and will)
-    //! differ from the file size.
-    /*!
+    /*! Get the virtual size (in bytes) on this DVD.
+     * This is not the combined size of all VOBS. This is calculated
+     * by the size of all cells in this program, so this may (and will)
+     * differ from the file size.
+     *
      *  \return Size (in bytes) on this DVD.
      */
     uint64_t            getVirtSize() const;
@@ -252,10 +270,10 @@ public:
 
     //! Gets the staring program chain (PGC)
     /*!
-     * NOT IMPLEMENTED YET
+     * Gets the staring program chain (PGC) TODO: NOT IMPLEMENTED YET. ALWAYS RETURNS NULL!
      *
      *  \return Success: Pointer to dvdpgc class
-     *  \return Fail: No start PGC defined.
+     *  \return Fail: NULL of no start PGC defined.
      */
     const dvdpgc *      getStartPgc() const;
 
@@ -263,7 +281,7 @@ public:
     /*!
      *  \return Error text.
      */
-    std::string         getErrorString() const;
+    const std::string & getErrorString() const;
 
     //! If an error occurred, this will return the code.
     /*!
@@ -275,19 +293,14 @@ public:
     /*!
      *  \return Current path including trailing separator.
      */
-    std::string         getPath() const;
+    const std::string & getPath() const;
 
-    //! Get the DVD title.
-    /*!
-     *  \return DVD title.
-     */
-    std::string         getTitle() const;
-
-    //! Enables/disables full scan. If full scan is disabled, no extra disk access takes place:
-    //! File sizes are calculated using information gathered from IFO files, all file dates are
-    //! set to the file date of the VIDEO_TS.IFO. This minimizes file operations (especially
-    //! useful if scanning files on webservers).
-    /*!
+    //! Enables/disables full scan.
+    /*! Enables/disables full scan. If full scan is disabled, no extra disk access takes place:
+     * File sizes are calculated using information gathered from IFO files, all file dates are
+     * set to the file date of the VIDEO_TS.IFO. This minimizes file operations (especially
+     * useful if scanning files on webservers).
+     *
      *  \param bFullScan bool true = enable full scan, false = disable full scan
      */
     void                setFullScan(bool bFullScan);
@@ -339,7 +352,7 @@ public:
      *
      *  \return album artist or empty string if unknown
      */
-    std::string         getAlbumArtist() const;
+    const std::string & getAlbumArtist() const;
 
     //! Set disk album artist
     /*!
@@ -355,7 +368,7 @@ public:
      *
      *  \return album or empty string if unknown
      */
-    std::string         getAlbum() const;
+    const std::string & getAlbum() const;
 
     //! Set disk album name
     /*!
@@ -371,7 +384,7 @@ public:
      *
      *  \return DVD genre or empty string if unknown
      */
-    std::string         getGenre() const;
+    const std::string & getGenre() const;
 
     //! Set the DVD genre
     /*!
@@ -381,17 +394,13 @@ public:
      */
     void                setGenre(const std::string & strGenre);
 
-    // TODO: Cover arts
-    //std::string         getCover() const;
-    //void                setCover();
-
     //! Get DVD movie cast
     /*!
      * If DVD was successfully looked up, return DVD movie cast
      *
      *  \return DVD movie cast or empty string if unknown
      */
-    std::string         getCast() const;
+    const std::string & getCast() const;
 
     //! Set the DVD movie cast
     /*!
@@ -407,7 +416,7 @@ public:
      *
      *  \return DVD movie crew or empty string if unknown
      */
-    std::string         getCrew() const;
+    const std::string & getCrew() const;
 
     //! Set the DVD movie crew
     /*!
@@ -423,7 +432,7 @@ public:
      *
      *  \return DVD movie director or empty string if unknown
      */
-    std::string         getDirector() const;
+    const std::string & getDirector() const;
 
     //! Set the DVD movie director
     /*!
@@ -439,7 +448,7 @@ public:
      *
      *  \return country of origin or empty string if unknown
      */
-    std::string         getCountry() const;
+    const std::string & getCountry() const;
 
     //! Set the country of origin
     /*!
@@ -456,7 +465,7 @@ public:
      *
      *  \return release date or empty string if unknown
      */
-    std::string         getReleaseDate() const;
+    const std::string & getReleaseDate() const;
 
     //! Set release date
     /*!
@@ -473,7 +482,7 @@ public:
      *
      *  \return Special feature list or empty string if unknown
      */
-    std::string         getSpecialFeatures() const;
+    const std::string & getSpecialFeatures() const;
 
     //! Set the special feature list
     /*!
@@ -489,7 +498,7 @@ public:
      *
      *  \return EAN/UPC or empty string if unknown
      */
-    std::string         getEAN_UPC() const;
+    const std::string & getEAN_UPC() const;
 
     //! Set EAN/UPC
     /*!
@@ -505,7 +514,7 @@ public:
      *
      *  \return storyline/synopsis or empty string if unknown
      */
-    std::string         getStoryline() const;
+    const std::string & getStoryline() const;
 
     //! Set storyline/synopsis
     /*!
@@ -521,7 +530,7 @@ public:
      *
      *  \return remarks or empty string if unknown
      */
-    std::string         getRemarks() const;
+    const std::string & getRemarks() const;
 
     //! Set remarks
     /*!
@@ -539,21 +548,13 @@ public:
      */
     int                 getRevision() const;
 
-    //! Set revision
-    /*!
-     * Sets the revision
-     *
-     *  \param strRevision const std::string & Revision
-     */
-    void                setRevision(int nRevision);
-
     //! Get submitter
     /*!
      * If DVD was successfully looked up, return submitter
      *
      *  \return submitter or empty string if unknown
      */
-    std::string         getSubmitter() const;
+    const std::string & getSubmitter() const;
 
     //! Set submitter
     /*!
@@ -569,7 +570,7 @@ public:
      *
      *  \return keywords or empty string if unknown
      */
-    std::string         getKeywords() const;
+    const std::string & getKeywords() const;
 
     //! Set keywords
     /*!
@@ -579,13 +580,45 @@ public:
      */
     void                setKeywords(const std::string & strKeywords);
 
+    //! Get protocol version
+    /*!
+     * If DVD was successfully looked up, return protocol version
+     *
+     *  \return Protocol version or 0 if unknown
+     */
+    int getProtocolVersion() const;
+
+    //! Get library version
+    /*!
+     * If DVD was successfully looked up, return library version
+     *
+     *  \return Library version or empty string if unknown
+     */
+    const std::string & getLibraryVersion() const;
+
+    //! Get library name
+    /*!
+     * If DVD was successfully looked up, return library name
+     *
+     *  \return Library name or empty string if unknown
+     */
+    const std::string & getLibraryName() const;
+
+    //! Client name
+    /*!
+     * If DVD was successfully looked up, return client name
+     *
+     *  \return Client name or empty string if unknown
+     */
+    const std::string & getClientName() const;
+
     //! Get submitter IP
     /*!
      * If DVD was successfully looked up, return submitter IP
      *
      *  \return submitter IP or empty string if unknown
      */
-    std::string         getSubmitterIP() const;
+    const std::string & getSubmitterIP() const;
 
     //! Get submission client
     /*!
@@ -593,7 +626,15 @@ public:
      *
      *  \return submission client or empty string if unknown
      */
-    std::string 		getClient() const;
+    const std::string & getClient() const;
+
+    //! Set the client program
+    /*!
+     * Sets the client program name
+     *
+     *  \param strClient const std::string & Client program name
+     */
+    void                setClient(const std::string & strClient);
 
     //! Get date of creation
     /*!
@@ -601,7 +642,7 @@ public:
      *
      *  \return Date of creation or empty string if unknown
      */
-    std::string         getDateCreated() const;
+    const std::string & getDateCreated() const;
 
     //! Get date of last change
     /*!
@@ -609,7 +650,7 @@ public:
      *
      *  \return date of last change or empty string if unknown/not changed
      */
-    std::string         getDateLastChanged() const;
+    const std::string & getDateLastChanged() const;
 
     //! Update album name etc.
     /*!
@@ -617,41 +658,41 @@ public:
      *
      *  \param dvdParse const dvdparse & Data received from server
      */
-    void                update(const dvdparse & dvdParse);
+    void                update(const dvdparse *dvdParse);
 
-    dvdparse& operator= (dvdparse const& rhs);
+    dvdparse& operator= (dvdparse const & source);
 
 protected:
 
     // Parse Video Manager
     void                getVmgPtt(const uint8_t* pData);
-    void                getVmgMain(const uint8_t *pData);
+    uint16_t            getVmgMain(const uint8_t *pData);
     void                getVmgAttributes(const uint8_t *pData);
     void                getVmgIfo();
     void                getVmgMenuVob();
     void                getVmgIfo(time_t ftime, uint64_t qwSizeOfVMGI);
     void                getVmgMenuVob(time_t ftime, uint32_t dwMenuVobSize);
-    bool                parseVideoManager();
+    uint16_t            parseVideoManager();
 
     // Parse Title Set
-    void                addUnit(const uint8_t* pData, dvdcell & dvdCell);
-    void                addCell(const uint8_t* pData, dvdprogram & dvdProgram, uint16_t wCell, uint16_t wPGCCellPlaybackOffset, uint32_t dwOffsetVTS_PGC, uint16_t wCellPositionOffset);
-    void                addPrograms(const uint8_t* pData, dvdpgc & dvdPgc, uint16_t wTitleSetNo, uint16_t wProgramChainNo);
-    void                getVtsAttributes(const uint8_t* pData, dvdtitle & dvdTitle);
-    void                getVtsIfo(dvdtitle & dvdTitle, uint16_t wTitleSetNo);
-    void                getVtsMenuVob(dvdtitle & dvdTitle, uint16_t wTitleSetNo);
-    void                getVtsVob(dvdtitle & dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo);
-    void                getVtsIfo(dvdtitle & dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI, uint16_t wTitleSetNo);
-    void                getVtsMenuVob(dvdtitle & dvdTitle, time_t ftime, uint32_t dwMenuVobSize, uint16_t wTitleSetNo);
-    void                getVtsVob(dvdtitle & dvdTitle, time_t ftime, uint32_t dwSize, uint16_t wVobNo, uint16_t wTitleSetNo);
+    void                addUnit(const uint8_t* pData, dvdcell *dvdCell);
+    void                addCell(const uint8_t* pData, dvdprogram * dvdProgram, uint16_t wCellNo, uint16_t wPGCCellPlaybackOffset, uint32_t dwOffsetVTS_PGC, uint16_t wCellPositionOffset);
+    void                addPrograms(const uint8_t* pData, dvdpgc * dvdPgc, uint16_t wTitleSetNo, uint16_t wProgramChainNo);
+    void                getVtsAttributes(const uint8_t* pData, dvdtitle *dvdTitle);
+    void                getVtsIfo(dvdtitle * dvdTitle, uint16_t wTitleSetNo);
+    void                getVtsMenuVob(dvdtitle * dvdTitle, uint16_t wTitleSetNo);
+    void                getVtsVob(dvdtitle * dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo);
+    void                getVtsIfo(dvdtitle * dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI, uint16_t wTitleSetNo);
+    void                getVtsMenuVob(dvdtitle * dvdTitle, time_t ftime, uint32_t dwMenuVobSize, uint16_t wTitleSetNo);
+    void                getVtsVob(dvdtitle * dvdTitle, time_t ftime, uint32_t dwSize, uint16_t wVobNo, uint16_t wTitleSetNo);
     bool                parseTitleSet(uint16_t wTitleSetNo);
 
     // Get Video/Audio/Subpicture details
-    void                getVideoAttributes(DVDVIDEOATTRIBUTES & videoAttributes, const uint8_t byVideoAttributes[2]);
-    void                getAudioAttributes(DVDAUDIOATTRIBUTESMENU & audioAttributes, const uint8_t byAudioAttributes[8], uint16_t wAudioStream);
-    void                getAudioAttributes(DVDAUDIOATTRIBUTESTITLE & audioAttributes, const uint8_t byAudioAttributes[8], uint16_t wAudioStream);
-    void                getSubpictureAttributes(DVDSUBPICTUREATTRIBUTES & subpictureAttributes, const uint8_t bySubpictureAttributes[6], uint16_t wSubpictureStream);
-    void                getCoding(int nCoding, DVDAUDIOATTRIBUTESMENU& audioAttributes, uint16_t wAudioStream);
+    void                getVideoAttributes(DVDVIDEOSTREAM & videoAttributes, const uint8_t byVideoAttributes[2]);
+    void                getAudioAttributes(DVDAUDIOSTREAM & audioAttributes, const uint8_t byAudioAttributes[8], uint16_t wAudioStreamNo);
+    void                getAudioAttributesEx(DVDAUDIOSTREAMEX & audioAttributes, const uint8_t byAudioAttributes[8]);
+    void                getSubpictureAttributes(DVDSUBPICSTREAM & subpictureAttributes, const uint8_t bySubpictureAttributes[6], uint16_t wSubpicStreamNo);
+    void                getCoding(int nCoding, DVDAUDIOSTREAM& audioAttributes, uint16_t wAudioStreamNo);
 
     bool				locateDVD();
 
@@ -660,7 +701,6 @@ protected:
      * IFO files are never too large, so they can always be read into memory as a whole.
      *
      * \param strFilePath const string & Full filename including path
-     * \param strErrorString string & If an error occurs, contains the error string
      * \param ftime time_t & If file successfully read, contains file creation time
      * \return Success: Pointer to memory area with file contents. Call delete when done with it.
      * \return Fail: NULL
@@ -672,20 +712,25 @@ protected:
 
     // Debug: check presence of file
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
-    void                checkFile(const dvdfile & dvdFile);
+    void                checkFile(const dvdfile * dvdFile);
 #endif
 
     void                setSubmitterIP(const std::string & strSubmitterIP);
-    void                setClient(const std::string & strClient);
     void                setDateCreated(const std::string & strDateCreated);
     void                setDateLastChanged(const std::string & strDateLastChanged);
+    void                setHash(const std::string & strHash);
+    void                setRevision(int nRevision);
+    void 				setProtocolVersion(int nProtocolVersion);
+    void 				setLibraryVersion(const std::string & strLibraryVersion);
+    void 				setLibraryName(const std::string & strLibraryName);
+    void 				setClientName(const std::string & strClientName);
 
 protected:
     std::string         m_strPath;					//!< Path to DVD (including trailing separator)
     DVDVMGM             m_DVDVMGM;					//!< DVDVMGM structure (DVD part of title)
-    dvdtitlelst         m_dvdTitleLst;				//!< list of DVD program chains (PGC) in this title set
-    dvdpttvmglst        m_dvdPttVmgLst;             //!< PTT list for video manager
-    dvdfilelst          m_dvdFileLst;				//!< list of DVD files in this title set
+    dvdtitlelst         m_lstDvdTitle;				//!< list of DVD program chains (PGC) in this title set
+    dvdpttvmglst        m_lstDvdPttVmg;             //!< PTT list for video manager
+    dvdfilelst          m_lstDvdFile;				//!< list of DVD files in this video manager
     std::string         m_strErrorString;			//!< Last error as clear text (English)
     DVDERRORCODE        m_eErrorCode;               //!< Error code
     bool                m_bFullScan;				//!< If true, perform full scan
@@ -693,6 +738,7 @@ protected:
     bool                m_bIsLoaded;                //!< true if DVD successfully loaded
 
     // database data
+    std::string         m_strHash;                  //!< md5 hash
     std::string         m_strAlbumArtist;           //!< Album artist
     std::string         m_strAlbum;                 //!< Album name
     std::string         m_strGenre;                 //!< DVD genre
@@ -712,8 +758,12 @@ protected:
     std::string         m_strDateCreated;           //!< Date of data set creation
     std::string         m_strDateLastChanged;       //!< Data data set was last changed
     std::string         m_strKeywords;              //!< Keywords
+    int                 m_nProtocolVersion;              //!< For received queries: XML version
+    std::string         m_strLibraryVersion;        //!< For received queries: remote library version
+    std::string         m_strLibraryName;           //!< For received queries: remote library name
+    std::string         m_strClientName;            //!< For received queries: remote client
 };
 
-typedef std::vector<dvdparse> dvdparselst;          //!< shortcut for a list of dvdfiles
+typedef vector_ptr<dvdparse> dvdparselst;           //!< shortcut for a list of dvdfiles
 
 #endif // DVDPARSE_H

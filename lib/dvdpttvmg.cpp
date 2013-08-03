@@ -36,15 +36,21 @@ dvdpttvmg::dvdpttvmg(dvdparse *pDvdParse)
 
 dvdpttvmg::~dvdpttvmg()
 {
+    while (m_lstDvdPttVts.size())
+    {
+        delete m_lstDvdPttVts.back();
+        m_lstDvdPttVts.pop_back();
+    }
 }
 
-dvdpttvmg& dvdpttvmg::operator= (dvdpttvmg const& rhs)
+dvdpttvmg& dvdpttvmg::operator= (dvdpttvmg const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDPTTVMG, &rhs.m_DVDPTTVMG, sizeof(DVDPTTVMG));
-        m_pDvdParse     = rhs.m_pDvdParse;
-        m_dvdPttVtsLst  = rhs.m_dvdPttVtsLst;
+        memcpy(&m_DVDPTTVMG, &source.m_DVDPTTVMG, sizeof(DVDPTTVMG));
+        m_pDvdParse     = source.m_pDvdParse;
+        m_lstDvdPttVts  = source.m_lstDvdPttVts;
+        m_strTitle      = source.m_strTitle;
     }
     return *this;
 }
@@ -54,38 +60,38 @@ LPCDVDPTTVMG dvdpttvmg::getDVDPTTVMG() const
     return &m_DVDPTTVMG;
 }
 
-const dvdtitle * dvdpttvmg::getDvdTitle() const
+dvdtitle * dvdpttvmg::getDvdTitle() const
 {
     if (m_pDvdParse == NULL)
     {
         return NULL;
     }
 
-    return m_pDvdParse->getDvdTitle(m_DVDPTTVMG.m_byVideoTitleSet);
+    return m_pDvdParse->getDvdTitle(m_DVDPTTVMG.m_wVideoTitleSetNo);
 }
 
-const dvdpttvts * dvdpttvmg::getDvdPttVts(uint16_t wPtt) const
+dvdpttvts * dvdpttvmg::getDvdPttVts(uint16_t wPttNo) const
 {
-    if (!wPtt || wPtt > m_dvdPttVtsLst.size())
+    if (!wPttNo || wPttNo > m_lstDvdPttVts.size())
     {
         return NULL;
     }
 
-    return &m_dvdPttVtsLst[wPtt - 1];
+    return m_lstDvdPttVts[wPttNo - 1];
 }
 
-uint16_t dvdpttvmg::getPttCount() const
+uint16_t dvdpttvmg::getPttVtsCount() const
 {
-    return m_dvdPttVtsLst.size();
+    return m_lstDvdPttVts.size();
 }
 
 uint64_t dvdpttvmg::getSize() const
 {
     uint64_t size = 0;
 
-    for (uint16_t wPttVmgNo = 1; wPttVmgNo <= getPttCount(); wPttVmgNo++)
+    for (uint16_t wPttVmgNo = 1; wPttVmgNo <= getPttVtsCount(); wPttVmgNo++)
     {
-        size += m_dvdPttVtsLst[wPttVmgNo - 1].getSize();
+        size += m_lstDvdPttVts[wPttVmgNo - 1]->getSize();
     }
 
     return size;
@@ -95,9 +101,9 @@ uint64_t dvdpttvmg::getPlayTime() const
 {
     uint64_t qwPlayTime = 0;
 
-    for (uint16_t wPttVmgNo = 1; wPttVmgNo <= getPttCount(); wPttVmgNo++)
+    for (uint16_t wPttVmgNo = 1; wPttVmgNo <= getPttVtsCount(); wPttVmgNo++)
     {
-        qwPlayTime += m_dvdPttVtsLst[wPttVmgNo - 1].getPlayTime();
+        qwPlayTime += m_lstDvdPttVts[wPttVmgNo - 1]->getPlayTime();
     }
 
     return qwPlayTime;

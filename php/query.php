@@ -18,12 +18,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*! \file query.php
+/* \file query.php
  *
  *  \brief Process client query
  */
 
     include_once 'inc/functions.inc.php';
+    include_once 'inc/functions.buildxml.inc.php';
+    include_once 'inc/functions.query.inc.php';
 
     //$path_parts = pathinfo($_SERVER['PHP_SELF']);
     //$strLangId = SaveSession("strLangId");
@@ -40,158 +42,46 @@
     $Result = XMLRESULT_SUCCESS;
     $ResponseText = "Operation successful";
 
-    $XmlMode = XMLMODE_RESPONSE;
+    $XmlMode = XMLMODE_QUERY_RESPONSE;
     $mysqli = null;
 
     try
     {
-    	libxml_use_internal_errors(true);
-    	$xml = simplexml_load_string($xmlstr);
-	
-        // create a dom document with encoding utf8
-        $domtree = new DOMDocument('1.0', 'UTF-8');
+        createXmlDocument($domtree, $xmlRoot, $XmlMode);
 
-        // create the root element of the xml tree
-        $xmlRoot = $domtree->createElement("xml");
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($xmlstr);
 
-        $comment = $domtree->createComment("libdvdetect data exchange");
-        $xmlRoot->appendChild($comment);
-
-        // append it to the document created
-        $xmlRoot = $domtree->appendChild($xmlRoot);
-
-        $xmlRoot->setAttribute("XmlMode", $XmlMode);
-        $xmlRoot->setAttribute("XmlVersion", XMLVERSION);
-        $xmlRoot->setAttribute("LibraryVersion", LIBRARYVERSION);
-        $xmlRoot->setAttribute("LibraryName", LIBRARYNAME);
-        $xmlRoot->setAttribute("ClientName", CLIENTNAME);
-
-        $responseTag = $domtree->createElement("response");
-        $xmlRoot->appendChild($responseTag);
-
-		if (!$xml)
+        if (!$xml)
         {
-            $Result = XMLRESULT_XML_ERROR;
-            $ResponseText = get_xml_error($xmlstr);
-            throw new Exception($ResponseText);
+            $ResponseText = "XML Error: " . get_xml_error($xmlstr);
+            throw new Exception($ResponseText, XMLRESULT_XML_ERROR);
         }
 
-    	$dvdTag = $xml->DVD[0];
-    	$attributes = $dvdTag->attributes();
-    	$Hash = $attributes["Hash"];
+        $attributes = $xml->attributes();
+        $XmlMode            = $attributes["XmlMode"];
+        $ProtocolVersion    = $attributes["ProtocolVersion"];
+        $LibraryVersion     = $attributes["LibraryVersion"];
+        $LibraryName        = $attributes["LibraryName"];
+        $ClientName         = $attributes["ClientName"];
 
-    	$mysqli = connect_server();
+        // Use requested version
+        $xmlRoot->setAttribute("ProtocolVersion", $ProtocolVersion);
 
-    	// Check connection
+        checkVersion($ProtocolVersion, LIBDVDETECT_PROTOCOL_VERSION);
+
+        $mysqli = connect_server();
+
+        // Check connection
         if (!$mysqli)
         {
-            $Result = XMLRESULT_SQL_ERROR;
-            $ResponseText = mysqli_connect_error();
-            throw new Exception($ResponseText);
+            $ResponseText = "Cannot connect to database.\nSQL Error: " . mysqli_connect_error();
+            throw new Exception($ResponseText, XMLRESULT_SQL_ERROR);
         }
 
-        $strSQL = "SELECT idDvd, Album, AlbumArtist, Revision, RowCreationDate, Genre, Cast, Crew, Director, Country, ReleaseDate, SpecialFeatures, EAN_UPC, Storyline, Submitter, SubmitterIP, Client, Remarks, RowLastChanged, Keywords FROM dvd ".
-                  "WHERE Hash = '" . $Hash . "' AND Active = 1 " .
-                  "ORDER BY Revision DESC;";
+        query_dvd($mysqli, $xml, $Hash, $rsDVDVMGM);
 
-        $rsDvd = query_server($mysqli, $strSQL);
-
-        $found = FALSE;
-
-        while (is_array($Cols = $rsDvd->fetch_row()))
-        {
-            $found = TRUE;
-
-            $idDvd              = $Cols[0];
-            $Album              = $Cols[1];
-            $AlbumArtist        = $Cols[2];
-            $Revision           = $Cols[3];
-            $RowCreationDate    = $Cols[4];
-            $Genre              = $Cols[5];
-            $Cast               = $Cols[6];
-            $Crew               = $Cols[7];
-            $Director           = $Cols[8];
-            $Country            = $Cols[9];
-            $ReleaseDate        = $Cols[10];
-            $SpecialFeatures    = $Cols[11];
-            $EAN_UPC            = $Cols[12];
-            $Storyline          = $Cols[13];
-            $Submitter          = $Cols[14];
-            $SubmitterIP        = $Cols[15];
-            $Client             = $Cols[16];
-            $Remarks            = $Cols[17];
-            $RowLastChanged     = $Cols[18];
-            $Keywords           = $Cols[19];
-
-            $dvdTag = $domtree->createElement("DVD");
-
-            $dvdTag->setAttribute("Hash", $Hash);
-            safeSetAttribute($dvdTag, "Album", $Album);
-            safeSetAttribute($dvdTag, "AlbumArtist", $AlbumArtist);
-            safeSetAttribute($dvdTag, "Revision", $Revision);
-            safeSetAttribute($dvdTag, "DateCreated", $RowCreationDate);
-            safeSetAttribute($dvdTag, "Genre", $Genre);
-            safeSetAttribute($dvdTag, "Cast", $Cast);
-            safeSetAttribute($dvdTag, "Crew", $Crew);
-            safeSetAttribute($dvdTag, "Director", $Director);
-            safeSetAttribute($dvdTag, "Country", $Country);
-            safeSetAttribute($dvdTag, "ReleaseDate", $ReleaseDate);
-            safeSetAttribute($dvdTag, "DateLastChanged", $RowLastChanged);
-            safeSetAttribute($dvdTag, "SpecialFeatures", $SpecialFeatures);
-            safeSetAttribute($dvdTag, "EAN_UPC", $EAN_UPC);
-            safeSetAttribute($dvdTag, "Storyline", $Storyline);
-            safeSetAttribute($dvdTag, "Submitter", $Submitter);
-            safeSetAttribute($dvdTag, "SubmitterIP", $SubmitterIP);
-            safeSetAttribute($dvdTag, "Client", $Client);
-            safeSetAttribute($dvdTag, "Remarks", $Remarks);
-            safeSetAttribute($dvdTag, "Keywords", $Keywords);
-
-            $dvdTag = $xmlRoot->appendChild($dvdTag);
-
-            $rsTitle = query_server($mysqli, "SELECT idTitleSet, TitleSetNo, Angles, Title FROM titleset WHERE DvdKey = " . $idDvd);
-
-            while (is_array($Cols = $rsTitle->fetch_row()))
-            {
-                $idTitleSet         = $Cols[0];
-                $TitleSetNo         = $Cols[1];
-                $Angles             = $Cols[2];
-                $Title              = $Cols[3];
-
-                $titleTag = $domtree->createElement("title");
-                $titleTag->setAttribute("TitleSetNo", $TitleSetNo);
-                $titleTag->setAttribute("Angles", $Angles);
-                safeSetAttribute($titleTag, "Title", $Title);
-                $titleTag = $dvdTag->appendChild($titleTag);
-
-                $rsChapter = query_server($mysqli, "SELECT idChapter, Number, PlayTime, Artist, Title FROM chapter WHERE TitleSetKey = " . $idTitleSet);
-
-                while (is_array($Cols = $rsChapter->fetch_row()))
-                {
-                    $Number     = $Cols[1];
-                    $PlayTime   = $Cols[2];
-                    $Artist     = $Cols[3];
-                    $Title      = $Cols[4];
-
-                    $chapterTag = $domtree->createElement("chapter");
-                    $chapterTag->setAttribute("Number", $Number);
-                    $chapterTag->setAttribute("PlayTime", $PlayTime);
-                    safeSetAttribute($chapterTag, "Artist", $Artist);
-                    safeSetAttribute($chapterTag, "Title", $Title);
-                    //$chapterTag->appendChild($domtree->createElement('Artist', $Artist));
-                    //$chapterTag->appendChild($domtree->createElement('Title', $Title));
-                    $chapterTag = $titleTag->appendChild($chapterTag);
-                }
-                // free result set
-                $rsChapter->close();
-                $rsChapter = null;
-            }
-
-            // free result set
-            $rsTitle->close();
-            $rsTitle = null;
-
-            break; // Only one DVD for now
-        }
+        $found = buildResults($domtree, $mysqli, $xmlRoot, $Hash, $rsDVDVMGM, $ProtocolVersion);
 
         if (!$found)
         {
@@ -205,22 +95,30 @@
         }
 
         // free result set
-        $rsDvd->close();
-        $rsDvd = null;
+        $rsDVDVMGM->close();
+        $rsDVDVMGM = null;
     }
     catch (Exception $e)
     {
+        $Result = $e->getCode();
+        $ResponseText = $e->getMessage();
     }
 
     disconnect_server($mysqli);
     $mysqli = null;
 
+    // Create response
+    $responseTag = $domtree->createElement("response");
     $responseTag->setAttribute("Result", $Result);
     $responseTag->appendChild($domtree->createElement('ResponseText', $ResponseText));
+    $xmlRoot->appendChild($responseTag);
     $responseTag = null;
 
     // Send the xml document out
-    header('Content-type: text/xml');
-    echo $domtree->saveXML();
+    header('Content-type: text/xml; charset=utf-8');
+    $xml = $domtree->saveXML();
+    header('Content-Length: ' . strlen($xml));
+
+    print($xml);
     $domtree = null;
 ?>

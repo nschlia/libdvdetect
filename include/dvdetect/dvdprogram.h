@@ -40,6 +40,8 @@
 class DLL_PUBLIC dvdprogram : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldocbuilder;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
@@ -62,11 +64,11 @@ public:
 
     //! Get a DVD cell in this program.
     /*!
-     *  \param wCell uint16_t Index of cell (1...n)
+     *  \param wCellNo uint16_t Index of cell (1...n)
      *  \return Success: Pointer to dvdcell class
-     *  \return Fail: NULL if wCell out of bounds.
+     *  \return Fail: NULL if wCellNo out of bounds.
      */
-    const dvdcell *     getDvdCell(uint16_t wCell) const;
+    dvdcell *           getDvdCell(uint16_t wCellNo) const;
 
     //! Get the number of cells in this program.
     /*!
@@ -98,13 +100,13 @@ public:
      */
     uint32_t            getEndSector() const;
 
-    dvdprogram& operator= (dvdprogram const& rhs);
+    dvdprogram& operator= (dvdprogram const & source);
 
 protected:
     DVDPROGRAM          m_DVDPROGRAM;				//!< DVDPROGRAM structure (DVD program)
-    dvdcelllst          m_dvdCellLst;				//!< list of DVD cells of this program
+    dvdcelllst          m_lstDvdCell;				//!< list of DVD cells of this program
 };
 
-typedef std::vector<dvdprogram> dvdprogramlst;		//!< shortcut for a list of dvdprograms
+typedef vector_ptr<dvdprogram> dvdprogramlst;		//!< shortcut for a list of dvdprograms
 
 #endif // DVDPROGRAM_H

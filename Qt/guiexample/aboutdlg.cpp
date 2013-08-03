@@ -33,7 +33,7 @@ aboutdlg::aboutdlg(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->textEditAbout->setText(tr(
-                                   "Qt GUI Example for <b>%0</b><br /><br />"
+                                   "Qt GUI Example for <b>%0</b> Qt %1<br /><br />"
                                    "This program demonstrates how to send query, search requests and submit data to the dvdetect server.<br />"
                                    "<br />"
                                    "Copyright (C) 2013 Norbert Schlia<br />"
@@ -52,7 +52,7 @@ aboutdlg::aboutdlg(QWidget *parent) :
                                    "<br />"
                                    "You should have received a copy of the GNU General Public License "
                                    "along with this program.  If not, see <a href=\"http://www.gnu.org/licenses/\">http://www.gnu.org/licenses/</a>."
-                                   ).arg(PACKAGE_STRING));
+                                   ).arg(PACKAGE_STRING).arg(QT_VERSION_STR));
 }
 
 aboutdlg::~aboutdlg()

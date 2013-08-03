@@ -35,57 +35,57 @@ typedef struct
 {
 #pragma pack(1)
 /*@{*/
-    uint8_t     m_header[12];                               //!< Offset 0x000 Size 12	"DVDVIDEO-VTS"
-    uint32_t	m_dwLastSectorVTS;                          //!< Offset 0x00C Size 4	last sector of VMG set (last sector of BUP)
-    uint8_t     m_byPadding01[12];                          //!< Offset 0x010 Size 12
-    uint32_t	m_dwLastSectorVMGI;                      	//!< Offset 0x01C Size 4	last sector of IFO
-    uint16_t	m_wVersionNumber;                       	//!< Offset 0x020 Size 2	Version number
-    uint8_t     m_byVTSCategory01;                          //!< Offset 0x022 Size 1	VTS category   0 = unspecified, 1 = Karaoke
-    uint8_t     m_byVTSCategory02;                          //!< Offset 0x023 Size 1	VTS category
-    uint8_t     m_byVTSCategory03;                          //!< Offset 0x024 Size 1	VTS category
-    uint8_t     m_byVTSCategory04;                          //!< Offset 0x025 Size 1	VTS category
-    int8_t      m_byPadding02[2];                           //!< Offset 0x026 Size 2
-    int8_t      m_byPadding03[2];                           //!< Offset 0x028 Size 2
-    int8_t      m_byPadding04;                              //!< Offset 0x02A Size 1
-    uint8_t     m_byPadding05[19];                          //!< Offset 0x02B Size 19
-    int8_t      m_byPadding06[2];                           //!< Offset 0x03E Size 2
-    int8_t      m_byPadding07[32];                          //!< Offset 0x040 Size 32
-    int8_t      m_byPadding08[8];                           //!< Offset 0x060 Size 8
-    uint8_t     m_byPadding09[24];                          //!< Offset 0x068 Size 24
-    uint32_t	m_dwEndVTS_MAT;                             //!< Offset 0x080 Size 4	end byte address of VTSI_MAT
-    int8_t      m_byPadding10[4];                           //!< Offset 0x084 Size 4
-    uint8_t     m_byPadding11[56];                          //!< Offset 0x088 Size 56
-    uint32_t	m_dwSectorPointerVTSM_VOBS;                 //!< Offset 0x0C0 Size 4	sector pointer to VTSM_VOBS (Menu VOB)
-    uint32_t	m_dwSectorPointerVTST_VOBS;               	//!< Offset 0x0C4 Size 4	sector pointer to VTST_VOBS (Title VOB)
-    uint32_t	m_dwSectorPointerVTS_PTT_SRPT;        		//!< Offset 0x0C8 Size 4	sector pointer to VTS_PTT_SRPT (table of Titles and Chapters)
-    uint32_t	m_dwSectorPointerVTS_PGCI_UT;               //!< Offset 0x0CC Size 4	sector pointer to VTS_PGCI_UT (Title Program Chain table)
-    uint32_t	m_dwSectorPointerVTSM_PGCI_UT;          	//!< Offset 0x0D0 Size 4    Size sector pointer to VTSM_PGCI_UT (Menu Program Chain table)
-    uint32_t	m_dwSectorPointerVTS_TMAPT;                 //!< Offset 0x0D4 Size 4    Size sector pointer to VTS_TMAPT (time map)
-    uint32_t	m_dwSectorPointerVTSM_C_ADT;                //!< Offset 0x0D8 Size 4    Size sector pointer to VTSM_C_ADT (menu cell address table)
-    uint32_t	m_dwSectorPointerVTSM_VOBU_ADMAP;       	//!< Offset 0x0DC Size 4    Size sector pointer to VTSM_VOBU_ADMAP (menu VOBU address map)
-    uint32_t	m_dwSectorPointerVTS_C_ADT;                 //!< Offset 0x0E0 Size 4    Size sector pointer to VTS_C_ADT (title set cell address table)
-    uint32_t	m_dwSectorPointerVTS_VOBU_ADMAP;            //!< Offset 0x0E4 Size 4    Size sector pointer to VTS_VOBU_ADMAP (title set VOBU address map)
-    uint8_t     m_byPadding12[24];                          //!< Offset 0x0E8 Size 24
+    uint8_t     m_header[12];                                       //!< Offset 0x000 Size 12	"DVDVIDEO-VTS"
+    uint32_t	m_dwLastSectorVTS;                                  //!< Offset 0x00C Size 4	last sector of VMG set (last sector of BUP)
+    uint8_t     m_byPadding01[12];                                  //!< Offset 0x010 Size 12
+    uint32_t	m_dwLastSectorVMGI;                                 //!< Offset 0x01C Size 4	last sector of IFO
+    uint16_t	m_wVersionNumber;                                   //!< Offset 0x020 Size 2	Version number
+    uint8_t     m_byVTSCategory01;                                  //!< Offset 0x022 Size 1	VTS category   0 = unspecified, 1 = Karaoke
+    uint8_t     m_byVTSCategory02;                                  //!< Offset 0x023 Size 1	VTS category
+    uint8_t     m_byVTSCategory03;                                  //!< Offset 0x024 Size 1	VTS category
+    uint8_t     m_byVTSCategory04;                                  //!< Offset 0x025 Size 1	VTS category
+    int8_t      m_byPadding02[2];                                   //!< Offset 0x026 Size 2
+    int8_t      m_byPadding03[2];                                   //!< Offset 0x028 Size 2
+    int8_t      m_byPadding04;                                      //!< Offset 0x02A Size 1
+    uint8_t     m_byPadding05[19];                                  //!< Offset 0x02B Size 19
+    int8_t      m_byPadding06[2];                                   //!< Offset 0x03E Size 2
+    int8_t      m_byPadding07[32];                                  //!< Offset 0x040 Size 32
+    int8_t      m_byPadding08[8];                                   //!< Offset 0x060 Size 8
+    uint8_t     m_byPadding09[24];                                  //!< Offset 0x068 Size 24
+    uint32_t	m_dwEndVTS_MAT;                                     //!< Offset 0x080 Size 4	end byte address of VTSI_MAT
+    int8_t      m_byPadding10[4];                                   //!< Offset 0x084 Size 4
+    uint8_t     m_byPadding11[56];                                  //!< Offset 0x088 Size 56
+    uint32_t	m_dwSectorPointerVTSM_VOBS;                         //!< Offset 0x0C0 Size 4	sector pointer to VTSM_VOBS (Menu VOB)
+    uint32_t	m_dwSectorPointerVTST_VOBS;                         //!< Offset 0x0C4 Size 4	sector pointer to VTST_VOBS (Title VOB)
+    uint32_t	m_dwSectorPointerVTS_PTT_SRPT;                      //!< Offset 0x0C8 Size 4	sector pointer to VTS_PTT_SRPT (table of Titles and Chapters)
+    uint32_t	m_dwSectorPointerVTS_PGCI_UT;                       //!< Offset 0x0CC Size 4	sector pointer to VTS_PGCI_UT (Title Program Chain table)
+    uint32_t	m_dwSectorPointerVTSM_PGCI_UT;                      //!< Offset 0x0D0 Size 4    Size sector pointer to VTSM_PGCI_UT (Menu Program Chain table)
+    uint32_t	m_dwSectorPointerVTS_TMAPT;                         //!< Offset 0x0D4 Size 4    Size sector pointer to VTS_TMAPT (time map)
+    uint32_t	m_dwSectorPointerVTSM_C_ADT;                        //!< Offset 0x0D8 Size 4    Size sector pointer to VTSM_C_ADT (menu cell address table)
+    uint32_t	m_dwSectorPointerVTSM_VOBU_ADMAP;                   //!< Offset 0x0DC Size 4    Size sector pointer to VTSM_VOBU_ADMAP (menu VOBU address map)
+    uint32_t	m_dwSectorPointerVTS_C_ADT;                         //!< Offset 0x0E0 Size 4    Size sector pointer to VTS_C_ADT (title set cell address table)
+    uint32_t	m_dwSectorPointerVTS_VOBU_ADMAP;                    //!< Offset 0x0E4 Size 4    Size sector pointer to VTS_VOBU_ADMAP (title set VOBU address map)
+    uint8_t     m_byPadding12[24];                                  //!< Offset 0x0E8 Size 24
 
-    uint8_t     m_byVideoAttributesOfVTSM_VOBS[2];        	//!< Offset 0x100 Size 2	video attributes of VTSM_VOBS
-    uint16_t    m_wNumberOfAudioStreamsInVTSM_VOBS;         //!< Offset 0x102 Size 2	number of audio streams in VTSM_VOBS (0 or 1)
-    uint8_t     m_byAudioAttributesOfVTSM_VOBS[8];          //!< Offset 0x104 Size 8	audio attributes of VTSM_VOBS
-    uint8_t     m_byPadding13[56];                          //!< Offset 0x10C Size 56
-    uint8_t     m_byPadding14[16];                          //!< Offset 0x144 Size 16
-    uint16_t	m_wNumberOfSubpictureStreamsInVTSM_VOBS;    //!< Offset 0x154 Size 2	number of subpicture streams in VTSM_VOBS (0 or 1)
-    uint8_t     m_bySubpictureAttributesOfVTSM_VOBS[6];     //!< Offset 0x156 Size 6	subpicture attributes of VTSM_VOBS
-    uint8_t     m_byPadding15[164];                         //!< Offset 0x15C Size 164
+    uint8_t     m_byVideoStreamVTSM[2];                             //!< Offset 0x100 Size 2	video attributes of VTSM_VOBS
+    uint16_t    m_wAudioStreamCountVTSM;                            //!< Offset 0x102 Size 2	number of audio streams in VTSM_VOBS (0 or 1)
+    uint8_t     m_byAudioStreamVTSM[8];                             //!< Offset 0x104 Size 8	audio attributes of VTSM_VOBS
+    uint8_t     m_byPadding13[56];                                  //!< Offset 0x10C Size 56
+    uint8_t     m_byPadding14[16];                                  //!< Offset 0x144 Size 16
+    uint16_t	m_wSubpicStreamCountVTSM;                           //!< Offset 0x154 Size 2	number of subpicture streams in VTSM_VOBS (0 or 1)
+    uint8_t     m_bySubpicStreamVTSM_VOBS[6];                       //!< Offset 0x156 Size 6	subpicture attributes of VTSM_VOBS
+    uint8_t     m_byPadding15[164];                                 //!< Offset 0x15C Size 164
 
-    uint8_t     m_byVideoAttributesOfVTS_VOBS[2];         	//!< Offset 0x200 Size 2	video attributes of VTS_VOBS
-    uint16_t    m_wNumberOfAudioStreamsInVTS_VOBS;      	//!< Offset 0x202 Size 2	number of audio streams in VTS_VOBS (0...8)
-    uint8_t     m_byAudioAttributesOfVTS_VOBS[8][8];        //!< Offset 0x204 Size 8*8	audio attributes of VTS_VOBS
-    uint8_t     m_byPadding16[16];                          //!< Offset 0x244 Size 16
-    uint16_t    m_wNumberOfSubpictureStreamsInVTS_VOBS;     //!< Offset 0x254 Size 2	number of subpicture streams in VTS_VOBS
-    uint8_t     m_bySubpictureAttributesOfVTS_VOBS[32][6];  //!< Offset 0x256 Size 32*6	subpicture attributes of VTS_VOBS (0...32)
-    uint8_t     m_byPadding17[2];                           //!< Offset 0x316 Size 2
+    uint8_t     m_byVideoStreamVTS_VOBS[2];                         //!< Offset 0x200 Size 2	video attributes of VTS_VOBS
+    uint16_t    m_wAudioStreamCountVTS;                             //!< Offset 0x202 Size 2	number of audio streams in VTS_VOBS (0...8)
+    uint8_t     m_byAudioStreamsVTS_VOBS[DVDVTS_MAXAUDIOSTREAM][8]; //!< Offset 0x204 Size 8*8	audio attributes of VTS_VOBS
+    uint8_t     m_byPadding16[16];                                  //!< Offset 0x244 Size 16
+    uint16_t    m_wSubpicStreamCountVTS;                            //!< Offset 0x254 Size 2	number of subpicture streams in VTS_VOBS
+    uint8_t     m_bySubpicStreamVTS_VOBS[DVDVTS_MAXSUBPICSTREAM][6];//!< Offset 0x256 Size 32*6	subpicture attributes of VTS_VOBS (0...32)
+    uint8_t     m_byPadding17[2];                                   //!< Offset 0x316 Size 2
 
-    uint8_t     m_byMultichannelExtension[8][24];         	//!< Offset 0x318 Size 8*24	multichannel extension
-    uint8_t     m_byPadding18[40];                          //!< Offset 0x3D8 Size 40
+    uint8_t     m_byMultichannelExt[DVDVTS_MAXAUDIOSTREAM][24];     //!< Offset 0x318 Size 8*24	multichannel extension
+    uint8_t     m_byPadding18[40];                                  //!< Offset 0x3D8 Size 40
 /*@}*/
 } VTS_IFO, *LPVTS_IFO;
 
@@ -201,8 +201,8 @@ typedef struct
 {
 #pragma pack(1)
 /*@{*/
-    uint16_t	m_wProgramChain;                            //!< Program Chain (PGCN)
-    uint16_t	m_wProgram;                                 //!< Program (PGN)
+    uint16_t	m_wProgramChainNo;                          //!< Program Chain (PGCN)
+    uint16_t	m_wProgramNo;                               //!< Program (PGN)
 /*@}*/
 } VTS_PTT, *LPVTS_PTT;
 

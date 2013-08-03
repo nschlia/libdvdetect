@@ -484,7 +484,8 @@ std::string getWin32ShortFilePath(const string& strFilePath)
 
     if (!result2)
     {
-        return "";
+        // Try to use real name, normally this happens only if file was not found
+        return strFilePath;
     }
 
     //
@@ -581,3 +582,40 @@ std::string getDvdFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo, uint16_t
 
     return strFileName.str();
 }
+
+#ifdef _WIN32
+// Replacement implementations for setenv/unsetenv under windoze
+int setenv(const char *name, const char *value, int /*overwrite*/)
+{
+    if (!SetEnvironmentVariable(name, value))
+    {
+        errno = ::GetLastError();
+        return -1;
+    }
+    return 0;
+}
+
+int unsetenv(const char *name)
+{
+    if (!SetEnvironmentVariable(name, NULL))
+    {
+        errno = ::GetLastError();
+        return -1;
+    }
+    return 0;
+}
+
+char *getenv(const char *name)      // Like the original: uses static buffer, not reentrant
+{
+    static char szBuffer[32767+1];  // M$ doc says max. size is 32767 bytes
+
+    if (!GetEnvironmentVariable(name, szBuffer, sizeof(szBuffer)))
+    {
+        errno = ::GetLastError();
+        return NULL;
+    }
+
+    return szBuffer;
+}
+#endif
+

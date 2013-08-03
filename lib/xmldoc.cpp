@@ -25,24 +25,126 @@
 #include "compat.h"
 
 #include <dvdetect/dvdetectc++.h>
-#include <tinyxml.h>
 
 #include "xmldoc.h"
 
 #include "localutils.h"
 
-std::string saveget(const char * psz)
-{
-    return (psz != NULL ? psz : "");
-}
-
 xmldoc::xmldoc(const std::string &strClientName)
-    : m_strClientName(strClientName)
+    : m_eErrorCode(DVDERRORCODE_NOERROR)
+    , m_strClientName(strClientName)
 {
 }
 
 xmldoc::~xmldoc()
 {
+}
+
+std::string xmldoc::saveGet(const char * psz) const
+{
+    return (psz != NULL ? psz : "");
+}
+
+void xmldoc::safeSetAttribute(TiXmlElement* pElement, const char *pszName, const std::string & strValue, bool bSaveEmpty) const
+{
+    if (!strValue.empty() || bSaveEmpty)
+    {
+        pElement->SetAttribute(pszName, strValue);
+    }
+}
+
+void xmldoc::safeSetAttribute(TiXmlElement* pElement, const char *pszName, const char *pszValue, bool bSaveEmpty) const
+{
+    if (pszValue != NULL && (*pszValue || bSaveEmpty))
+    {
+        pElement->SetAttribute(pszName, pszValue);
+    }
+}
+
+int xmldoc::setValue(TiXmlElement* pElement, const std::string& strNode, const char * pszValue, bool bCDATA /*= true*/) const
+{
+    TiXmlNode* pNode = new TiXmlElement(strNode);
+
+    pElement->LinkEndChild(pNode);
+
+    TiXmlText * pText = new TiXmlText(pszValue);
+
+    pText->SetCDATA(bCDATA);
+    pNode->LinkEndChild(pText);
+
+    return 0;
+}
+
+int xmldoc::setValue(TiXmlElement* pElement, const std::string& strNode, const std::string & strValue, bool bCDATA /*= true*/) const
+{
+    TiXmlNode* pNode = new TiXmlElement(strNode);
+
+    pElement->LinkEndChild(pNode);
+
+    TiXmlText * pText = new TiXmlText(strValue);
+
+    pText->SetCDATA(bCDATA);
+    pNode->LinkEndChild(pText);
+
+    return 0;
+}
+
+int xmldoc::safeSetValue(TiXmlElement* pElement, const std::string& strNode, const char * pszValue, bool bCDATA /*= true*/) const
+{
+    if (*pszValue)
+    {
+        TiXmlNode* pNode = new TiXmlElement(strNode);
+
+        pElement->LinkEndChild(pNode);
+
+        TiXmlText * pText = new TiXmlText(pszValue);
+
+        pText->SetCDATA(bCDATA);
+        pNode->LinkEndChild(pText);
+    }
+
+    return 0;
+}
+
+int xmldoc::safeSetValue(TiXmlElement* pElement, const std::string& strNode, const std::string & strValue, bool bCDATA /*= true*/) const
+{
+    if (!strValue.empty())
+    {
+        TiXmlNode* pNode = new TiXmlElement(strNode);
+
+        pElement->LinkEndChild(pNode);
+
+        TiXmlText * pText = new TiXmlText(strValue);
+
+        pText->SetCDATA(bCDATA);
+        pNode->LinkEndChild(pText);
+    }
+
+    return 0;
+}
+
+int xmldoc::queryText(TiXmlElement* pElement, const std::string& strNode, std::string * pstrValue) const
+{
+    TiXmlNode* pNode = pElement->FirstChild(strNode);
+    if (pNode == NULL)
+    {
+        return -1;
+    }
+
+    pNode = pNode->FirstChild();
+    if (pNode == NULL)
+    {
+        return -1;
+    }
+
+    TiXmlText * pText = pNode->ToText();
+    if (pText == NULL)
+    {
+        return -1;
+    }
+
+    *pstrValue = pText->Value();
+    return 0;
 }
 
 int xmldoc::getResponse(TiXmlHandle hRoot)
@@ -58,7 +160,7 @@ int xmldoc::getResponse(TiXmlHandle hRoot)
             const char *pszResponseText = pResponseText->GetText();
             if (pszResponseText)
             {
-                m_strErrorString = pszResponseText;
+                setError(pszResponseText, DVDERRORCODE_XML_RESPONSE);
             }
         }
 
@@ -68,378 +170,14 @@ int xmldoc::getResponse(TiXmlHandle hRoot)
     return nResult;
 }
 
-int xmldoc::parseXmlResponse(const std::string & strXMLIn, XMLMODE & eXmlModeOut)
-{
-    TiXmlDocument	doc;
-    int res = 0;
-
-    try
-    {
-        doc.Parse(strXMLIn.c_str(), NULL, TIXML_ENCODING_UTF8);
-
-        if (doc.Error())
-        {
-            m_strErrorString = doc.ErrorDesc();
-            throw -1;
-        }
-        else
-        {
-            TiXmlHandle		hDoc(&doc);
-            TiXmlElement*	pElem = NULL;
-            TiXmlHandle		hRoot = 0;
-
-            pElem = hDoc.FirstChildElement().Element();
-            // should always have a valid root but handle gracefully if it does not
-            if (pElem == NULL)
-            {
-                throw -1;
-            }
-
-            int n = 0;
-            pElem->QueryIntAttribute("XmlMode", &n);
-            eXmlModeOut = (XMLMODE)n;
-
-            // const char *	pXmlVersion = NULL;
-            // const char *	pszLibraryVersion = NULL;
-            // const char *	pszLibraryName = NULL;
-            // const char *	pszClientName = NULL;
-
-            // pXmlVersion         = pElem->Attribute("XmlVersion");
-            // pszLibraryVersion	= pElem->Attribute("LibraryVersion");
-            // pszLibraryName      = pElem->Attribute("LibraryName");
-            // pszClientName       = pElem->Attribute("ClientName");
-
-            hRoot  =  TiXmlHandle(pElem);
-
-            res = getResponse(hRoot);
-        }
-    }
-    catch (int _res)
-    {
-        res = _res;
-    }
-    return res;
-}
-
-int xmldoc::parseXml(const std::string & strXMLIn, XMLMODE & eXmlModeOut, dvdparselst & dvdParseLstOut)
-{
-    TiXmlDocument	doc;
-    int res = 0;
-
-    dvdParseLstOut.clear();
-
-    try
-    {
-        doc.Parse(strXMLIn.c_str(), NULL, TIXML_ENCODING_UTF8);
-
-        if (doc.Error())
-        {
-            m_strErrorString = doc.ErrorDesc();
-            throw -1;
-        }
-        else
-        {
-            TiXmlHandle		hDoc(&doc);
-            TiXmlElement*	pElem = NULL;
-            TiXmlHandle		hRoot = 0;
-
-            pElem = hDoc.FirstChildElement().Element();
-            // should always have a valid root but handle gracefully if it does not
-            if (pElem == NULL)
-            {
-                throw -1;
-            }
-
-            int n = 0;
-            pElem->QueryIntAttribute("XmlMode", &n);
-            eXmlModeOut = (XMLMODE)n;
-
-            // const char *	pXmlVersion = NULL;
-            // const char *	pszLibraryVersion = NULL;
-            // const char *	pszLibraryName = NULL;
-            // const char *	pszClientName = NULL;
-
-            // pXmlVersion          = pElem->Attribute("XmlVersion");
-            // pszLibraryVersion    = pElem->Attribute("LibraryVersion");
-            // pszLibraryName       = pElem->Attribute("LibraryName");
-            // pszClientName        = pElem->Attribute("ClientName");
-
-            // save this for later
-            hRoot  =  TiXmlHandle(pElem);
-
-            res = getResponse(hRoot);
-            if (res)
-            {
-                throw res;
-            }
-
-            TiXmlElement* pDVD = hRoot.FirstChild("DVD").Element();
-
-            for (; pDVD != NULL; pDVD = pDVD->NextSiblingElement())
-            {
-                dvdparse dvdParse;
-
-                //dvdParse.setHash(saveget(pDVD->Attribute("Hash")));
-                dvdParse.setAlbumArtist(saveget(pDVD->Attribute("AlbumArtist")));
-                dvdParse.setAlbum(saveget(pDVD->Attribute("Album")));
-                dvdParse.setGenre(saveget(pDVD->Attribute("Genre")));
-                dvdParse.setCast(saveget(pDVD->Attribute("Cast")));
-                dvdParse.setCrew(saveget(pDVD->Attribute("Crew")));
-                dvdParse.setDirector(saveget(pDVD->Attribute("Director")));
-                dvdParse.setCountry(saveget(pDVD->Attribute("Country")));
-                dvdParse.setReleaseDate(saveget(pDVD->Attribute("ReleaseDate")));
-                dvdParse.setSpecialFeatures(saveget(pDVD->Attribute("SpecialFeatures")));
-                dvdParse.setEAN_UPC(saveget(pDVD->Attribute("EAN_UPC")));
-                dvdParse.setStoryline(saveget(pDVD->Attribute("Storyline")));
-                dvdParse.setRemarks(saveget(pDVD->Attribute("Remarks")));
-                int nRevision = 0;
-                pDVD->QueryIntAttribute("Revision", &nRevision);
-                dvdParse.setRevision(nRevision);
-                dvdParse.setSubmitter(saveget(pDVD->Attribute("Submitter")));
-                dvdParse.setSubmitterIP(saveget(pDVD->Attribute("SubmitterIP")));
-                dvdParse.setClient(saveget(pDVD->Attribute("Client")));
-                dvdParse.setDateCreated(saveget(pDVD->Attribute("DateCreated")));
-                dvdParse.setDateLastChanged(saveget(pDVD->Attribute("DateLastChanged")));
-                dvdParse.setKeywords(saveget(pDVD->Attribute("Keywords")));
-
-                //const char *	pText = NULL;
-                // pText        = pDVD->GetText();
-
-                TiXmlElement* pTitle = pDVD->FirstChildElement("title");
-                for (; pTitle != NULL; pTitle = pTitle->NextSiblingElement())
-                {
-                    dvdpttvmg dvdTitle(NULL);
-
-                    int             nTitleSetNo = 0;
-                    int             nAngles = 0;
-
-                    pTitle->QueryIntAttribute("TitleSetNo", &nTitleSetNo);
-                    pTitle->QueryIntAttribute("Angles", &nAngles);
-
-                    dvdTitle.setTitle(saveget(pTitle->Attribute("Title")));
-                    dvdTitle.m_DVDPTTVMG.m_byVideoTitleSet  = nTitleSetNo;
-                    //dvdTitle.m_DVDPTTVMG.m_wAngles     = nAngles;
-
-                    TiXmlElement* pChapter = pTitle->FirstChildElement("chapter");
-                    for (; pChapter != NULL; pChapter = pChapter->NextSiblingElement())
-                    {
-                        dvdpttvts dvdChapter(NULL);
-
-                        int             nNumber = 0;
-                        //uint64_t        qwPlayTime = 0;
-
-                        pChapter->QueryIntAttribute("Number", &nNumber);
-                        //pChapter->QueryIntAttribute("PlayTime", &nPlayTime);
-
-                        dvdChapter.setArtist(saveget(pChapter->Attribute("Artist")));
-                        dvdChapter.setTitle(saveget(pChapter->Attribute("Title")));
-
-                        dvdChapter.m_DVDPTTVTS.m_wPttNo             = nNumber;
-                        dvdChapter.m_DVDPTTVTS.m_wProgramChainNo    = 1;
-                        //dvdChapter.m_DVDPTTVTS.m_qwPlayTime        = qwPlayTime;
-
-                        dvdTitle.m_dvdPttVtsLst.push_back(dvdChapter);
-                    }
-                    dvdParse.m_dvdPttVmgLst.push_back(dvdTitle);
-                }
-                dvdParseLstOut.push_back(dvdParse);
-            }
-        }
-    }
-    catch (int _res)
-    {
-        res = _res;
-    }
-    return res;
-}
-
-int xmldoc::buildXml(std::string & strXMLOut, XMLMODE eXmlModeIn, const dvdparselst & dvdParseLstIn, const std::string & strSearchIn /*= ""*/)
-{
-    TiXmlDocument doc;
-    int res = 0;
-
-    strXMLOut.empty();
-
-    try
-    {
-        TiXmlDeclaration* decl = new TiXmlDeclaration("1.0", "UTF-8", "");
-        doc.LinkEndChild( decl );
-
-        TiXmlElement* root = new TiXmlElement("xml");
-        doc.LinkEndChild(root);
-
-        root->SetAttribute("XmlMode", (int)(eXmlModeIn));
-        root->SetAttribute("XmlVersion", LIBDVDETECT_PROTOCOL_VERSION);
-        root->SetAttribute("LibraryVersion", LIBDVDETECT_VERSION);
-        root->SetAttribute("LibraryName", LIBDVDETECT_LIBRARYNAME);
-
-        saveSetAttribute(root, "ClientName", m_strClientName);
-
-        TiXmlComment* comment = new TiXmlComment();
-        comment->SetValue(" Query for libdvdetect ");
-        root->LinkEndChild(comment);
-
-        if (strSearchIn.length())
-        {
-            TiXmlElement * search = new TiXmlElement("Search");
-
-            search->LinkEndChild(new TiXmlText(strSearchIn));
-            root->LinkEndChild(search);
-        }
-
-        {
-            TiXmlElement * dvd = new TiXmlElement("DVD");
-
-            dvd->SetAttribute("Hash", dvdParseLstIn[0].getHash());
-            //dvd->SetAttribute("Code", dvdParseLst[0].getCode());
-
-            saveSetAttribute(dvd, "Album", dvdParseLstIn[0].getAlbum());
-            saveSetAttribute(dvd, "AlbumArtist", dvdParseLstIn[0].getAlbumArtist());
-            saveSetAttribute(dvd, "Genre", dvdParseLstIn[0].getGenre());
-
-            // if (!dvdParseLstIn[0].getCover())
-            // {
-            //  dvd->SetAttribute("Cover", dvdParseLstIn[0].getCover());
-            // }
-
-            saveSetAttribute(dvd, "Cast", dvdParseLstIn[0].getCast());
-            saveSetAttribute(dvd, "Crew", dvdParseLstIn[0].getCrew());
-            saveSetAttribute(dvd, "Director", dvdParseLstIn[0].getDirector());
-            saveSetAttribute(dvd, "Country", dvdParseLstIn[0].getCountry());
-            saveSetAttribute(dvd, "ReleaseDate", dvdParseLstIn[0].getReleaseDate());
-            saveSetAttribute(dvd, "SpecialFeatures", dvdParseLstIn[0].getSpecialFeatures());
-            saveSetAttribute(dvd, "EAN_UPC", dvdParseLstIn[0].getEAN_UPC());
-            saveSetAttribute(dvd, "Storyline", dvdParseLstIn[0].getStoryline());
-            saveSetAttribute(dvd, "Remarks", dvdParseLstIn[0].getRemarks());
-            saveSetAttribute(dvd, "Submitter", dvdParseLstIn[0].getSubmitter());
-            saveSetAttribute(dvd, "Keywords", dvdParseLstIn[0].getKeywords());
-            saveSetAttribute(dvd, "Client", m_strClientName);
-
-            {
-                LPCDVDVMGM pDVDVMGM = dvdParseLstIn[0].getDVDVMGM();
-                for (uint16_t wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wPTTNumberOfTitles; wTitleSetNo++)
-                {
-                    const dvdpttvmg *pDvdPttVmg = dvdParseLstIn[0].getDvdPttVmg(wTitleSetNo);
-                    LPCDVDPTTVMG pDVDPTTVMG = pDvdPttVmg->getDVDPTTVMG();
-
-                    TiXmlElement * title = new TiXmlElement("title");
-
-                    title->SetAttribute("TitleSetNo", wTitleSetNo);
-
-                    saveSetAttribute(title,"Title", pDvdPttVmg->getTitle());
-
-                    if (eXmlModeIn == XMLMODE_SUBMIT_VERBOSE)
-                    {
-                        const dvdtitle * pDvdTitle = pDvdPttVmg->getDvdTitle();
-                        LPCDVDVTS pDVDVTS = pDvdTitle->getDVDVTS();
-
-                        title->SetAttribute("Angles", (int)(pDVDPTTVMG->m_byNumberOfVideoAngles));
-
-                        std::string strVideoCodingMode = getVideoCodingMode(pDVDVTS->m_VideoAttributesOfVTS_VOBS.m_eCodingMode);
-                        std::string strVideoStandard = getVideoStandard(pDVDVTS->m_VideoAttributesOfVTS_VOBS.m_eStandard);
-                        std::string strVideoAspect = getVideoAspect(pDVDVTS->m_VideoAttributesOfVTS_VOBS.m_eAspect);
-
-                        saveSetAttribute(title, "VideoCodingMode", strVideoCodingMode);
-                        saveSetAttribute(title, "VideoStandard", strVideoStandard);
-                        saveSetAttribute(title, "VideoAspect", strVideoAspect);
-
-                        title->SetAttribute("Resolution", ::toString(pDVDVTS->m_VideoAttributesOfVTS_VOBS.m_wResolutionX) + "x" + ::toString(pDVDVTS->m_VideoAttributesOfVTS_VOBS.m_wResolutionY));
-                        title->SetAttribute("LetterBoxed", pDVDVTS->m_VideoAttributesOfVTS_VOBS.m_bLetterBoxed);
-
-                        for (uint16_t wAudioStream = 1; wAudioStream <= pDVDVTS->m_wNumberOfAudioStreamsInVTS_VOBS; wAudioStream++)
-                        {
-                            TiXmlElement * audiostream = new TiXmlElement("audiostream");
-
-                            audiostream->SetAttribute("Number", wAudioStream);
-
-                            audiostream->SetAttribute("Quantisation", (int)(pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream - 1].m_eQuantisation));
-                            if (pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream - 1].m_bLanguageTypePresent)
-                            {
-                                audiostream->SetAttribute("Language", getLanguage(pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream - 1].m_szLanguageCode));
-                            }
-                            audiostream->SetAttribute("Coding", getAudioCodingMode(pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream - 1].m_eCodingMode));
-                            audiostream->SetAttribute("Channels", pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream - 1].m_wChannels);
-                            audiostream->SetAttribute("SampleRate", pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream - 1].m_dwSampleRate);
-                            audiostream->SetAttribute("CodeExt", (int)(pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream  - 1].m_eCodeExt));
-                            audiostream->SetAttribute("Quantisation", getAudioQuantisation(pDVDVTS->m_AudioAttributesOfVTS_VOBS[wAudioStream - 1].m_eQuantisation));
-
-                            title->LinkEndChild(audiostream);
-                        }
-
-                        for (uint16_t wSubpictureStream = 1; wSubpictureStream <= pDVDVTS->m_wNumberOfSubpictureStreamsInVTS_VOBS; wSubpictureStream++)
-                        {
-                            TiXmlElement * subpicturestream = new TiXmlElement("subpicturestream");
-
-                            subpicturestream->SetAttribute("Number", wSubpictureStream);
-                            if (pDVDVTS->m_SubpictureAttributesOfVTS_VOBS[wSubpictureStream - 1].m_bLanguageTypePresent)
-                            {
-                                subpicturestream->SetAttribute("Language", getLanguage(pDVDVTS->m_SubpictureAttributesOfVTS_VOBS[wSubpictureStream - 1].m_szLanguageCode));
-                            }
-                            subpicturestream->SetAttribute("CodeExt", (int)(pDVDVTS->m_SubpictureAttributesOfVTS_VOBS[wSubpictureStream - 1].m_eCodeExt));
-
-                            title->LinkEndChild(subpicturestream);
-                        }
-                    }
-
-                    for (uint16_t wPtt = 1; wPtt <= pDvdPttVmg->getPttCount(); wPtt++)
-                    {
-                        const dvdpttvts * pDvdPttVts = pDvdPttVmg->getDvdPttVts(wPtt);
-
-                        TiXmlElement* chapter = new TiXmlElement("chapter");
-
-                        chapter->SetAttribute("Number", wPtt);
-                        chapter->SetAttribute("PlayTime", pDvdPttVts->getPlayTime());
-                        saveSetAttribute(chapter,"Artist", pDvdPttVts->getArtist());
-                        saveSetAttribute(chapter,"Title", pDvdPttVts->getTitle());
-
-                        title->LinkEndChild(chapter);
-                    }
-                    dvd->LinkEndChild(title);
-                }
-                root->LinkEndChild(dvd);
-            }
-        }
-
-        TiXmlPrinter printer;
-        doc.Accept(&printer);
-
-        if (doc.Error())
-        {
-            m_strErrorString = doc.ErrorDesc();
-            throw -1;
-        }
-
-        strXMLOut = printer.CStr();
-    }
-    catch (int _res)
-    {
-        res = _res;
-    }
-    return res;
-}
-
-int xmldoc::query(std::string & strXML, const dvdparse & dvdParseSearch)
-{
-    dvdparselst dvdParseLst;
-
-    dvdParseLst.push_back(dvdParseSearch);
-
-    return buildXml(strXML, XMLMODE_QUERY, dvdParseLst);
-}
-
-int xmldoc::search(std::string & strXML, dvdparselst & dvdParseLstResponse, const std::string & strSearch)
-{
-    return buildXml(strXML, XMLMODE_SEARCH, dvdParseLstResponse, strSearch);
-}
-
-int xmldoc::submit(std::string & strXML, const dvdparselst & dvdParseLst, bool bVerbose)
-{
-    return buildXml(strXML, bVerbose ? XMLMODE_SUBMIT_VERBOSE : XMLMODE_SUBMIT_CONDENSED, dvdParseLst);
-}
-
 std::string xmldoc::getErrorString() const
 {
     return m_strErrorString;
+}
+
+DVDERRORCODE xmldoc::getErrorCode() const
+{
+    return m_eErrorCode;
 }
 
 void xmldoc::setClientName(const std::string & strClientName)
@@ -452,7 +190,7 @@ std::string xmldoc::getClientName() const
     return m_strClientName;
 }
 
-std::string xmldoc::getVideoCodingMode(DVDVIDEOCODINGMODE eCodingMode) const
+std::string xmldoc::valueToString(DVDVIDEOCODINGMODE eCodingMode) const
 {
     std::string strVideoCodingMode;
 
@@ -471,7 +209,7 @@ std::string xmldoc::getVideoCodingMode(DVDVIDEOCODINGMODE eCodingMode) const
     return strVideoCodingMode;
 }
 
-std::string xmldoc::getVideoStandard(DVDVIDEOTVSTANDARD eStandard) const
+std::string xmldoc::valueToString(DVDVIDEOTVSTANDARD eStandard) const
 {
     std::string strVideoStandard;
 
@@ -490,7 +228,7 @@ std::string xmldoc::getVideoStandard(DVDVIDEOTVSTANDARD eStandard) const
     return strVideoStandard;
 }
 
-std::string xmldoc::getVideoAspect(DVDVIDEOASPECT eAspect) const
+std::string xmldoc::valueToString(DVDVIDEOASPECT eAspect) const
 {
     std::string strVideoAspect;
 
@@ -509,7 +247,7 @@ std::string xmldoc::getVideoAspect(DVDVIDEOASPECT eAspect) const
     return strVideoAspect;
 }
 
-std::string xmldoc::getAudioCodingMode(DVDAUDIOCODINGMODE eAudioCodingMode) const
+std::string xmldoc::valueToString(DVDAUDIOCODINGMODE eAudioCodingMode) const
 {
     std::string strCodingMode;
 
@@ -521,7 +259,7 @@ std::string xmldoc::getAudioCodingMode(DVDAUDIOCODINGMODE eAudioCodingMode) cons
     case DVDAUDIOCODINGMODE_MPEG1:
         strCodingMode = "MPEG-1";
         break;
-    case DVDAUDIOCODINGMODE_MPEG2_EXT:
+    case DVDAUDIOCODINGMODE_MPEG2:
         strCodingMode = "MPEG-2";
         break;
     case DVDAUDIOCODINGMODE_LPCM:
@@ -537,7 +275,7 @@ std::string xmldoc::getAudioCodingMode(DVDAUDIOCODINGMODE eAudioCodingMode) cons
     return strCodingMode;
 }
 
-std::string xmldoc::getAudioQuantisation(DVDAUDIOQUANTISATION eQuantisation) const
+std::string xmldoc::valueToString(DVDAUDIOQUANTISATION eQuantisation) const
 {
     std::string strQuantisation;
 
@@ -561,16 +299,432 @@ std::string xmldoc::getAudioQuantisation(DVDAUDIOQUANTISATION eQuantisation) con
     return strQuantisation;
 }
 
-std::string xmldoc::getLanguage(const char *pszLanguage) const
+std::string xmldoc::valueToString(DVDAUDIOCHANNELASSIGNMENT eAudioChannelAssignment) const
 {
-    return pszLanguage;
+    return ::toString(eAudioChannelAssignment); // Keep it simple: the description makes no sense to the reader anyway
 }
 
-void xmldoc::saveSetAttribute(TiXmlElement* element, const char *name, const std::string & strValue) const
+std::string xmldoc::valueToString(DVDAUDIOAPPLICATIONMODE eAudioApplicationMode) const
 {
-    if (!strValue.empty())
+    std::string strAudioApplicationMode;
+
+    switch (eAudioApplicationMode)
     {
-        element->SetAttribute(name, strValue);
+    case DVDAUDIOAPPLICATIONMODE_UNSPECIFIED:
+        strAudioApplicationMode = "unspecified";
+        break;
+    case DVDAUDIOAPPLICATIONMODE_KARAOKE:
+        strAudioApplicationMode = "karaoke";
+        break;
+    case DVDAUDIOAPPLICATIONMODE_SURROUND:
+        strAudioApplicationMode = "surround";
+        break;
+    default:
+        break;
     }
+    return strAudioApplicationMode;
+}
+
+std::string xmldoc::valueToString(DVDAKARAOKEMODE eKaraokeMode) const
+{
+    std::string strKaraokeMode;
+
+    switch (eKaraokeMode)
+    {
+    case DVDKARAOKEMODE_SOLO:
+        strKaraokeMode = "solo";
+        break;
+    case DVDKARAOKEMODE_DUET:
+        strKaraokeMode = "duet";
+        break;
+    default:
+        break;
+    }
+    return strKaraokeMode;
+}
+
+std::string xmldoc::valueToString(DVDAUDIOCODEEXT eAudioCodeExt) const
+{
+    return ::toString(eAudioCodeExt); // Keep it simple: the description makes no sense to the reader anyway
+}
+
+std::string xmldoc::valueToString(DVDSUBPICCODEEXT eSubpictCodeExt) const
+{
+    return ::toString(eSubpictCodeExt); // Keep it simple: the description makes no sense to the reader anyway
+}
+
+std::string xmldoc::valueToString(CELLTYPE eCellType) const
+{
+    std::string strCellType;
+
+    switch (eCellType)
+    {
+    case CELLTYPE_NORMAL:
+        strCellType = "normal";
+        break;
+    case CELLTYPE_FIRST:
+        strCellType = "first";
+        break;
+    case CELLTYPE_MIDDLE:
+        strCellType = "middle";
+        break;
+    case CELLTYPE_LAST:
+        strCellType = "last";
+        break;
+    default:
+        break;
+    }
+
+    return strCellType;
+}
+
+std::string xmldoc::valueToString(BLOCKTYPE eBlockType) const
+{
+    std::string strBlockType;
+
+    switch (eBlockType)
+    {
+    case BLOCKTYPE_NORMAL:
+        strBlockType = "normal";
+        break;
+    case BLOCKTYPE_ANGLE:
+        strBlockType = "angle";
+        break;
+    default:
+        break;
+    }
+    return strBlockType;
+}
+
+string xmldoc::valueToString(DVDFILETYPE eDvdFileType) const
+{
+    return dvdGetFileType(eDvdFileType);
+}
+
+std::string xmldoc::valueToString(LPCDVDVIDEORESOLUTION pVideoResolution) const
+{
+    if (pVideoResolution != NULL && pVideoResolution->m_wX && pVideoResolution->m_wY)
+    {
+        return ::toString(pVideoResolution->m_wX) + "x" + ::toString(pVideoResolution->m_wY);
+    }
+    else
+    {
+        return "";
+    }
+}
+
+std::string xmldoc::valueToString(const time_t *pUnixTime) const
+{
+#if 0 // Reentrant
+    struct tm timeinfo;
+    char szBuffer [80] = "";
+
+    memset(&timeinfo, 0, sizeof(tm));
+
+    gmtime_r(pUnixTime, &timeinfo);
+#else
+    struct tm *timeinfo;
+    char szBuffer [80] = "";
+
+    timeinfo = gmtime(pUnixTime);
+#endif
+
+    strftime(szBuffer, sizeof(szBuffer), DVD_DATEFORMAT, timeinfo);
+
+    return szBuffer;
+}
+
+std::string xmldoc::languageToString(const char pszLangCode[]) const  // TODO
+{
+    return pszLangCode;
+}
+
+void xmldoc::fromString(LPDVDVIDEOCODINGMODE peVideoCodingMode, const std::string & strDvdVideoCodingMode) const
+{
+    if (strDvdVideoCodingMode == "MPEG-1")
+    {
+        *peVideoCodingMode = DVDVIDEOCODINGMODE_MPEG1;
+    }
+    else if (strDvdVideoCodingMode == "MPEG-2")
+    {
+        *peVideoCodingMode = DVDVIDEOCODINGMODE_MPEG2;
+    }
+    else
+    {
+        *peVideoCodingMode = DVDVIDEOCODINGMODE_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDVIDEOTVSTANDARD peVideoStandard, const std::string & strDvdVideoStandard) const
+{
+    if (strDvdVideoStandard == "NTSC")
+    {
+        *peVideoStandard = DVDVIDEOTVSTANDARD_NTSC;
+    }
+    else if (strDvdVideoStandard == "PAL")
+    {
+        *peVideoStandard = DVDVIDEOTVSTANDARD_PAL;
+    }
+    else
+    {
+        *peVideoStandard = DVDVIDEOTVSTANDARD_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDVIDEORESOLUTION pVideoResolution, const std::string & strResolution) const
+{
+    if (pVideoResolution == NULL)
+    {
+        return;
+    }
+
+    size_t nPos = strResolution.find('x');
+
+    memset(pVideoResolution, 0, sizeof(DVDVIDEORESOLUTION));
+
+    if (nPos != string::npos && nPos)
+    {
+        ::fromString(&pVideoResolution->m_wX, strResolution.substr(0, nPos));
+        ::fromString(&pVideoResolution->m_wY, strResolution.substr(nPos + 1));
+    }
+}
+
+void xmldoc::fromString(LPDVDVIDEOASPECT peVideoAspect, const std::string & strDvdVideoAspect) const
+{
+    if (strDvdVideoAspect == "4:3")
+    {
+        *peVideoAspect = DVDVIDEOASPECT_4_3;
+    }
+    else if (strDvdVideoAspect == "16:9")
+    {
+        *peVideoAspect = DVDVIDEOASPECT_16_9;
+    }
+    else
+    {
+        *peVideoAspect = DVDVIDEOASPECT_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDAUDIOCODINGMODE peAudioCodingMode, const std::string & strAudioCodingMode) const
+{
+    if (strAudioCodingMode == "AC3")
+    {
+        *peAudioCodingMode = DVDAUDIOCODINGMODE_AC3;
+    }
+    else if (strAudioCodingMode == "MPEG-1")
+    {
+        *peAudioCodingMode = DVDAUDIOCODINGMODE_MPEG1;
+    }
+    else if (strAudioCodingMode == "MPEG-2")
+    {
+        *peAudioCodingMode = DVDAUDIOCODINGMODE_MPEG2;
+    }
+    else if (strAudioCodingMode == "LPCM")
+    {
+        *peAudioCodingMode = DVDAUDIOCODINGMODE_LPCM;
+    }
+    else if (strAudioCodingMode == "DTS")
+    {
+        *peAudioCodingMode = DVDAUDIOCODINGMODE_DTS;
+    }
+    else
+    {
+        *peAudioCodingMode = DVDAUDIOCODINGMODE_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDAUDIOQUANTISATION peAudioQuantisation, const std::string & strQuantisation) const
+{
+    if (strQuantisation == "16 bps")
+    {
+        *peAudioQuantisation = DVDAUDIOQUANTISATION_16BPS;
+    }
+    else if (strQuantisation == "20 bps")
+    {
+        *peAudioQuantisation = DVDAUDIOQUANTISATION_20BPS;
+    }
+    else if (strQuantisation == "24 bps")
+    {
+        *peAudioQuantisation = DVDAUDIOQUANTISATION_24BPS;
+    }
+    else if (strQuantisation == "DRC")
+    {
+        *peAudioQuantisation = DVDAUDIOQUANTISATION_DRC;
+    }
+    else
+    {
+        *peAudioQuantisation = DVDAUDIOQUANTISATION_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDAUDIOCHANNELASSIGNMENT peAudioChannelAssignment, const std::string & strAudioChannelAssignment) const
+{
+    ::fromString((int *)peAudioChannelAssignment, strAudioChannelAssignment);
+}
+
+void xmldoc::fromString(LPDVDAUDIOAPPLICATIONMODE peAudioApplicationMode, const std::string & strAudioApplicationMode) const
+{
+    if (strAudioApplicationMode == "unspecified")
+    {
+        *peAudioApplicationMode = DVDAUDIOAPPLICATIONMODE_UNSPECIFIED;
+    }
+    else if (strAudioApplicationMode == "karaoke")
+    {
+        *peAudioApplicationMode = DVDAUDIOAPPLICATIONMODE_KARAOKE;
+    }
+    else if (strAudioApplicationMode == "surround")
+    {
+        *peAudioApplicationMode = DVDAUDIOAPPLICATIONMODE_SURROUND;
+    }
+    else
+    {
+        *peAudioApplicationMode = DVDAUDIOAPPLICATIONMODE_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDAKARAOKEMODE peKaraokeMode, const std::string & strKaraokeMode) const
+{
+    if (strKaraokeMode == "solo")
+    {
+        *peKaraokeMode = DVDKARAOKEMODE_SOLO;
+    }
+    else if (strKaraokeMode == "duet")
+    {
+        *peKaraokeMode = DVDKARAOKEMODE_DUET;
+    }
+    else
+    {
+        *peKaraokeMode = DVDKARAOKEMODE_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDAUDIOCODEEXT peAudioCodeExt, const std::string & strAudioCodeExt) const
+{
+    ::fromString((int *)peAudioCodeExt, strAudioCodeExt);
+}
+
+void xmldoc::fromString(LPDVDSUBPICCODEEXT peSubpictCodeExt, const std::string & strSubpictCodeExt) const
+{
+    ::fromString((int *)peSubpictCodeExt, strSubpictCodeExt);
+}
+
+void xmldoc::fromString(LPCELLTYPE peCellType, const std::string & strCellType) const
+{
+    if (strCellType == "normal")
+    {
+        *peCellType = CELLTYPE_NORMAL;
+    }
+    else if (strCellType == "first")
+    {
+        *peCellType = CELLTYPE_FIRST;
+    }
+    else if (strCellType == "middle")
+    {
+        *peCellType = CELLTYPE_MIDDLE;
+    }
+    else if (strCellType == "last")
+    {
+        *peCellType = CELLTYPE_LAST;
+    }
+    else
+    {
+        *peCellType = CELLTYPE_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPBLOCKTYPE peBlockType, const std::string & strBlockType) const
+{
+    if (strBlockType == "normal")
+    {
+        *peBlockType = BLOCKTYPE_NORMAL;
+    }
+    else if (strBlockType == "angle")
+    {
+        *peBlockType = BLOCKTYPE_ANGLE;
+    }
+    else
+    {
+        *peBlockType = BLOCKTYPE_INVALID;
+    }
+}
+
+void xmldoc::fromString(LPDVDFILETYPE peDvdFileType, const std::string & strFileType) const
+{
+    if (strFileType == "VMG/IFO")
+    {
+        *peDvdFileType = DVDFILETYPE_VMG_IFO;   // VIDEO_TS.IFO
+    }
+    else if (strFileType == "VMG/BUP")
+    {
+        *peDvdFileType = DVDFILETYPE_VMG_BUP;   // VIDEO_TS.BUP
+    }
+    else if (strFileType == "VMG/VOB")
+    {
+        *peDvdFileType = DVDFILETYPE_VMG_VOB;   // VIDEO_TS.VOB
+    }
+    else if (strFileType == "VTS/IFO")
+    {
+        *peDvdFileType = DVDFILETYPE_VTS_IFO;   // VTS_##_0.IFO
+    }
+    else if (strFileType == "VTS/BUP")
+    {
+        *peDvdFileType = DVDFILETYPE_VTS_BUP;   // VTS_##_0.BUP
+    }
+    else if (strFileType == "MNU/VOB")
+    {
+        *peDvdFileType = DVDFILETYPE_MENU_VOB;  // VTS_##_0.VOB
+    }
+    else if (strFileType == "VTS/VOB")
+    {
+        *peDvdFileType = DVDFILETYPE_VTS_VOB;   // VTS_##_1.VOB to VTS_##_9.VOB
+    }
+    else
+    {
+        *peDvdFileType = DVDFILETYPE_INVALID;
+    }
+}
+
+void xmldoc::languageFromString(char *pszLanguage, const std::string & strLanguage) const
+{
+    strcpy(pszLanguage, strLanguage.c_str());// TODO
+}
+
+void xmldoc::fromString(time_t * pUnixTime, const std::string & strDate) const
+{
+    struct tm time;
+    memset(&time, 0, sizeof(struct tm));
+
+    strptime(strDate.c_str(), DVD_DATEFORMAT, &time);
+
+#if _WIN32
+    *pUnixTime = _mkgmtime(&time);
+#else
+    // Convert to GMT
+    char *tz;
+    tz = getenv("TZ");
+    if (tz)
+    {
+        tz = strdup(tz);
+    }
+    setenv("TZ", "", 1);
+    tzset();
+    *pUnixTime = mktime(&time);
+    if (tz)
+    {
+        setenv("TZ", tz, 1);
+        free(tz);
+    }
+    else
+    {
+        unsetenv("TZ");
+    }
+    tzset();
+#endif
+}
+
+void xmldoc::setError(const std::string & strErrorString, DVDERRORCODE eErrorCode)
+{
+    m_strErrorString    = strErrorString;
+    m_eErrorCode        = eErrorCode;
 }
 

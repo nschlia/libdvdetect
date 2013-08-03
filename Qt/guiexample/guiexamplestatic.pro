@@ -12,6 +12,12 @@ TARGET = guiexample
 TEMPLATE = app
 
 SOURCES += main.cpp \
+    aboutdlg.cpp \
+    dvdexplorerdlg.cpp \
+    searchtextdlg.cpp \ 
+    explorerutils.cpp \
+    editdetailsdlg.cpp \ 
+    editoptionsdlg.cpp \
     ../../lib/dvdcell.cpp \
     ../../lib/dvddatabase.cpp \
     ../../lib/dvdetectbase.cpp \
@@ -27,17 +33,18 @@ SOURCES += main.cpp \
     ../../lib/dvdutils.cpp \
     ../../lib/http.cpp \
     ../../lib/localutils.cpp \
+    ../../lib/xmldoc.cpp \
+    ../../lib/xmldocbuilder.cpp \
+    ../../lib/xmldocparser.cpp
+
+win32:SOURCES += \
     ../../win/tinyxml/tinystr.cpp \
     ../../win/tinyxml/tinyxml.cpp \
     ../../win/tinyxml/tinyxmlerror.cpp \
     ../../win/tinyxml/tinyxmlparser.cpp \
-    aboutdlg.cpp \
-    dvdexplorerdlg.cpp \
-    searchtextdlg.cpp \
-    ../../lib/xmldoc.cpp \
     ../../lib/md5/md5.c \
-    editdetailsdlg.cpp \
-    explorerutils.cpp
+    ../../lib/emu/strptime.c
+
 INCLUDEPATH += \
     ../.. \
     ../../lib \
@@ -47,6 +54,9 @@ win32:INCLUDEPATH += \
     ../../win/tinyxml/ \
 
 HEADERS  += \
+    aboutdlg.h \
+    dvdexplorerdlg.h \
+    searchtextdlg.h \ 
     ../../config.h \
     ../../include/dvdetect/dvdcell.h \
     ../../include/dvdetect/dvddatabase.h \
@@ -65,13 +75,12 @@ HEADERS  += \
     ../../include/dvdetect/dvdutils.h \
     ../../include/dvdetect/types.h \
     ../../include/dvdetect/version.h \
-    ../../win/tinyxml/tinystr.h \
-    ../../win/tinyxml/tinyxml.h \
-    aboutdlg.h \
-    dvdexplorerdlg.h \
-    searchtextdlg.h \
+    explorerutils.h \
+    editdetailsdlg.h \
+    editoptionsdlg.h \
     ../../lib/xmldoc.h \
-    ../../lib/md5.h \
+    ../../lib/xmldocbuilder.h \
+    ../../lib/xmldocparser.h \
     ../../lib/vts_ifo.h \
     ../../lib/vmg_ifo.h \
     ../../lib/localutils.h \
@@ -80,8 +89,11 @@ HEADERS  += \
     ../../lib/commonwin32.h \
     ../../lib/common.h \
     ../../lib/md5/md5.h \
-    editdetailsdlg.h \
-    explorerutils.h
+    ../../include/dvdetect/vector_ptr.h
+
+win32:HEADERS  += \
+    ../../win/tinyxml/tinystr.h \
+    ../../win/tinyxml/tinyxml.h \
 
 DEFINES += HAVE_CONFIG_H TINYXML_USE_STL TIXML_USE_STL
 win32:DEFINES -= UNICODE
@@ -94,6 +106,7 @@ DEFINES += NDEBUG
 }
 
 win32:LIBS += -lws2_32
+else:LIBS += -lcrypto -ltinyxml
 
 #LIBS += -L"$$PWD/../../lib/.libs/" -ldvdetect
 
@@ -101,19 +114,31 @@ FORMS    += \
     dvdexplorerdlg.ui \
     searchtextdlg.ui \
     aboutdlg.ui \
-    editdetailsdlg.ui
+    editdetailsdlg.ui \
+    editoptionsdlg.ui
 
 # SPÄTER WEG!
 DEFINES += BUILDING_STATIC
 
 OTHER_FILES += \
     ../../php/test.xml \
-    ../../php/submit.php \
-    ../../php/search.php \
-    ../../php/schema.xsd \
+    ../../sql/dbdvdetect.mysql.sql \
     ../../php/robots.txt \
-    ../../php/query.php \
     ../../php/index.php \
-    ../../php/inc/functions.inc.php \
+    ../../php/query.php \
+    ../../php/search.php \
+    ../../php/submit.php \
     ../../php/inc/index.php \
-    ../../sql/dbdvdetect.mysql.sql
+    ../../php/inc/functions.inc.php \
+    ../../php/inc/functions.query.inc.php \
+    ../../php/inc/functions.submit.inc.php \
+    ../../php/inc/functions.search.inc.php \
+    ../../php/inc/functions.buildxml.inc.php \
+    ../../include/dvdetect/version.h.in \
+    ../../THANKS \
+    ../../README \
+    ../../NEWS \
+    ../../COPYING \
+    ../../INSTALL \
+    ../../AUTHORS \
+    ../../ChangeLog

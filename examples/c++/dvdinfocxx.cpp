@@ -112,15 +112,15 @@ static void showHeader(LPCDVDVMGM pDVDVMGM)
     cout << "Provider ID         : " << pDVDVMGM->m_szProviderID << endl;
 }
 
-static void showCellsAndUnits(LPCDVDPROGRAM pDVDPROGRAM, const dvdprogram *pDvdProgram)
+static void showCellsAndUnits(const dvdprogram *pDvdProgram)
 {
-    for (uint16_t wCell = 1; wCell <= pDVDPROGRAM->m_wCells; wCell++)
+    for (uint16_t wCell = 1; wCell <= pDvdProgram->getCellCount(); wCell++)
     {
         const dvdcell *pDvdCell = pDvdProgram->getDvdCell(wCell);
         LPCDVDCELL pDVDCELL = pDvdCell->getDVDCELL();
 
         cout << endl;
-        cout << "Cell                : " << pDVDCELL->m_wCell << endl;
+        cout << "Cell                : " << pDVDCELL->m_wCellNo << endl;
         cout << "Seamless Multiplex  : " << pDVDCELL->m_bSeamlessMultiplex << endl;
         cout << "Interleaved         : " << pDVDCELL->m_bInterleaved << endl;
         cout << "STC Discontinuity   : " << pDVDCELL->m_bSCRdiscontinuity << endl;
@@ -176,10 +176,10 @@ static void showCellsAndUnits(LPCDVDPROGRAM pDVDPROGRAM, const dvdprogram *pDvdP
         cout << "VOB ID              : " << pDVDCELL->m_wVOBidn << endl;
         cout << "Cell ID             : " << pDVDCELL->m_wCELLidn << endl;
 
-        cout << "Cell Pos Info Count : " << pDVDCELL->m_wCellPosInfoCount << endl;
+        cout << "Number Of Cells     : " << pDvdCell->getUnitCount() << endl;
         cout << "Number Of VOB Ids   : " << pDVDCELL->m_wNumberOfVOBIds << endl;
 
-        for (uint16_t wUnit = 1; wUnit <= pDVDCELL->m_wCellPosInfoCount; wUnit++)
+        for (uint16_t wUnit = 1; wUnit <= pDvdCell->getUnitCount(); wUnit++)
         {
             const dvdunit * pDvdUnit = pDvdCell->getDvdUnit(wUnit);
             LPCDVDUNIT pDVDUNIT = pDvdUnit->getDVDUNIT();
@@ -191,26 +191,26 @@ static void showCellsAndUnits(LPCDVDPROGRAM pDVDPROGRAM, const dvdprogram *pDvdP
     }
 }
 
-static int showPhysicalStructure(dvdparse & dvd)
+static int showPhysicalStructure(dvdparse & DVD)
 {
-    LPCDVDVMGM pDVDVMGM = dvd.getDVDVMGM();
+    LPCDVDVMGM pDVDVMGM = DVD.getDVDVMGM();
     int res = 0;
 
     showHeader(pDVDVMGM);
 
-    cout << "Number of Title Sets: " << pDVDVMGM->m_wNumberOfTitleSets << endl;
+    cout << "Number of Title Sets: " << DVD.getTitleSetCount() << endl;
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wNumberOfTitleSets; wTitleSetNo++)
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= DVD.getTitleSetCount(); wTitleSetNo++)
     {
-        const dvdtitle *pDvdTitle = dvd.getDvdTitle(wTitleSetNo);
+        const dvdtitle *pDvdTitle = DVD.getDvdTitle(wTitleSetNo);
         LPCDVDVTS pDVDVTS = pDvdTitle->getDVDVTS();
 
         cout << "******************************** Title " << setfill('0')  << setw(2) << wTitleSetNo << " ********************************" << endl;
 
         cout << "Version             : " << pDVDVTS->m_wVersionNumberMajor << "." << pDVDVTS->m_wVersionNumberMinor << endl;
-        cout << "Program Chains (PGC): " << pDVDVTS->m_wNumberOfProgramChains << endl;
+        cout << "Program Chains (PGC): " << pDvdTitle->getPgcCount() << endl;
 
-        for (uint16_t wProgramChainNo = 1; wProgramChainNo <= pDVDVTS->m_wNumberOfProgramChains;  wProgramChainNo++)
+        for (uint16_t wProgramChainNo = 1; wProgramChainNo <= pDvdTitle->getPgcCount();  wProgramChainNo++)
         {
             const dvdpgc *pDvdPgc = pDvdTitle->getDvdPgc(wProgramChainNo);
             LPCDVDPGC pDVDPGC = pDvdPgc->getDVDPGC();
@@ -219,45 +219,43 @@ static int showPhysicalStructure(dvdparse & dvd)
             cout << "Entry PGC           : " << (pDVDPGC->m_bEntryPGC ? "yes" : "no") << endl;
             cout << "Title Number        : " << pDVDPGC->m_wTitleSetNo << endl;
             cout << "PGC Number          : " << wProgramChainNo << endl;
-            cout << "Programs/Cells      : " << pDVDPGC->m_wNumberOfPrograms << "/" << pDVDPGC->m_wNumberOfCells << endl;
+            cout << "Programs            : " << pDvdPgc->getProgramCount() << endl;
 
-            playTime(pDVDPGC->m_qwPlayTime, pDVDPGC->m_wFrameRate);
-
-            for (uint16_t wProgram = 1; wProgram <= pDVDPGC->m_wNumberOfPrograms; wProgram++)
+            for (uint16_t wProgramNo = 1; wProgramNo <= pDvdPgc->getProgramCount(); wProgramNo++)
             {
-                const dvdprogram *pDvdProgram = pDvdPgc->getDvdProgram(wProgram);
+                const dvdprogram *pDvdProgram = pDvdPgc->getDvdProgram(wProgramNo);
                 LPCDVDPROGRAM pDVDPROGRAM = pDvdProgram->getDVDPROGRAM();
 
                 cout << endl;
                 cout << "Program #           : " << pDVDPROGRAM->m_wProgramNo << endl;
-                cout << "Cells               : " << pDVDPROGRAM->m_wCells << endl;
+                cout << "Cells               : " << pDvdProgram->getCellCount() << endl;
 
-                showCellsAndUnits(pDVDPROGRAM, pDvdProgram);
+                showCellsAndUnits(pDvdProgram);
             }
         }
     }
 
     cout << endl;
-    cout << "Size                : " << dvd.getSize() / (1024*1024) << " MB" << endl;
-    playTime(dvd.getPlayTime());
+    cout << "Size                : " << DVD.getSize() / (1024*1024) << " MB" << endl;
+    playTime(DVD.getPlayTime());
 
     cout << "**************************************************************************" << endl;
 
     return res;
 }
 
-static int showVirtualStructure(dvdparse & dvd)
+static int showVirtualStructure(dvdparse & DVD)
 {
-    LPCDVDVMGM pDVDVMGM = dvd.getDVDVMGM();
+    LPCDVDVMGM pDVDVMGM = DVD.getDVDVMGM();
     int res = 0;
 
     showHeader(pDVDVMGM);
 
-    cout << "Number of Title Sets: " << pDVDVMGM->m_wPTTNumberOfTitles << endl;
+    cout << "Number of Title Sets: " << DVD.getDvdPttVmgCount() << endl;
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wPTTNumberOfTitles; wTitleSetNo++)
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= DVD.getDvdPttVmgCount(); wTitleSetNo++)
     {
-        const dvdpttvmg *pDvdPttVmg = dvd.getDvdPttVmg(wTitleSetNo);
+        const dvdpttvmg *pDvdPttVmg = DVD.getDvdPttVmg(wTitleSetNo);
         const dvdtitle *pDvdTitle = pDvdPttVmg->getDvdTitle();
         LPCDVDVTS pDVDVTS = pDvdTitle->getDVDVTS();
         LPCDVDPTTVMG pDVDPTTVMG = pDvdPttVmg->getDVDPTTVMG();
@@ -265,27 +263,26 @@ static int showVirtualStructure(dvdparse & dvd)
         cout << "******************************** Title " << setfill('0')  << setw(2) << wTitleSetNo << " ********************************" << endl;
 
         cout << "Version             : " << pDVDVTS->m_wVersionNumberMajor << "." << pDVDVTS->m_wVersionNumberMinor << endl;
-        cout << "Chapters            : " << pDvdPttVmg->getPttCount() << endl;
-        cout << "Angles              : " << (unsigned)pDVDPTTVMG->m_byNumberOfVideoAngles << endl;
+        cout << "Chapters            : " << pDvdPttVmg->getPttVtsCount() << endl;
+        cout << "Angles              : " << pDVDPTTVMG->m_wNumberOfVideoAngles << endl;
 
-        for (uint16_t wPtt = 1; wPtt <= pDvdPttVmg->getPttCount(); wPtt++)
+        for (uint16_t wPtt = 1; wPtt <= pDvdPttVmg->getPttVtsCount(); wPtt++)
         {
             const dvdpttvts * pDvdPttVts = pDvdPttVmg->getDvdPttVts(wPtt);
             LPCDVDPTTVTS pDVDPTTVTS = pDvdPttVts->getDVDPTTVTS();
-            const dvdprogram * pDvdProgram = dvd.getDvdProgram(pDVDPTTVTS->m_wTitleSetNo, pDVDPTTVTS->m_wProgramChainNo, pDVDPTTVTS->m_wProgram);
-            LPCDVDPROGRAM pDVDPROGRAM = pDvdProgram->getDVDPROGRAM();
+            const dvdprogram * pDvdProgram = DVD.getDvdProgram(pDVDPTTVTS->m_wTitleSetNo, pDVDPTTVTS->m_wProgramChainNo, pDVDPTTVTS->m_wProgramNo);
 
             cout << endl;
-            cout << "Program #           : " << pDVDPTTVTS->m_wProgram << endl;
-            cout << "Cells               : " << pDVDPROGRAM->m_wCells << endl;
+            cout << "Program #           : " << pDVDPTTVTS->m_wProgramNo << endl;
+            cout << "Cells               : " << pDvdProgram->getCellCount() << endl;
 
-            showCellsAndUnits(pDVDPROGRAM, pDvdProgram);
+            showCellsAndUnits(pDvdProgram);
         }
     }
 
     cout << endl;
-    cout << "Size                : " << dvd.getVirtSize() / (1024*1024) << " MB" << endl;
-    playTime(dvd.getVirtPlayTime());
+    cout << "Size                : " << DVD.getVirtSize() / (1024*1024) << " MB" << endl;
+    playTime(DVD.getVirtPlayTime());
 
     cout << "**************************************************************************" << endl;
 
@@ -347,26 +344,23 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-
-    cout << "TESTPATH: "<< strPath << endl << endl;
-
-    dvdparse dvd;
-    res = dvd.parse(strPath);
+    dvdparse DVD;
+    res = DVD.parse(strPath);
 
     if (res == 0)
     {
         if (bPhysicalStructure)
         {
-            res = showPhysicalStructure(dvd);
+            res = showPhysicalStructure(DVD);
         }
         else
         {
-            res = showVirtualStructure(dvd);
+            res = showVirtualStructure(DVD);
         }
     }
     else
     {
-        cerr << dvd.getErrorString() << endl;
+        cerr << DVD.getErrorString() << endl;
     }
 
     return res;

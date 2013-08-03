@@ -36,7 +36,7 @@ using namespace std;
 #include "compat.h"
 
 /*!
- *  @brief http class
+ *  \brief http class
  *
  * HTTP web server access class
  */
@@ -62,14 +62,14 @@ public:
     virtual ~http();
 
     /*!
-     *  @brief Set proxy name
+     *  \brief Set proxy name
      *
      *  \param strProxy TSTRING & DNS name or IP of proxy and optional port (e.g. proxy:3128)
      */
     void		setProxy(const TSTRING & strProxy);
 
     /*!
-     *  @brief Send request to server
+     *  \brief Send request to server
      *
      * Send a request to the server with optional data.
      *
@@ -81,7 +81,7 @@ public:
     int         request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strData = _T(""));
 
     /*!
-     *  @brief Get the http headers
+     *  \brief Get the http headers
      *
      * Gets the http headers returned by the server.
      *
@@ -90,7 +90,7 @@ public:
     TSTRING		getHeaders() const;
 
     /*!
-     *  @brief Get the http content
+     *  \brief Get the http content
      *
      * Get the http content (aka the web page) without any headers
      *
@@ -99,7 +99,7 @@ public:
     TSTRING		getContent() const;
 
     /*!
-     *  @brief Get the http response
+     *  \brief Get the http response
      *
      * Get the http response code, e.g. 404 (not found), 200 (OK) etc.
      *
@@ -108,7 +108,7 @@ public:
     int         getResponse() const;
 
     /*!
-     *  @brief Return the last error
+     *  \brief Return the last error
      *
      * If an error occurred, returns the last error in text form.
      *
@@ -119,7 +119,7 @@ public:
 protected:
 
     /*!
-     *  @brief Split an url
+     *  \brief Split an url
      *
      * Splits url into separate parts: hortname, uri and port:
      *
@@ -140,15 +140,16 @@ protected:
     static int	splitUrl(TSTRING & strUrl, TSTRING & strHost, TSTRING & strUri, int & iPort);
 
     /*!
-     *  @brief Set the error text
+     *  \brief Set the error text
      *
      *  \param strError TSTRING & Error text
+     *  \param nErrorCode int Error code (see "man errno")
      */
     void		setError(const TSTRING & strError, int nErrorCode = 0);
 
 
     /*!
-     *  @brief Send data via tcp
+     *  \brief Send data via tcp
      *
      * Encapsulates the low level send() function
      *
@@ -161,7 +162,7 @@ protected:
     int         send(SOCKET s, const TSTRING & strBuffer, int flags) const;
 
     /*!
-     *  @brief Receive data via tcp
+     *  \brief Receive data via tcp
      *
      * Encapsulates the low level recv() function.
      * If the block is fragmented, the function waits until there is actually

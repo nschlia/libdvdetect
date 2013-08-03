@@ -41,6 +41,8 @@
 class DLL_PUBLIC dvdtitle : public dvdetectbase
 {
     friend class dvdparse;
+    friend class xmldocbuilder;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
@@ -67,7 +69,7 @@ public:
      *  \return Success: Pointer to dvdpgc class
      *  \return Fail: NULL if wProgramChainNo out of bounds.
      */
-    const dvdpgc *      getDvdPgc(uint16_t wProgramChainNo) const;
+    dvdpgc *getDvdPgc(uint16_t wProgramChainNo) const;
 
     //! Get the number of program chains (PGC) in this title set.
     /*!
@@ -81,7 +83,7 @@ public:
      *  \return Success: Pointer to wFileNo class
      *  \return Fail: NULL if wFileNo out of bounds.
      */
-    const dvdfile *     getDvdFile(uint16_t wFileNo) const;
+    dvdfile *           getDvdFile(uint16_t wFileNo) const;
 
     //! Get the number of files in this title set.
     /*!
@@ -90,10 +92,12 @@ public:
     uint16_t            getFileCount() const;
 
     //! Get the size (in bytes) of this title set.
-    //! This is not the combined size of all VOBS. This is calculated
-    //! by the size of all cells in this program, so this may (and will)
-    //! differ from the file size.
-    /*!
+    /*! Get the size (in bytes) of this title set.
+     * This is not the combined size of all VOBS. This is calculated
+     * by the size of all cells in this program, so this may (and will)
+     * differ from the file size, but reflect the size of the actual
+     * title.
+     *
      *  \return Size (in bytes) of this title set.
      */
     uint64_t            getSize() const;
@@ -104,14 +108,14 @@ public:
      */
     uint64_t            getPlayTime() const;
 
-    dvdtitle& operator= (dvdtitle const& rhs);
+    dvdtitle& operator= (dvdtitle const & source);
 
 protected:
     DVDVTS              m_DVDVTS;				//!< DVDVTS structure (DVD video title set)
-    dvdpgclst           m_dvdPgcLst;			//!< list of DVD pogram chains (PGC) in this title set
-    dvdfilelst          m_dvdFileLst;			//!< list of DVD files in this title set
+    dvdpgclst           m_lstDvdPgc;			//!< list of DVD pogram chains (PGC) in this title set
+    dvdfilelst          m_lstDvdFile;			//!< list of DVD files in this title set
 };
 
-typedef std::vector<dvdtitle> dvdtitlelst;		//!< shortcut for a list of dvdtitles
+typedef vector_ptr<dvdtitle> dvdtitlelst;		//!< shortcut for a list of dvdtitles
 
 #endif // DVDTITLE_H

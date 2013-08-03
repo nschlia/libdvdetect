@@ -62,6 +62,15 @@ DLL_PUBLIC const char * dvdGetExtension(DVDFILETYPE eFileType);
 
 DLL_PUBLIC const char * dvdGetFileType(DVDFILETYPE eFileType);
 
+//! Get a DVD file name
+/*!
+     * \param eFileType DVDFILETYPE File type, e.g. VIDEO_TS.IFO
+     * \param wTitleSetNo uint16_t For VTS_* files, number of title set
+     * \param wVtsNo  uint16_t For VTS_* files, number of IF or VOB
+     * \return File name
+     */
+DLL_PUBLIC void         dvdGetFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo, uint16_t wVtsNo, char * pszFileName, size_t maxlen);
+
 #ifdef __cplusplus
 }
 #endif

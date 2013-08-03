@@ -32,6 +32,7 @@
 #endif
 
 #include <dvdetect/types.h>
+#include <dvdetect/vector_ptr.h>
 #include <dvdetect/version.h>
 #include <dvdetect/dvdetectdll.h>
 #include <dvdetect/dvdutils.h>

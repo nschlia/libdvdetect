@@ -16,7 +16,9 @@ SOURCES += main.cpp \
     dvdexplorerdlg.cpp \
     searchtextdlg.cpp \ 
     explorerutils.cpp \
-    editdetailsdlg.cpp
+    editdetailsdlg.cpp \
+    editoptionsdlg.cpp
+    
 INCLUDEPATH += \
     ../.. \
     ../../lib \
@@ -24,6 +26,9 @@ INCLUDEPATH += \
     ../../include/dvdetect
 
 HEADERS  += \
+    aboutdlg.h \
+    dvdexplorerdlg.h \
+    searchtextdlg.h \ 
     ../../config.h \
     ../../include/dvdetect/dvdcell.h \
     ../../include/dvdetect/dvddatabase.h \
@@ -42,11 +47,9 @@ HEADERS  += \
     ../../include/dvdetect/dvdutils.h \
     ../../include/dvdetect/types.h \
     ../../include/dvdetect/version.h \
-    aboutdlg.h \
-    dvdexplorerdlg.h \
-    searchtextdlg.h \ 
     explorerutils.h \
-    editdetailsdlg.h
+    editdetailsdlg.h \
+    editoptionsdlg.h
 
 DEFINES += HAVE_CONFIG_H
 win32:DEFINES -= UNICODE
@@ -66,7 +69,9 @@ FORMS    += \
     dvdexplorerdlg.ui \
     searchtextdlg.ui \
     aboutdlg.ui \
-    editdetailsdlg.ui
+    editdetailsdlg.ui \
+    editoptionsdlg.ui
 
 # SPÄTER WEG!
 DEFINES += BUILDING_STATIC
+

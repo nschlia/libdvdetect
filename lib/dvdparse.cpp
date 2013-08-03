@@ -29,7 +29,23 @@
 #include "localutils.h"
 #include "vts_ifo.h"
 #include "vmg_ifo.h"
+#ifdef HAVE_OPENSSL_MD5_H
+// Have native m5 support
+#include <openssl/md5.h>
+#define MD5_type                    uint8_t
+#else
+// Use our code
 #include "md5/md5.h"
+#define MD5_CTX                     md5_state_t
+#define MD5_type                    md5_byte_t
+
+#define MD5_Init(c)                 md5_init(c)
+#define MD5_Update(c, data, len)    md5_append(c, (const md5_byte_t *)data, len)
+#define MD5_Final(c, md)            md5_finish(md, c)
+#endif
+
+
+#include <sys/stat.h>
 
 #include <fstream>
 
@@ -40,42 +56,55 @@ dvdparse::dvdparse()
 
 dvdparse::~dvdparse()
 {
-
 }
 
-dvdparse& dvdparse::operator= (dvdparse const& rhs)
+dvdparse& dvdparse::operator= (dvdparse const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        m_strPath               = rhs.m_strPath;
-        memcpy(&m_DVDVMGM, &rhs.m_DVDVMGM, sizeof(DVDVMGM));
-        m_dvdTitleLst           = rhs.m_dvdTitleLst;
-        m_dvdPttVmgLst          = rhs.m_dvdPttVmgLst;
-        m_dvdFileLst            = rhs.m_dvdFileLst;
-        m_strErrorString        = rhs.m_strErrorString;
-        m_eErrorCode            = rhs.m_eErrorCode;
-        m_bFullScan             = rhs.m_bFullScan;
-        m_nVirtTitleCount       = rhs.m_nVirtTitleCount;
-        m_bIsLoaded             = rhs.m_bIsLoaded;
-        m_strAlbumArtist        = rhs.m_strAlbumArtist;
-        m_strAlbum              = rhs.m_strAlbum;
-        m_strGenre              = rhs.m_strGenre;
-        m_strCast               = rhs.m_strCast;
-        m_strCrew               = rhs.m_strCrew;
-        m_strDirector           = rhs.m_strDirector;
-        m_strCountry            = rhs.m_strCountry;
-        m_strReleaseDate        = rhs.m_strReleaseDate;
-        m_strSpecialFeatures    = rhs.m_strSpecialFeatures;
-        m_strEAN_UPC            = rhs.m_strEAN_UPC;
-        m_strStoryline          = rhs.m_strStoryline;
-        m_strRemarks            = rhs.m_strRemarks;
-        m_nRevision             = rhs.m_nRevision;
-        m_strSubmitter          = rhs.m_strSubmitter;
-        m_strSubmitterIP        = rhs.m_strSubmitterIP;
-        m_strClient             = rhs.m_strClient;
-        m_strDateCreated        = rhs.m_strDateCreated;
-        m_strDateLastChanged    = rhs.m_strDateLastChanged;
-        m_strKeywords           = rhs.m_strKeywords;
+        m_strPath               = source.m_strPath;
+        memcpy(&m_DVDVMGM, &source.m_DVDVMGM, sizeof(DVDVMGM));
+        m_lstDvdTitle           = source.m_lstDvdTitle;
+        m_lstDvdPttVmg          = source.m_lstDvdPttVmg;
+        // Change owner parser as well
+        for (dvdpttvmglst::iterator itDvdPttVmg = m_lstDvdPttVmg.begin(); itDvdPttVmg != m_lstDvdPttVmg.end(); itDvdPttVmg++)
+        {
+            (*itDvdPttVmg)->m_pDvdParse = this;
+            for (dvdpttvtslst::iterator itDvdPttVts = (*itDvdPttVmg)->m_lstDvdPttVts.begin(); itDvdPttVts != (*itDvdPttVmg)->m_lstDvdPttVts.end(); itDvdPttVts++)
+            {
+                (*itDvdPttVts)->m_pDvdParse = this;
+            }
+        }
+        m_lstDvdFile            = source.m_lstDvdFile;
+        m_strErrorString        = source.m_strErrorString;
+        m_eErrorCode            = source.m_eErrorCode;
+        m_bFullScan             = source.m_bFullScan;
+        m_nVirtTitleCount       = source.m_nVirtTitleCount;
+        m_bIsLoaded             = source.m_bIsLoaded;
+        m_strHash               = source.m_strHash;
+        m_strAlbumArtist        = source.m_strAlbumArtist;
+        m_strAlbum              = source.m_strAlbum;
+        m_strGenre              = source.m_strGenre;
+        m_strCast               = source.m_strCast;
+        m_strCrew               = source.m_strCrew;
+        m_strDirector           = source.m_strDirector;
+        m_strCountry            = source.m_strCountry;
+        m_strReleaseDate        = source.m_strReleaseDate;
+        m_strSpecialFeatures    = source.m_strSpecialFeatures;
+        m_strEAN_UPC            = source.m_strEAN_UPC;
+        m_strStoryline          = source.m_strStoryline;
+        m_strRemarks            = source.m_strRemarks;
+        m_nRevision             = source.m_nRevision;
+        m_strSubmitter          = source.m_strSubmitter;
+        m_strSubmitterIP        = source.m_strSubmitterIP;
+        m_strClient             = source.m_strClient;
+        m_strDateCreated        = source.m_strDateCreated;
+        m_strDateLastChanged    = source.m_strDateLastChanged;
+        m_strKeywords           = source.m_strKeywords;
+        m_nProtocolVersion           = source.m_nProtocolVersion;
+        m_strLibraryVersion     = source.m_strLibraryVersion;
+        m_strLibraryName        = source.m_strLibraryName;
+        m_strClientName         = source.m_strClientName;
     }
     return *this;
 }
@@ -84,15 +113,16 @@ void dvdparse::clear()
 {
     memset(&m_DVDVMGM, 0, sizeof(DVDVMGM));
 
-    m_dvdTitleLst.clear();
-    m_dvdPttVmgLst.clear();
-    m_dvdFileLst.clear();
+    m_lstDvdTitle.clear();
+    m_lstDvdPttVmg.clear();
+    m_lstDvdFile.clear();
     m_strPath.clear();
     m_strErrorString.clear();
     m_eErrorCode = DVDERRORCODE_NOERROR;
     m_bFullScan = true;
     m_nVirtTitleCount = 0;
     m_bIsLoaded = false;
+    m_strHash.clear();
     m_strAlbumArtist.clear();
     m_strAlbum.clear();
     m_strGenre.clear();
@@ -112,6 +142,10 @@ void dvdparse::clear()
     m_strDateCreated.clear();
     m_strDateLastChanged.clear();
     m_strKeywords.clear();
+    m_nProtocolVersion = 0;
+    m_strLibraryVersion.clear();
+    m_strLibraryName.clear();
+    m_strClientName.clear();
 }
 
 bool dvdparse::locateDVD()
@@ -171,14 +205,13 @@ int dvdparse::parse(const std::string & strPath)
             throw (int)-1;
         }
 
-        if (!parseVideoManager())
+        uint16_t wTitleSetCount = parseVideoManager();
+        if (!wTitleSetCount)
         {
             throw (int)-1;
         }
 
-        m_dvdTitleLst.resize(m_DVDVMGM.m_wNumberOfTitleSets);
-
-        for (uint16_t wTitleSetNo = 1; wTitleSetNo <= m_DVDVMGM.m_wNumberOfTitleSets; wTitleSetNo++)
+        for (uint16_t wTitleSetNo = 1; wTitleSetNo <= wTitleSetCount; wTitleSetNo++)
         {
             if (!parseTitleSet(wTitleSetNo))
             {
@@ -197,15 +230,15 @@ int dvdparse::parse(const std::string & strPath)
 }
 
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
-void dvdparse::checkFile(const dvdfile & dvdFile)
+void dvdparse::checkFile(const dvdfile * dvdFile)
 {
     struct stat buf;
-    assert(stat(getWin32ShortFilePath(m_strPath + dvdFile.m_DVDFILE.m_szFileName).c_str(), &buf) != -1);
-    assert(dvdFile.m_DVDFILE.m_dwSize == (uint32_t)buf.st_size);
+    assert(stat(getWin32ShortFilePath(m_strPath + dvdFile->getFileName()).c_str(), &buf) != -1);
+    assert(dvdFile->m_DVDFILE.m_dwSize == (uint32_t)buf.st_size);
 }
 #endif
 
-void dvdparse::getVmgMain(const uint8_t* pData)
+uint16_t dvdparse::getVmgMain(const uint8_t* pData)
 {
     LPCVMG_IFO vmg_ifo = (LPCVMG_IFO)pData;
 
@@ -219,7 +252,8 @@ void dvdparse::getVmgMain(const uint8_t* pData)
     m_DVDVMGM.m_wVolumeNumber          = be2native(vmg_ifo->m_wVolumeNumber);
     m_DVDVMGM.m_wSideID                = vmg_ifo->m_bySideID;
     getString(m_DVDVMGM.m_szProviderID, vmg_ifo->m_ProviderID);
-    m_DVDVMGM.m_wNumberOfTitleSets     = be2native(vmg_ifo->m_wNumberOfTitleSets);
+
+    return be2native(vmg_ifo->m_wNumberOfTitleSets);
 }
 
 void dvdparse::getVmgAttributes(const uint8_t* pData)
@@ -227,125 +261,127 @@ void dvdparse::getVmgAttributes(const uint8_t* pData)
     LPCVMG_IFO vmg_ifo = (LPCVMG_IFO)pData;
 
     // video attributes of VMGM_VOBS
-    getVideoAttributes(m_DVDVMGM.m_VideoAttributesOfVMGM_VOBS, vmg_ifo->m_byVideoAttributesOfVMGM_VOBS);
+    getVideoAttributes(m_DVDVMGM.m_VideoStream, vmg_ifo->m_byVideoStreamVMGM_VOBS);
 
     // audio attributes of VMGM_VOBS
-    m_DVDVMGM.m_wNumberOfAudioStreamsInVMGM_VOBS        = be2native(vmg_ifo->m_wNumberOfAudioStreamsInVMGM_VOBS);
-    if (m_DVDVMGM.m_wNumberOfAudioStreamsInVMGM_VOBS)
+    m_DVDVMGM.m_wAudioStreamCount        = be2native(vmg_ifo->m_wAudioStreamCount);
+    if (m_DVDVMGM.m_wAudioStreamCount)
     {
-        getAudioAttributes(m_DVDVMGM.m_AudioAttributesOfVMGM_VOBS, vmg_ifo->m_byAudioAttributesOfVMGM_VOBS, 0);
+        getAudioAttributes(m_DVDVMGM.m_AudioStream, vmg_ifo->m_byAudioStreamsVMGM_VOBS, 0);
     }
 
     // subpicture attributes of VMGM_VOBS
-    m_DVDVMGM.m_wNumberOfSubpictureStreamsInVMGM_VOBS   = be2native(vmg_ifo->m_wNumberOfSubpictureStreamsInVMGM_VOBS);
-    if (m_DVDVMGM.m_wNumberOfSubpictureStreamsInVMGM_VOBS)
+    m_DVDVMGM.m_wSubpicStreamCount   = be2native(vmg_ifo->m_wSubpicStreamCount);
+    if (m_DVDVMGM.m_wSubpicStreamCount)
     {
-        getSubpictureAttributes(m_DVDVMGM.m_SubpictureAttributesOfVMGM_VOBS, vmg_ifo->m_bySubpictureAttributesOfVMGM_VOBS, 0);
+        getSubpictureAttributes(m_DVDVMGM.m_SubpicStream, vmg_ifo->m_bySubpicStreamVMGM_VOBS, 0);
     }
 }
 
 void dvdparse::getVmgIfo()
 {
     struct stat buf;
-    dvdfile dvdFile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
 
     if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
     {
-        dvdFile.m_DVDFILE.m_eDvdFileType    = DVDFILETYPE_VMG_IFO;
-        //dvdFile.m_DVDFILE.m_wTitleSetNo   = 0;
-        dvdFile.m_DVDFILE.m_dwSize          = buf.st_size;
-        dvdFile.m_DVDFILE.m_Date            = buf.st_ctime;
+        dvdfile *dvdFile = new dvdfile;
 
-        safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType   = DVDFILETYPE_VMG_IFO;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo  = 0;
+        dvdFile->m_DVDFILE.m_dwSize         = buf.st_size;
+        dvdFile->m_DVDFILE.m_Date           = buf.st_mtime;
 
-        m_dvdFileLst.push_back(dvdFile);
+        m_lstDvdFile.push_back(dvdFile);
     }
 
     strFileName = getDvdFileName(DVDFILETYPE_VMG_BUP);
 
     if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
     {
-        dvdFile.m_DVDFILE.m_eDvdFileType    = DVDFILETYPE_VMG_BUP;
-        //dvdFile.m_DVDFILE.m_wTitleSetNo   = 0;
-        //dvdFile.m_DVDFILE.m_wVobNo        = 0;
-        dvdFile.m_DVDFILE.m_dwSize          = buf.st_size;
-        dvdFile.m_DVDFILE.m_Date            = buf.st_ctime;
+        dvdfile *dvdFile = new dvdfile;
 
-        safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType   = DVDFILETYPE_VMG_BUP;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo  = 0;
+        //dvdFile->m_DVDFILE.m_wVobNo       = 0;
+        dvdFile->m_DVDFILE.m_dwSize         = buf.st_size;
+        dvdFile->m_DVDFILE.m_Date           = buf.st_mtime;
 
-        m_dvdFileLst.push_back(dvdFile);
+        m_lstDvdFile.push_back(dvdFile);
     }
 }
 
 void dvdparse::getVmgMenuVob()
 {
     struct stat buf;
-    dvdfile dvdFile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_VOB);
 
     if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
     {
-        dvdFile.m_DVDFILE.m_eDvdFileType    = DVDFILETYPE_VMG_VOB;
-        //dvdFile.m_DVDFILE.m_wTitleSetNo   = 0;
-        //dvdFile.m_DVDFILE.m_wVobNo        = 0;
-        dvdFile.m_DVDFILE.m_dwSize          = buf.st_size;
-        dvdFile.m_DVDFILE.m_Date            = buf.st_ctime;
+        dvdfile *dvdFile = new dvdfile;
 
-        safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType   = DVDFILETYPE_VMG_VOB;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo  = 0;
+        //dvdFile->m_DVDFILE.m_wVobNo       = 0;
+        dvdFile->m_DVDFILE.m_dwSize         = buf.st_size;
+        dvdFile->m_DVDFILE.m_Date           = buf.st_mtime;
 
-        m_dvdFileLst.push_back(dvdFile);
+        m_lstDvdFile.push_back(dvdFile);
     }
 }
 
 void dvdparse::getVmgIfo(time_t ftime, uint64_t qwSizeOfVMGI)
 {
-    dvdfile dvdFile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
 
-    dvdFile.m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_IFO;
-    //dvdFile.m_DVDFILE.m_wTitleSetNo       = 0;
-    //dvdFile.m_DVDFILE.m_wVobNo            = 0;
-    dvdFile.m_DVDFILE.m_dwSize              = qwSizeOfVMGI;         // Path cannot be empty
-    dvdFile.m_DVDFILE.m_Date                = ftime;                // simply use date of title IFO
+    {
+        dvdfile *dvdFile = new dvdfile;
 
-    safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_IFO;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo       = 0;
+        //dvdFile->m_DVDFILE.m_wVobNo            = 0;
+        dvdFile->m_DVDFILE.m_dwSize              = qwSizeOfVMGI;         // Path cannot be empty
+        dvdFile->m_DVDFILE.m_Date                = ftime;                // simply use date of title IFO
 
-    m_dvdFileLst.push_back(dvdFile);
+        m_lstDvdFile.push_back(dvdFile);
+
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
-    checkFile(dvdFile);
+        checkFile(dvdFile);
 #endif
+    }
 
-    strFileName = getDvdFileName(DVDFILETYPE_VMG_BUP);
 
-    dvdFile.m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_BUP;
-    //dvdFile.m_DVDFILE.m_wTitleSetNo       = 0;
-    //dvdFile.m_DVDFILE.m_wVobNo            = 0;
-    //dvdFile.m_DVDFILE.m_dwSize            = qwSizeOfVMGI;
-    //dvdFile.m_DVDFILE.m_Date              = buf.st_ctime;
+    {
+        dvdfile *dvdFile = new dvdfile;
 
-    safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        strFileName = getDvdFileName(DVDFILETYPE_VMG_BUP);
 
-    m_dvdFileLst.push_back(dvdFile);
+        dvdFile->m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_BUP;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo       = 0;
+        //dvdFile->m_DVDFILE.m_wVobNo            = 0;
+        //dvdFile->m_DVDFILE.m_dwSize            = qwSizeOfVMGI;
+        //dvdFile->m_DVDFILE.m_Date              = buf.st_mtime;
+
+        m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
-    checkFile(dvdFile);
+        checkFile(dvdFile);
 #endif
+    }
 }
 
 void dvdparse::getVmgMenuVob(time_t ftime, uint32_t dwMenuVobSize)
 {
-    dvdfile dvdFile;
+    dvdfile *dvdFile = new dvdfile;
+
     std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_VOB);
 
-    dvdFile.m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_VOB;
-    //dvdFile.m_DVDFILE.m_wTitleSetNo       = 0;
-    //dvdFile.m_DVDFILE.m_wVobNo            = 0;
-    dvdFile.m_DVDFILE.m_dwSize              = dwMenuVobSize;
-    dvdFile.m_DVDFILE.m_Date                = ftime;            // simply use date of title IFO
+    dvdFile->m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_VOB;
+    //dvdFile->m_DVDFILE.m_wTitleSetNo       = 0;
+    //dvdFile->m_DVDFILE.m_wVobNo            = 0;
+    dvdFile->m_DVDFILE.m_dwSize              = dwMenuVobSize;
+    dvdFile->m_DVDFILE.m_Date                = ftime;            // simply use date of title IFO
 
-    safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
-
-    m_dvdFileLst.push_back(dvdFile);
+    m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
     checkFile(dvdFile);
 #endif
@@ -357,32 +393,30 @@ void dvdparse::getVmgPtt(const uint8_t* pData)
     uint32_t dwStartAddressVMG_PTT_SRPT                 = dvdSector2bytes(be2native(vmg_ifo->m_dwSectorPointerVMG_PTT_SRPT));    // 0C4 	sector pointer to VMG_PTT_SRPT (table of titles)
     LPCVMG_PTT_SRPT_HEADER pVMG_PTT_SRPT_HEADER         = (LPCVMG_PTT_SRPT_HEADER)(pData + dwStartAddressVMG_PTT_SRPT);
 
-    m_DVDVMGM.m_wPTTNumberOfTitles                      = be2native(pVMG_PTT_SRPT_HEADER->m_wNumberOfTitles);
-    for (uint16_t wTitle = 1; wTitle <= m_DVDVMGM.m_wPTTNumberOfTitles; wTitle++)
+    uint16_t wPTTNumberOfTitles                         = be2native(pVMG_PTT_SRPT_HEADER->m_wNumberOfTitles);
+    for (uint16_t wTitle = 1; wTitle <= wPTTNumberOfTitles; wTitle++)
     {
         LPCVMG_PTT_SRPT pVMG_PTT_SRPT = (LPCVMG_PTT_SRPT)(pData + dwStartAddressVMG_PTT_SRPT +  sizeof(VMG_PTT_SRPT_HEADER) + (wTitle - 1) * sizeof(VMG_PTT_SRPT));
-        dvdpttvmg dvdPttVmg(this);
+        dvdpttvmg *dvdPttVmg = new dvdpttvmg(this);
 
-        dvdPttVmg.m_DVDPTTVMG.m_byPlaybackType          = getbyte(pVMG_PTT_SRPT->m_byPlaybackType);
-        dvdPttVmg.m_DVDPTTVMG.m_byNumberOfVideoAngles   = getbyte(pVMG_PTT_SRPT->m_byNumberOfVideoAngles);
-        dvdPttVmg.m_DVDPTTVMG.m_wNumberOfChapters       = be2native(pVMG_PTT_SRPT->m_wNumberOfChapters);
-        dvdPttVmg.m_DVDPTTVMG.m_byParentalMgmMaskVMG    = getbyte(pVMG_PTT_SRPT->m_byParentalMgmMaskVMG);
-        dvdPttVmg.m_DVDPTTVMG.m_byParentalMgmMaskVTS    = getbyte(pVMG_PTT_SRPT->m_byParentalMgmMaskVTS);
-        dvdPttVmg.m_DVDPTTVMG.m_byVideoTitleSet         = getbyte(pVMG_PTT_SRPT->m_byVideoTitleSet);
-        dvdPttVmg.m_DVDPTTVMG.m_byTitleNumber           = getbyte(pVMG_PTT_SRPT->m_byTitleNumber);
-        dvdPttVmg.m_DVDPTTVMG.m_dwVtsAddress            = dvdSector2bytes(be2native(pVMG_PTT_SRPT->m_dwVtsSectorAddress));
+        dvdPttVmg->m_DVDPTTVMG.m_wPlaybackType          = getbyte(pVMG_PTT_SRPT->m_byPlaybackType);
+        dvdPttVmg->m_DVDPTTVMG.m_wNumberOfVideoAngles   = getbyte(pVMG_PTT_SRPT->m_byNumberOfVideoAngles);
+        dvdPttVmg->m_DVDPTTVMG.m_byParentalMgmMaskVMG   = getbyte(pVMG_PTT_SRPT->m_byParentalMgmMaskVMG);
+        dvdPttVmg->m_DVDPTTVMG.m_byParentalMgmMaskVTS   = getbyte(pVMG_PTT_SRPT->m_byParentalMgmMaskVTS);
+        dvdPttVmg->m_DVDPTTVMG.m_wVideoTitleSetNo         = getbyte(pVMG_PTT_SRPT->m_byVideoTitleSet);
+        dvdPttVmg->m_DVDPTTVMG.m_wTitleNo           = getbyte(pVMG_PTT_SRPT->m_byTitleNumber);
 
-        m_dvdPttVmgLst.push_back(dvdPttVmg);
+        m_lstDvdPttVmg.push_back(dvdPttVmg);
     }
 }
 
-bool dvdparse::parseVideoManager()
+uint16_t dvdparse::parseVideoManager()
 {
     string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
     string strFilePath = m_strPath + strFileName;
     const uint8_t* pData = NULL;
+    uint16_t wTitleSetCount = 0;
     time_t ftime = 0;
-    bool bSuccess = false;
 
     pData = readIFO(strFilePath, ftime);
     if (pData != NULL)
@@ -397,13 +431,13 @@ bool dvdparse::parseVideoManager()
             // uint32_t dwStartAddressVMGM_PGCI_UT     = dvdSector2bytes(be2native(vmg_ifo->m_dwSectorPointerVMGM_PGCI_UT));   // 0C8 	sector pointer to VMGM_PGCI_UT (Menu Program Chain table)
             // uint32_t dwStartAddressVMG_PTL_MAIT     = dvdSector2bytes(be2native(vmg_ifo->m_dwSectorPointerVMG_PTL_MAIT));   // 0CC 	sector pointer to VMG_PTL_MAIT (Parental Management masks)
             // uint32_t dwStartAddressVMG_VTS_ATRT     = dvdSector2bytes(be2native(vmg_ifo->m_dwSectorPointerVMG_VTS_ATRT));   // 0D0 	sector pointer to VMG_VTS_ATRT (copies of VTS audio/sub-picture attributes)
-            // TODO: VMG_TXTDT_MG nicht dokumentiert... Keine DVD mit Daten gefunden...
+            // TODO: VMG_TXTDT_MG not documented... No DVD containing data found yet...
             // uint32_t dwStartAddressVMG_TXTDT_MG     = dvdSector2bytes(be2native(vmg_ifo->m_dwSectorPointerVMG_TXTDT_MG));   // 0D4 	sector pointer to VMG_TXTDT_MG (text data)
             // assert(dwStartAddressVMG_TXTDT_MG == 0);
             // uint32_t dwStartAddressVMGM_C_ADT       = dvdSector2bytes(be2native(vmg_ifo->m_dwSectorPointerVMGM_C_ADT));     // 0D8 	sector pointer to VMGM_C_ADT (menu cell address table)
             // uint32_t dwStartAddressVMGM_VOBU_ADMAP  = dvdSector2bytes(be2native(vmg_ifo->m_dwSectorPointerVMGM_VOBU_ADMAP));// 0DC 	sector pointer to VMGM_VOBU_ADMAP (menu VOBU address map)
 
-            getVmgMain(pData);
+            wTitleSetCount = getVmgMain(pData);
 
             getVmgAttributes(pData);
 
@@ -432,20 +466,19 @@ bool dvdparse::parseVideoManager()
                     getVmgMenuVob(ftime, dwMenuVobSize);
                 }
             }
-
-            bSuccess = true;
         }
         else
         {
             setError("Error reading file '" + strFilePath + "': Not a Video Manager IFO file header.", DVDERRORCODE_VMG_IFO);
+            wTitleSetCount = 0;
         }
         delete [] pData;
     }
 
-    return bSuccess;
+    return wTitleSetCount;
 }
 
-void dvdparse::addUnit(const uint8_t* pData, dvdcell & dvdCell)
+void dvdparse::addUnit(const uint8_t* pData, dvdcell * dvdCell)
 {
     LPCVTS_IFO pVTS_IFO                          = (LPCVTS_IFO)pData;
 
@@ -463,10 +496,9 @@ void dvdparse::addUnit(const uint8_t* pData, dvdcell & dvdCell)
     uint16_t wOldVOBidn = 0;
     uint8_t byOldCELLidn = 0;
     uint32_t dwCounter = (be2native(pC_ADT_HEADER->m_dwEndAdress) - 7) / sizeof(VTS_C_ADT);
-    dvdCell.m_DVDCELL.m_wCellPosInfoCount       = 0;
-    dvdCell.m_DVDCELL.m_wNumberOfVOBIds         = be2native(pC_ADT_HEADER->m_wNumberOfVOBIds);
+    dvdCell->m_DVDCELL.m_wNumberOfVOBIds       	= be2native(pC_ADT_HEADER->m_wNumberOfVOBIds);
 
-    uint16_t wUnit = 1;
+    uint16_t wUnitNo = 1;
 
     for (uint32_t u = 0; u < dwCounter; u++)
     {
@@ -487,310 +519,301 @@ void dvdparse::addUnit(const uint8_t* pData, dvdcell & dvdCell)
         wOldVOBidn      = wVOBidn;
         byOldCELLidn    = byCELLidn;
 
-        if (dvdCell.m_DVDCELL.m_wVOBidn == wVOBidn &&
-                dvdCell.m_DVDCELL.m_wCELLidn == byCELLidn)
+        if (dvdCell->m_DVDCELL.m_wVOBidn == wVOBidn &&
+                dvdCell->m_DVDCELL.m_wCELLidn == byCELLidn)
         {
-            dvdunit dvdUnit;
+            dvdunit *dvdUnit = new dvdunit;
 
-            dvdUnit.m_DVDUNIT.m_wTitleSetNo        = dvdCell.m_DVDCELL.m_wTitleSetNo;
-            dvdUnit.m_DVDUNIT.m_wProgramChainNo = dvdCell.m_DVDCELL.m_wProgramChainNo;
-            dvdUnit.m_DVDUNIT.m_wProgramNo      = dvdCell.m_DVDCELL.m_wProgramNo;
-            dvdUnit.m_DVDUNIT.m_wCell           = dvdCell.m_DVDCELL.m_wCell;
-            dvdUnit.m_DVDUNIT.m_wUnit           = wUnit++;
+            dvdUnit->m_DVDUNIT.m_wTitleSetNo     = dvdCell->m_DVDCELL.m_wTitleSetNo;
+            dvdUnit->m_DVDUNIT.m_wProgramChainNo = dvdCell->m_DVDCELL.m_wProgramChainNo;
+            dvdUnit->m_DVDUNIT.m_wProgramNo      = dvdCell->m_DVDCELL.m_wProgramNo;
+            dvdUnit->m_DVDUNIT.m_wCellNo         = dvdCell->m_DVDCELL.m_wCellNo;
+            dvdUnit->m_DVDUNIT.m_wUnitNo         = wUnitNo++;
 
-            dvdUnit.m_DVDUNIT.m_dwStartSector   = be2native(pC_ADT->m_dwStartSector);
-            dvdUnit.m_DVDUNIT.m_dwEndSector     = be2native(pC_ADT->m_dwEndSector);
-            dvdCell.m_DVDCELL.m_wCellPosInfoCount++;
+            dvdUnit->m_DVDUNIT.m_dwStartSector   = be2native(pC_ADT->m_dwStartSector);
+            dvdUnit->m_DVDUNIT.m_dwEndSector     = be2native(pC_ADT->m_dwEndSector);
 
-            dvdCell.m_dvdUnitLst.push_back(dvdUnit);
+            dvdCell->m_lstDvdUnit.push_back(dvdUnit);
         }
     }
 }
 
-void dvdparse::addCell(const uint8_t* pData, dvdprogram& dvdProgram, uint16_t wCell, uint16_t wPGCCellPlaybackOffset, uint32_t dwOffsetVTS_PGC, uint16_t wCellPositionOffset)
+void dvdparse::addCell(const uint8_t* pData, dvdprogram * dvdProgram, uint16_t wCellNo, uint16_t wPGCCellPlaybackOffset, uint32_t dwOffsetVTS_PGC, uint16_t wCellPositionOffset)
 {
-    dvdcell dvdCell;
+    dvdcell * dvdCell = new dvdcell;
     LPCVTS_IFO pVTS_IFO                             = (LPCVTS_IFO)pData;
 
     uint32_t dwStartAddressVTS_PGCI_UT              = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTS_PGCI_UT));
 
-    LPCVTS_PGC pVTS_PGC = (LPCVTS_PGC)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC + wPGCCellPlaybackOffset + (sizeof(VTS_PGC) * (wCell - 1))));
-    dvdCell.m_DVDCELL.m_wTitleSetNo                 = dvdProgram.m_DVDPROGRAM.m_wTitleSetNo;
-    dvdCell.m_DVDCELL.m_wProgramChainNo             = dvdProgram.m_DVDPROGRAM.m_wProgramChainNo;
-    dvdCell.m_DVDCELL.m_wProgramNo                  = dvdProgram.m_DVDPROGRAM.m_wProgramNo;
-    dvdCell.m_DVDCELL.m_wCell                       = wCell;
+    LPCVTS_PGC pVTS_PGC = (LPCVTS_PGC)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC + wPGCCellPlaybackOffset + (sizeof(VTS_PGC) * (wCellNo - 1))));
+    dvdCell->m_DVDCELL.m_wTitleSetNo                 = dvdProgram->m_DVDPROGRAM.m_wTitleSetNo;
+    dvdCell->m_DVDCELL.m_wProgramChainNo             = dvdProgram->m_DVDPROGRAM.m_wProgramChainNo;
+    dvdCell->m_DVDCELL.m_wProgramNo                  = dvdProgram->m_DVDPROGRAM.m_wProgramNo;
+    dvdCell->m_DVDCELL.m_wCellNo                     = wCellNo;
 
-    dvdCell.m_DVDCELL.m_eCellType                   = (CELLTYPE)((((pVTS_PGC->m_byCellCategory1 & 0xC0) >> 6) & 0x03) + 1);
-    dvdCell.m_DVDCELL.m_eBlockType                  = (BLOCKTYPE)((((pVTS_PGC->m_byCellCategory1 & 0x30) >> 4) & 0x03) + 1);
-    dvdCell.m_DVDCELL.m_bSeamlessMultiplex          = (pVTS_PGC->m_byCellCategory1 & 0x08) ? true : false;
-    dvdCell.m_DVDCELL.m_bInterleaved                = (pVTS_PGC->m_byCellCategory1 & 0x04) ? true : false;
-    dvdCell.m_DVDCELL.m_bSCRdiscontinuity           = (pVTS_PGC->m_byCellCategory1 & 0x02) ? true : false;
-    dvdCell.m_DVDCELL.m_bSeamlessAngleLinkedInDSI   = (pVTS_PGC->m_byCellCategory1 & 0x01) ? true : false;
-    dvdCell.m_DVDCELL.m_bVOBStillMode               = (pVTS_PGC->m_byCellCategory2 & 0x40) ? true : false;;
-    dvdCell.m_DVDCELL.m_bStopsTrickPlay             = (pVTS_PGC->m_byCellCategory2 & 0x20) ? true : false;;
-    dvdCell.m_DVDCELL.m_wCellStillTime              = pVTS_PGC->m_byCellStillTime;
-    dvdCell.m_DVDCELL.m_wCellCommand                = pVTS_PGC->m_byCellCommand;
-    dvdCell.m_DVDCELL.m_qwPlayTime                  = BCDtime(pVTS_PGC->m_byPlaytime);
-    dvdCell.m_DVDCELL.m_wFrameRate                  = frameRate(pVTS_PGC->m_byPlaytime);
-    dvdCell.m_DVDCELL.m_dwFirstVOBUStartSector      = be2native(pVTS_PGC->m_dwFirstVOBUStartSector);
-    dvdCell.m_DVDCELL.m_dwFirstILVUEndSector        = be2native(pVTS_PGC->m_dwFirstILVUEndSector);
-    dvdCell.m_DVDCELL.m_dwLastVOBUStartSector       = be2native(pVTS_PGC->m_dwLastVOBUStartSector);
-    dvdCell.m_DVDCELL.m_dwLastVOBUEndSector         = be2native(pVTS_PGC->m_dwLastVOBUEndSector);
+    dvdCell->m_DVDCELL.m_eCellType                   = (CELLTYPE)((((pVTS_PGC->m_byCellCategory1 & 0xC0) >> 6) & 0x03) + 1);
+    dvdCell->m_DVDCELL.m_eBlockType                  = (BLOCKTYPE)((((pVTS_PGC->m_byCellCategory1 & 0x30) >> 4) & 0x03) + 1);
+    dvdCell->m_DVDCELL.m_bSeamlessMultiplex          = (pVTS_PGC->m_byCellCategory1 & 0x08) ? true : false;
+    dvdCell->m_DVDCELL.m_bInterleaved                = (pVTS_PGC->m_byCellCategory1 & 0x04) ? true : false;
+    dvdCell->m_DVDCELL.m_bSCRdiscontinuity           = (pVTS_PGC->m_byCellCategory1 & 0x02) ? true : false;
+    dvdCell->m_DVDCELL.m_bSeamlessAngleLinkedInDSI   = (pVTS_PGC->m_byCellCategory1 & 0x01) ? true : false;
+    dvdCell->m_DVDCELL.m_bVOBStillMode               = (pVTS_PGC->m_byCellCategory2 & 0x40) ? true : false;;
+    dvdCell->m_DVDCELL.m_bStopsTrickPlay             = (pVTS_PGC->m_byCellCategory2 & 0x20) ? true : false;;
+    dvdCell->m_DVDCELL.m_wCellStillTime              = pVTS_PGC->m_byCellStillTime;
+    dvdCell->m_DVDCELL.m_wCellCommand                = pVTS_PGC->m_byCellCommand;
+    dvdCell->m_DVDCELL.m_qwPlayTime                  = BCDtime(pVTS_PGC->m_byPlaytime);
+    dvdCell->m_DVDCELL.m_wFrameRate                  = frameRate(pVTS_PGC->m_byPlaytime);
+    dvdCell->m_DVDCELL.m_dwFirstVOBUStartSector      = be2native(pVTS_PGC->m_dwFirstVOBUStartSector);
+    dvdCell->m_DVDCELL.m_dwFirstILVUEndSector        = be2native(pVTS_PGC->m_dwFirstILVUEndSector);
+    dvdCell->m_DVDCELL.m_dwLastVOBUStartSector       = be2native(pVTS_PGC->m_dwLastVOBUStartSector);
+    dvdCell->m_DVDCELL.m_dwLastVOBUEndSector         = be2native(pVTS_PGC->m_dwLastVOBUEndSector);
 
 #ifdef ASSERT_H
     assert(wCellPositionOffset);                // Can this be 0??? (not required)
 #endif
     if (wCellPositionOffset != 0)
     {
-        LPCVTS_CELLPOS pVTS_CELLPOS = (LPCVTS_CELLPOS)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC + wCellPositionOffset + (sizeof(VTS_CELLPOS) * (wCell - 1))));
-        dvdCell.m_DVDCELL.m_wVOBidn                 = be2native(pVTS_CELLPOS->m_wVOBidn);
-        dvdCell.m_DVDCELL.m_wCELLidn                = pVTS_CELLPOS->m_byCELLidn;
+        LPCVTS_CELLPOS pVTS_CELLPOS = (LPCVTS_CELLPOS)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC + wCellPositionOffset + (sizeof(VTS_CELLPOS) * (wCellNo - 1))));
+        dvdCell->m_DVDCELL.m_wVOBidn                 = be2native(pVTS_CELLPOS->m_wVOBidn);
+        dvdCell->m_DVDCELL.m_wCELLidn                = pVTS_CELLPOS->m_byCELLidn;
     }
 
     addUnit(pData, dvdCell);
 
-    dvdProgram.m_DVDPROGRAM.m_wCells++;
-
-    dvdProgram.m_dvdCellLst.push_back(dvdCell);
+    dvdProgram->m_lstDvdCell.push_back(dvdCell);
 }
 
-void dvdparse::addPrograms(const uint8_t* pData, dvdpgc & dvdPgc, uint16_t wTitleSetNo, uint16_t wProgramChainNo)
+void dvdparse::addPrograms(const uint8_t* pData, dvdpgc *dvdPgc, uint16_t wTitleSetNo, uint16_t wProgramChainNo)
 {
     LPCVTS_IFO pVTS_IFO                     = (LPCVTS_IFO)pData;
 
-    dvdPgc.m_DVDPGC.m_wTitleSetNo           = wTitleSetNo;
+    dvdPgc->m_DVDPGC.m_wTitleSetNo          = wTitleSetNo;
 
     uint32_t dwStartAddressVTS_PGCI_UT      = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTS_PGCI_UT));
 
     LPCVTS_PGCI_UT pVTS_PGCI_UT = (LPCVTS_PGCI_UT)(pData + (dwStartAddressVTS_PGCI_UT + sizeof(VTS_PGCI_UT_HEADER) + (wProgramChainNo - 1) * sizeof(VTS_PGCI_UT)));
-    dvdPgc.m_DVDPGC.m_bEntryPGC             = (getbyte(pVTS_PGCI_UT->m_byTitleNo) & 0x80) ? true : false;
-    dvdPgc.m_DVDPGC.m_wProgramChainNo       = getbyte(pVTS_PGCI_UT->m_byTitleNo) & 0x7f;
+    dvdPgc->m_DVDPGC.m_bEntryPGC            = (getbyte(pVTS_PGCI_UT->m_byTitleNo) & 0x80) ? true : false;
+    dvdPgc->m_DVDPGC.m_wProgramChainNo      = getbyte(pVTS_PGCI_UT->m_byTitleNo) & 0x7f;
     uint32_t dwOffsetVTS_PGC                = be2native(pVTS_PGCI_UT->m_dwOffsetVTS_PGC);
 
     LPCVTS_PGCHEADER pVTS_PGCHEADER = (LPCVTS_PGCHEADER)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC));
-    dvdPgc.m_DVDPGC.m_wNumberOfPrograms     = getbyte(pVTS_PGCHEADER->m_byNumberOfPrograms);
-    dvdPgc.m_DVDPGC.m_wNumberOfCells        = getbyte(pVTS_PGCHEADER->m_byNumberOfCells);
-    dvdPgc.m_DVDPGC.m_qwPlayTime            = BCDtime(pVTS_PGCHEADER->m_byPlaytime);
-    dvdPgc.m_DVDPGC.m_wFrameRate            = frameRate(pVTS_PGCHEADER->m_byPlaytime);
     uint16_t wPGCProgramMapOffset           = be2native(pVTS_PGCHEADER->m_wPGCProgramMapOffset);    // offset within PGC to program map
     uint16_t wPGCCellPlaybackOffset         = be2native(pVTS_PGCHEADER->m_wPGCCellPlaybackOffset);  // offset within PGC to cell playback information table
     uint16_t wCellPositionOffset            = be2native(pVTS_PGCHEADER->m_wCellPositionOffset);     // offset within PGC to cell position information table
 
-    dvdPgc.m_dvdProgramLst.resize(dvdPgc.m_DVDPGC.m_wNumberOfPrograms);
+    uint16_t wNumberOfPrograms              = getbyte(pVTS_PGCHEADER->m_byNumberOfPrograms);
+    uint16_t wNumberOfCells                 = getbyte(pVTS_PGCHEADER->m_byNumberOfCells);
 
-    for (uint16_t wProgramNo = 1; wProgramNo <= dvdPgc.m_DVDPGC.m_wNumberOfPrograms; wProgramNo++)
+    for (uint16_t wProgramNo = 1; wProgramNo <= wNumberOfPrograms; wProgramNo++)
     {
-        dvdprogram & dvdProgram = dvdPgc.m_dvdProgramLst[wProgramNo - 1];
+        //dvdprogram * dvdProgram = dvdPgc->m_lstDvdProgram[wProgramNo - 1];
+        dvdprogram * dvdProgram = new dvdprogram;
+        dvdPgc->m_lstDvdProgram.push_back(dvdProgram);
 
         LPCVTS_PROGRAMMAP pVTS_PROGRAMMAP = (LPCVTS_PROGRAMMAP)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC + wPGCProgramMapOffset + (wProgramNo - 1)));
         uint16_t wEntryCell = getbyte(pVTS_PROGRAMMAP->m_byEntryCell);
         uint16_t wLastCell  = 0;
 
-        if (wProgramNo < dvdPgc.m_DVDPGC.m_wNumberOfPrograms)
+        if (wProgramNo < wNumberOfPrograms)
         {
             wLastCell = getbyte((pVTS_PROGRAMMAP + 1)->m_byEntryCell) - 1;
         }
         else
         {
-            wLastCell = dvdPgc.m_DVDPGC.m_wNumberOfCells;
+            wLastCell = wNumberOfCells;
         }
 
-        dvdProgram.m_DVDPROGRAM.m_wTitleSetNo      = wTitleSetNo;
-        dvdProgram.m_DVDPROGRAM.m_wProgramChainNo  = wProgramChainNo;
-        dvdProgram.m_DVDPROGRAM.m_wProgramNo       = wProgramNo;
+        dvdProgram->m_DVDPROGRAM.m_wTitleSetNo      = wTitleSetNo;
+        dvdProgram->m_DVDPROGRAM.m_wProgramChainNo  = wProgramChainNo;
+        dvdProgram->m_DVDPROGRAM.m_wProgramNo       = wProgramNo;
 
-        dvdProgram.m_DVDPROGRAM.m_wCells           = 0;
-
-        for (uint16_t wCell = wEntryCell; wCell <= wLastCell; wCell++)
+        for (uint16_t wCellNo = wEntryCell; wCellNo <= wLastCell; wCellNo++)
         {
-            addCell(pData, dvdProgram, wCell, wPGCCellPlaybackOffset, dwOffsetVTS_PGC, wCellPositionOffset);
+            addCell(pData, dvdProgram, wCellNo, wPGCCellPlaybackOffset, dwOffsetVTS_PGC, wCellPositionOffset);
         }
     }
 }
 
-void dvdparse::getVtsIfo(dvdtitle& dvdTitle, uint16_t wTitleSetNo)
+void dvdparse::getVtsIfo(dvdtitle *dvdTitle, uint16_t wTitleSetNo)
 {
     struct stat buf;
-    dvdfile dvdFile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_IFO, wTitleSetNo, 0);
 
     if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
     {
-        dvdFile.m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_VTS_IFO;
-        dvdFile.m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
-        dvdFile.m_DVDFILE.m_wVobNo                  = 0;
-        dvdFile.m_DVDFILE.m_dwSize                  = buf.st_size;
-        dvdFile.m_DVDFILE.m_Date                    = buf.st_ctime;
+        dvdfile *dvdFile = new dvdfile;
 
-        safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_VTS_IFO;
+        dvdFile->m_DVDFILE.m_wTitleSetNo            = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                 = 0;
+        dvdFile->m_DVDFILE.m_dwSize                 = buf.st_size;
+        dvdFile->m_DVDFILE.m_Date                   = buf.st_mtime;
 
-        dvdTitle.m_dvdFileLst.push_back(dvdFile);
+        dvdTitle->m_lstDvdFile.push_back(dvdFile);
     }
 
     strFileName = getDvdFileName(DVDFILETYPE_VTS_BUP, wTitleSetNo, 0);
 
     if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
     {
-        dvdFile.m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_VTS_BUP;
-        //dvdFile.m_DVDFILE.m_wTitleSetNo           = wTitleSetNo;
-        //dvdFile.m_DVDFILE.m_wVobNo                = 0;
-        dvdFile.m_DVDFILE.m_dwSize                  = buf.st_size;
-        dvdFile.m_DVDFILE.m_Date                    = buf.st_ctime;
+        dvdfile *dvdFile = new dvdfile;
 
-        safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_VTS_BUP;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo          = wTitleSetNo;
+        //dvdFile->m_DVDFILE.m_wVobNo               = 0;
+        dvdFile->m_DVDFILE.m_dwSize                 = buf.st_size;
+        dvdFile->m_DVDFILE.m_Date                   = buf.st_mtime;
 
-        dvdTitle.m_dvdFileLst.push_back(dvdFile);
+        dvdTitle->m_lstDvdFile.push_back(dvdFile);
     }
 }
 
-void dvdparse::getVtsMenuVob(dvdtitle& dvdTitle, uint16_t wTitleSetNo)
+void dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, uint16_t wTitleSetNo)
 {
     struct stat buf;
-    dvdfile dvdFile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_MENU_VOB, wTitleSetNo, 0);
 
     if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
     {
-        dvdFile.m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_MENU_VOB;
-        dvdFile.m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
-        dvdFile.m_DVDFILE.m_wVobNo                  = 0;
-        dvdFile.m_DVDFILE.m_dwSize                  = buf.st_size;
-        dvdFile.m_DVDFILE.m_Date                    = buf.st_ctime;
+        dvdfile *dvdFile = new dvdfile;
 
-        safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_MENU_VOB;
+        dvdFile->m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                  = 0;
+        dvdFile->m_DVDFILE.m_dwSize                  = buf.st_size;
+        dvdFile->m_DVDFILE.m_Date                    = buf.st_mtime;
 
-        dvdTitle.m_dvdFileLst.push_back(dvdFile);
+        dvdTitle->m_lstDvdFile.push_back(dvdFile);
     }
 }
 
-void dvdparse::getVtsVob(dvdtitle& dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo)
+void dvdparse::getVtsVob(dvdtitle *dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo)
 {
     struct stat buf;
-    dvdfile dvdFile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_VOB, wTitleSetNo, wVobNo);
 
     if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
     {
-        dvdFile.m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_VTS_VOB;
-        dvdFile.m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
-        dvdFile.m_DVDFILE.m_wVobNo                  = wVobNo;
-        dvdFile.m_DVDFILE.m_dwSize                  = buf.st_size;
-        dvdFile.m_DVDFILE.m_Date                    = buf.st_ctime;
+        dvdfile *dvdFile = new dvdfile;
 
-        safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_VTS_VOB;
+        dvdFile->m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                  = wVobNo;
+        dvdFile->m_DVDFILE.m_dwSize                  = buf.st_size;
+        dvdFile->m_DVDFILE.m_Date                    = buf.st_mtime;
 
-        dvdTitle.m_dvdFileLst.push_back(dvdFile);
+        dvdTitle->m_lstDvdFile.push_back(dvdFile);
     }
 }
 
-void dvdparse::getVtsIfo(dvdtitle& dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI, uint16_t wTitleSetNo)
+void dvdparse::getVtsIfo(dvdtitle *dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI, uint16_t wTitleSetNo)
 {
-    dvdfile dvdFile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_IFO, wTitleSetNo, 0);
 
-    dvdFile.m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_IFO;
-    dvdFile.m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
-    dvdFile.m_DVDFILE.m_wVobNo                      = 0;
-    dvdFile.m_DVDFILE.m_dwSize                      = qwSizeOfVMGI;
-    dvdFile.m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
+    {
+        dvdfile *dvdFile = new dvdfile;
 
-    safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_IFO;
+        dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                      = 0;
+        dvdFile->m_DVDFILE.m_dwSize                      = qwSizeOfVMGI;
+        dvdFile->m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
 
-    dvdTitle.m_dvdFileLst.push_back(dvdFile);
+        dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
-    checkFile(dvdFile);
+        checkFile(dvdFile);
 #endif
+    }
 
     strFileName = getDvdFileName(DVDFILETYPE_VTS_BUP, wTitleSetNo, 0);
 
-    dvdFile.m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_BUP;
-    //dvdFile.m_DVDFILE.m_wTitleSetNo               = wTitleSetNo;
-    //dvdFile.m_DVDFILE.m_wVobNo                    = 0;
-    //dvdFile.m_DVDFILE.m_dwSize                    = qwSizeOfVMGI;
-    //dvdFile.m_DVDFILE.m_Date                      = buf.st_ctime;
+    {
+        dvdfile *dvdFile = new dvdfile;
 
-    safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
+        dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_BUP;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo               = wTitleSetNo;
+        //dvdFile->m_DVDFILE.m_wVobNo                    = 0;
+        //dvdFile->m_DVDFILE.m_dwSize                    = qwSizeOfVMGI;
+        //dvdFile->m_DVDFILE.m_Date                      = buf.st_mtime;
 
-    dvdTitle.m_dvdFileLst.push_back(dvdFile);
+        dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
-    checkFile(dvdFile);
+        checkFile(dvdFile);
 #endif
+    }
 }
 
-void dvdparse::getVtsMenuVob(dvdtitle& dvdTitle, time_t ftime, uint32_t dwMenuVobSize, uint16_t wTitleSetNo)
+void dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, time_t ftime, uint32_t dwMenuVobSize, uint16_t wTitleSetNo)
 {
-    dvdfile dvdFile;
+    dvdfile *dvdFile = new dvdfile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_MENU_VOB, wTitleSetNo, 0);
 
-    dvdFile.m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_MENU_VOB;
-    dvdFile.m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
-    dvdFile.m_DVDFILE.m_wVobNo                      = 0;
-    dvdFile.m_DVDFILE.m_dwSize                      = dwMenuVobSize;
-    dvdFile.m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
+    dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_MENU_VOB;
+    dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
+    dvdFile->m_DVDFILE.m_wVobNo                      = 0;
+    dvdFile->m_DVDFILE.m_dwSize                      = dwMenuVobSize;
+    dvdFile->m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
 
-    safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
-
-    dvdTitle.m_dvdFileLst.push_back(dvdFile);
+    dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
     checkFile(dvdFile);
 #endif
 }
 
-void dvdparse::getVtsVob(dvdtitle& dvdTitle, time_t ftime, uint32_t dwSize, uint16_t wVobNo, uint16_t wTitleSetNo)
+void dvdparse::getVtsVob(dvdtitle *dvdTitle, time_t ftime, uint32_t dwSize, uint16_t wVobNo, uint16_t wTitleSetNo)
 {
-    dvdfile dvdFile;
+    dvdfile *dvdFile = new dvdfile;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_VOB, wTitleSetNo, wVobNo);
 
-    dvdFile.m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_VOB;
-    dvdFile.m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
-    dvdFile.m_DVDFILE.m_wVobNo                      = wVobNo;
-    dvdFile.m_DVDFILE.m_dwSize                      = dwSize;
-    dvdFile.m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
+    dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_VOB;
+    dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
+    dvdFile->m_DVDFILE.m_wVobNo                      = wVobNo;
+    dvdFile->m_DVDFILE.m_dwSize                      = dwSize;
+    dvdFile->m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
 
-    safecpy(dvdFile.m_DVDFILE.m_szFileName, strFileName.c_str());
-
-    dvdTitle.m_dvdFileLst.push_back(dvdFile);
+    dvdTitle->m_lstDvdFile.push_back(dvdFile);
 
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
     checkFile(dvdFile);
 #endif
 }
 
-void dvdparse::getVtsAttributes(const uint8_t *pData, dvdtitle& dvdTitle)
+void dvdparse::getVtsAttributes(const uint8_t *pData, dvdtitle * dvdTitle)
 {
     LPCVTS_IFO pVTS_IFO = (LPCVTS_IFO)pData;
 
     // video attributes of VTSM_VOBS
-    getVideoAttributes(dvdTitle.m_DVDVTS.m_VideoAttributesOfVTSM_VOBS, pVTS_IFO->m_byVideoAttributesOfVTS_VOBS);
+    getVideoAttributes(dvdTitle->m_DVDVTS.m_VideoStreamVTSM, pVTS_IFO->m_byVideoStreamVTS_VOBS);
 
     // audio attributes of VTSM_VOBS
-    dvdTitle.m_DVDVTS.m_wNumberOfAudioStreamsInVTSM_VOBS        = be2native(pVTS_IFO->m_wNumberOfAudioStreamsInVTSM_VOBS);
-    if (dvdTitle.m_DVDVTS.m_wNumberOfAudioStreamsInVTSM_VOBS)
+    dvdTitle->m_DVDVTS.m_wAudioStreamCountVTSM        = be2native(pVTS_IFO->m_wAudioStreamCountVTSM);
+    if (dvdTitle->m_DVDVTS.m_wAudioStreamCountVTSM)
     {
-        getAudioAttributes(dvdTitle.m_DVDVTS.m_AudioAttributesOfVTSM_VOBS, pVTS_IFO->m_byAudioAttributesOfVTSM_VOBS, 0);
+        getAudioAttributes(dvdTitle->m_DVDVTS.m_AudioStreamVTSM, pVTS_IFO->m_byAudioStreamVTSM, 0);
     }
 
     // subpicture attributes of VTSM_VOBS
-    dvdTitle.m_DVDVTS.m_wNumberOfSubpictureStreamsInVTSM_VOBS   = be2native(pVTS_IFO->m_wNumberOfSubpictureStreamsInVTSM_VOBS);
-    if (dvdTitle.m_DVDVTS.m_wNumberOfSubpictureStreamsInVTSM_VOBS)
+    dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTSM   = be2native(pVTS_IFO->m_wSubpicStreamCountVTSM);
+    if (dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTSM)
     {
-        getSubpictureAttributes(dvdTitle.m_DVDVTS.m_SubpictureAttributesOfVTSM_VOBS, pVTS_IFO->m_bySubpictureAttributesOfVTSM_VOBS, 0);
+        getSubpictureAttributes(dvdTitle->m_DVDVTS.m_SubpicStreamVTSM, pVTS_IFO->m_bySubpicStreamVTSM_VOBS, 0);
     }
 
     // video attributes of VTS_VOBS
-    getVideoAttributes(dvdTitle.m_DVDVTS.m_VideoAttributesOfVTS_VOBS, pVTS_IFO->m_byVideoAttributesOfVTS_VOBS);
+    getVideoAttributes(dvdTitle->m_DVDVTS.m_VideoStreamVTS, pVTS_IFO->m_byVideoStreamVTS_VOBS);
     // audio attributes of VTS_VOBS
-    dvdTitle.m_DVDVTS.m_wNumberOfAudioStreamsInVTS_VOBS         = be2native(pVTS_IFO->m_wNumberOfAudioStreamsInVTS_VOBS);
-    for (uint16_t wAudioStream = 1; wAudioStream <= dvdTitle.m_DVDVTS.m_wNumberOfAudioStreamsInVTS_VOBS; wAudioStream++)
+    dvdTitle->m_DVDVTS.m_wAudioStreamCountVTS         = be2native(pVTS_IFO->m_wAudioStreamCountVTS);
+    for (uint16_t wAudioStreamNo = 1; wAudioStreamNo <= dvdTitle->m_DVDVTS.m_wAudioStreamCountVTS; wAudioStreamNo++)
     {
-        getAudioAttributes(dvdTitle.m_DVDVTS.m_AudioAttributesOfVTS_VOBS[wAudioStream - 1], pVTS_IFO->m_byAudioAttributesOfVTS_VOBS[wAudioStream - 1], wAudioStream);
+        getAudioAttributes(dvdTitle->m_DVDVTS.m_AudioStreamVTS[wAudioStreamNo - 1], pVTS_IFO->m_byAudioStreamsVTS_VOBS[wAudioStreamNo - 1], wAudioStreamNo);
+        getAudioAttributesEx(dvdTitle->m_DVDVTS.m_AudioStreamExVTS[wAudioStreamNo - 1], pVTS_IFO->m_byAudioStreamsVTS_VOBS[wAudioStreamNo - 1]);
     }
 
     // subpicture attributes of VTS_VOBS
-    dvdTitle.m_DVDVTS.m_wNumberOfSubpictureStreamsInVTS_VOBS    = be2native(pVTS_IFO->m_wNumberOfSubpictureStreamsInVTS_VOBS);
-    for (uint16_t wSubpictureStream = 1; wSubpictureStream <= dvdTitle.m_DVDVTS.m_wNumberOfSubpictureStreamsInVTS_VOBS; wSubpictureStream++)
+    dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTS    = be2native(pVTS_IFO->m_wSubpicStreamCountVTS);
+    for (uint16_t wSubpicStreamNo = 1; wSubpicStreamNo <= dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTS; wSubpicStreamNo++)
     {
-        getSubpictureAttributes(dvdTitle.m_DVDVTS.m_SubpictureAttributesOfVTS_VOBS[wSubpictureStream - 1], pVTS_IFO->m_bySubpictureAttributesOfVTS_VOBS[wSubpictureStream - 1], wSubpictureStream);
+        getSubpictureAttributes(dvdTitle->m_DVDVTS.m_SubpicStreamVTS[wSubpicStreamNo - 1], pVTS_IFO->m_bySubpicStreamVTS_VOBS[wSubpicStreamNo - 1], wSubpicStreamNo);
     }
 }
 
@@ -809,11 +832,13 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
         LPCVTS_IFO pVTS_IFO = (LPCVTS_IFO)pData;
         if (getString(pVTS_IFO->m_header) == "DVDVIDEO-VTS")
         {
-            dvdtitle & dvdTitle = m_dvdTitleLst[wTitleSetNo - 1];
+            //dvdtitle * dvdTitle = m_lstDvdTitle[wTitleSetNo - 1];
+            dvdtitle * dvdTitle = new dvdtitle;
+            m_lstDvdTitle.push_back(dvdTitle);
 
-            dvdTitle.m_DVDVTS.m_wTitleSetNo                 = wTitleSetNo;
-            dvdTitle.m_DVDVTS.m_wVersionNumberMajor         = ((pVTS_IFO->m_wVersionNumber & 0xF000) >> 12);
-            dvdTitle.m_DVDVTS.m_wVersionNumberMinor         = ((pVTS_IFO->m_wVersionNumber & 0x0F00) >> 8);
+            dvdTitle->m_DVDVTS.m_wTitleSetNo                 = wTitleSetNo;
+            dvdTitle->m_DVDVTS.m_wVersionNumberMajor         = ((pVTS_IFO->m_wVersionNumber & 0xF000) >> 12);
+            dvdTitle->m_DVDVTS.m_wVersionNumberMinor         = ((pVTS_IFO->m_wVersionNumber & 0x0F00) >> 8);
 
             uint32_t dwStartAddressVTS_PTT_SRPT             = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTS_PTT_SRPT));
 
@@ -833,9 +858,9 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                 LPCVTS_PTT_SRPT pVTS_PTT_SRPT = (LPCVTS_PTT_SRPT)(pData + dwStartAddressVTS_PTT_SRPT + sizeof(VTS_PTT_SRPT_HEADER) + (wPttVmgNo - 1) * sizeof(VTS_PTT_SRPT));
                 int16_t dwOffsetToPTT                       = be2native(pVTS_PTT_SRPT->m_dwOffsetToPTT);
                 uint32_t dwBlockSize = 0;
-                uint16_t wVirtualPttNo = wPttVmgNo - 1 + m_nVirtTitleCount;
+                uint16_t wPttTitleSetNo = wPttVmgNo - 1 + m_nVirtTitleCount;
 
-                if (wVirtualPttNo >= m_dvdPttVmgLst.size())
+                if (wPttTitleSetNo >= getDvdPttVmgCount())
                 {
                     // Badly authored DVD: Contains more virtual titles than defined in video manager.
                     // This means maybe there's at least one hidden title set.
@@ -860,36 +885,35 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                     continue;
                 }
 
-                dvdpttvmg & dvdPttVmg = m_dvdPttVmgLst[wVirtualPttNo];
+                dvdpttvmg * dvdPttVmg = m_lstDvdPttVmg[wPttTitleSetNo];
 
-                for (uint16_t wPttVmgVts = 1; wPttVmgVts <= dwCounter; wPttVmgVts++)
+                for (uint16_t wPttChapterNo = 1; wPttChapterNo <= dwCounter; wPttChapterNo++)
                 {
-                    dvdpttvts dvdPttVts(this);
+                    dvdpttvts *dvdPttVts = new dvdpttvts(this);
 
-                    LPCVTS_PTT pVTS_PTT = (LPCVTS_PTT)(pData + dwStartAddressVTS_PTT_SRPT + dwOffsetToPTT + (wPttVmgVts - 1) * sizeof(VTS_PTT));
+                    LPCVTS_PTT pVTS_PTT = (LPCVTS_PTT)(pData + dwStartAddressVTS_PTT_SRPT + dwOffsetToPTT + (wPttChapterNo - 1) * sizeof(VTS_PTT));
 
-                    dvdPttVts.m_DVDPTTVTS.m_wTitleSetNo     = wTitleSetNo;
-                    dvdPttVts.m_DVDPTTVTS.m_wPttTitleSetNo  = wVirtualPttNo + 1;
-                    dvdPttVts.m_DVDPTTVTS.m_wPttNo          = wPttVmgVts;
+                    dvdPttVts->m_DVDPTTVTS.m_wTitleSetNo        = wTitleSetNo;
+                    dvdPttVts->m_DVDPTTVTS.m_wPttTitleSetNo     = wPttTitleSetNo + 1;
+                    dvdPttVts->m_DVDPTTVTS.m_wPttChapterNo      = wPttChapterNo;
 
-                    dvdPttVts.m_DVDPTTVTS.m_wProgramChainNo = be2native(pVTS_PTT->m_wProgramChain);
-                    dvdPttVts.m_DVDPTTVTS.m_wProgram        = be2native(pVTS_PTT->m_wProgram);
+                    dvdPttVts->m_DVDPTTVTS.m_wProgramChainNo    = be2native(pVTS_PTT->m_wProgramChainNo);
+                    dvdPttVts->m_DVDPTTVTS.m_wProgramNo         = be2native(pVTS_PTT->m_wProgramNo);
 
-                    dvdPttVmg.m_dvdPttVtsLst.push_back(dvdPttVts);
+                    dvdPttVmg->m_lstDvdPttVts.push_back(dvdPttVts);
                 }
             }
 
             m_nVirtTitleCount += wNumberOfTitles;
 
-            uint32_t dwStartAddressVTS_PGCI_UT              = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTS_PGCI_UT));
-            LPCVTS_PGCI_UT_HEADER pVTS_PGCI_UT_HEADER       = (LPCVTS_PGCI_UT_HEADER)(pData + dwStartAddressVTS_PGCI_UT);
-            dvdTitle.m_DVDVTS.m_wNumberOfProgramChains      = be2native(pVTS_PGCI_UT_HEADER->m_wNumberOfProgramChains);
+            uint32_t dwStartAddressVTS_PGCI_UT                  = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTS_PGCI_UT));
+            LPCVTS_PGCI_UT_HEADER pVTS_PGCI_UT_HEADER           = (LPCVTS_PGCI_UT_HEADER)(pData + dwStartAddressVTS_PGCI_UT);
+            uint16_t wNumberOfProgramChains                     = be2native(pVTS_PGCI_UT_HEADER->m_wNumberOfProgramChains);
 
-            dvdTitle.m_dvdPgcLst.resize(dvdTitle.m_DVDVTS.m_wNumberOfProgramChains);
-
-            for (uint16_t wProgramChainNo = 1; wProgramChainNo <= dvdTitle.m_DVDVTS.m_wNumberOfProgramChains; wProgramChainNo++)
+            for (uint16_t wProgramChainNo = 1; wProgramChainNo <= wNumberOfProgramChains; wProgramChainNo++)
             {
-                dvdpgc & dvdPgc                             = dvdTitle.m_dvdPgcLst[wProgramChainNo - 1];
+                dvdpgc * dvdPgc = new dvdpgc;
+                dvdTitle->m_lstDvdPgc.push_back(dvdPgc);
 
                 addPrograms(pData, dvdPgc, wTitleSetNo, wProgramChainNo);
             }
@@ -964,37 +988,37 @@ LPCDVDVMGM dvdparse::getDVDVMGM() const
     return &m_DVDVMGM;
 }
 
-const dvdtitle *dvdparse::getDvdTitle(uint16_t wTitleSetNo) const
+dvdtitle *dvdparse::getDvdTitle(uint16_t wTitleSetNo) const
 {
-    if (!wTitleSetNo || wTitleSetNo > m_dvdTitleLst.size())
+    if (!wTitleSetNo || wTitleSetNo > getTitleSetCount())
     {
         return NULL;
     }
 
-    return &m_dvdTitleLst[wTitleSetNo - 1];
+    return m_lstDvdTitle[wTitleSetNo - 1];
 }
 
-uint16_t dvdparse::getTitleCount() const
+uint16_t dvdparse::getTitleSetCount() const
 {
-    return m_DVDVMGM.m_wNumberOfTitleSets;
+    return m_lstDvdTitle.size();
 }
 
-const dvdfile * dvdparse::getDvdFile(uint16_t wFileNo) const
+dvdfile * dvdparse::getDvdFile(uint16_t wFileNo) const
 {
-    if (wFileNo >= m_dvdFileLst.size())
+    if (wFileNo >= m_lstDvdFile.size())
     {
         return NULL;
     }
 
-    return &m_dvdFileLst[wFileNo];
+    return m_lstDvdFile[wFileNo];
 }
 
 uint16_t dvdparse::getFileCount() const
 {
-    return (uint16_t)m_dvdFileLst.size();
+    return (uint16_t)m_lstDvdFile.size();
 }
 
-const dvdpgc * dvdparse::getDvdPgc(uint16_t wTitleSetNo, uint16_t wProgramChainNo) const
+dvdpgc * dvdparse::getDvdPgc(uint16_t wTitleSetNo, uint16_t wProgramChainNo) const
 {
     const dvdtitle *pDvdTitle = getDvdTitle(wTitleSetNo);
 
@@ -1006,7 +1030,7 @@ const dvdpgc * dvdparse::getDvdPgc(uint16_t wTitleSetNo, uint16_t wProgramChainN
     return pDvdTitle->getDvdPgc(wProgramChainNo);
 }
 
-const dvdprogram * dvdparse::getDvdProgram(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram) const
+dvdprogram * dvdparse::getDvdProgram(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgramNo) const
 {
     const dvdpgc *pDvdPgc = getDvdPgc(wTitleSetNo, wProgramChainNo);
 
@@ -1015,35 +1039,37 @@ const dvdprogram * dvdparse::getDvdProgram(uint16_t wTitleSetNo, uint16_t wProgr
         return NULL;
     }
 
-    return pDvdPgc->getDvdProgram(wProgram);
+    return pDvdPgc->getDvdProgram(wProgramNo);
 }
 
-const dvdprogram * dvdparse::getDvdProgram(LPCDVDPTTVTS pDVDPTTVTS) const
+dvdprogram * dvdparse::getDvdProgram(LPCDVDPTTVTS pDVDPTTVTS) const
 {
-    /*const*/ dvdprogram *pDvdProgram = (dvdprogram *)getDvdProgram(pDVDPTTVTS->m_wTitleSetNo, pDVDPTTVTS->m_wProgramChainNo, pDVDPTTVTS->m_wProgram);
+    dvdprogram *pDvdProgram = getDvdProgram(pDVDPTTVTS->m_wTitleSetNo, pDVDPTTVTS->m_wProgramChainNo, pDVDPTTVTS->m_wProgramNo);
 
-    pDvdProgram->m_DVDPROGRAM.m_wPTTTitleSetNo      = pDVDPTTVTS->m_wPttTitleSetNo;
-    pDvdProgram->m_DVDPROGRAM.m_wPTTProgramNo       = pDVDPTTVTS->m_wPttNo;
-
-    return pDvdProgram;
-}
-
-const dvdpttvmg * dvdparse::getDvdPttVmg(uint16_t wTitleSetNo) const
-{
-    if (!wTitleSetNo || wTitleSetNo > getDvdPttCount())
+    if (pDvdProgram == NULL)
     {
         return NULL;
     }
 
-    return &m_dvdPttVmgLst[wTitleSetNo - 1];
+    return pDvdProgram;
 }
 
-uint16_t dvdparse::getDvdPttCount() const
+dvdpttvmg * dvdparse::getDvdPttVmg(uint16_t wTitleSetNo) const
 {
-    return m_dvdPttVmgLst.size();
+    if (!wTitleSetNo || wTitleSetNo > getDvdPttVmgCount())
+    {
+        return NULL;
+    }
+
+    return m_lstDvdPttVmg[wTitleSetNo - 1];
 }
 
-const dvdpttvts * dvdparse::getDvdPttVts(uint16_t wTitleSetNo, uint16_t wPtt) const
+uint16_t dvdparse::getDvdPttVmgCount() const
+{
+    return m_lstDvdPttVmg.size();
+}
+
+dvdpttvts * dvdparse::getDvdPttVts(uint16_t wTitleSetNo, uint16_t wPttNo) const
 {
     const dvdpttvmg *pDvdPttVmg = getDvdPttVmg(wTitleSetNo);
 
@@ -1052,31 +1078,58 @@ const dvdpttvts * dvdparse::getDvdPttVts(uint16_t wTitleSetNo, uint16_t wPtt) co
         return NULL;
     }
 
-    return pDvdPttVmg->getDvdPttVts(wPtt);
+    return pDvdPttVmg->getDvdPttVts(wPttNo);
 }
 
-const dvdcell *dvdparse::getDvdCell(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram, uint16_t wCell) const
+dvdpttvts* dvdparse::getDvdPttVts(const dvdprogram *pDvdProgram) const
 {
-    const dvdprogram *pDvdProgram = getDvdProgram(wTitleSetNo, wProgramChainNo, wProgram);
+    if (pDvdProgram == NULL)
+    {
+        return NULL;
+    }
+
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getDvdPttVmgCount(); wTitleSetNo++)
+    {
+        const dvdpttvmg *pDvdPttVmg = getDvdPttVmg(wTitleSetNo);
+
+        for (uint16_t wPttNo = 1; wPttNo <= pDvdPttVmg->getPttVtsCount(); wPttNo++)
+        {
+            dvdpttvts * pDvdPttVts = pDvdPttVmg->getDvdPttVts(wPttNo);
+            LPCDVDPTTVTS pDVDPTTVTS = pDvdPttVts->getDVDPTTVTS();
+            const dvdprogram * pDvdProgram2 = getDvdProgram(pDVDPTTVTS);
+
+            if (pDvdProgram == pDvdProgram2)
+            {
+                return pDvdPttVts;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+dvdcell *dvdparse::getDvdCell(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgramNo, uint16_t wCellNo) const
+{
+    const dvdprogram *pDvdProgram = getDvdProgram(wTitleSetNo, wProgramChainNo, wProgramNo);
 
     if (pDvdProgram == NULL)
     {
         return NULL;
     }
 
-    return pDvdProgram->getDvdCell(wCell);
+    return pDvdProgram->getDvdCell(wCellNo);
 }
 
-const dvdunit * dvdparse::getDvdUnit(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgram, uint16_t wCell, uint16_t wUnit) const
+dvdunit * dvdparse::getDvdUnit(uint16_t wTitleSetNo, uint16_t wProgramChainNo, uint16_t wProgramNo, uint16_t wCellNo, uint16_t wUnitNo) const
 {
-    const dvdcell *pDvdCell = getDvdCell(wTitleSetNo, wProgramChainNo, wProgram, wCell);
+    const dvdcell *pDvdCell = getDvdCell(wTitleSetNo, wProgramChainNo, wProgramNo, wCellNo);
 
     if (pDvdCell == NULL)
     {
         return NULL;
     }
 
-    return pDvdCell->getDvdUnit(wUnit);
+    return pDvdCell->getDvdUnit(wUnitNo);
 }
 
 const dvdpgc * dvdparse::getStartPgc() const
@@ -1092,7 +1145,7 @@ const dvdpgc * dvdparse::getStartPgc() const
     return pDvdPgc;
 }
 
-std::string dvdparse::getErrorString() const
+const std::string & dvdparse::getErrorString() const
 {
     return m_strErrorString;
 }
@@ -1102,14 +1155,9 @@ DVDERRORCODE dvdparse::getErrorCode() const
     return m_eErrorCode;
 }
 
-std::string dvdparse::getPath() const
+const std::string & dvdparse::getPath() const
 {
     return m_strPath;
-}
-
-std::string dvdparse::getTitle() const
-{
-    return "Unknown DVD";       // TODO: richtig ermitteln
 }
 
 void dvdparse::setFullScan(bool bFullScan)
@@ -1122,7 +1170,7 @@ bool dvdparse::getFullScan() const
     return m_bFullScan;
 }
 
-void dvdparse::getVideoAttributes(DVDVIDEOATTRIBUTES & videoAttributes, const uint8_t byVideoAttributes[2])
+void dvdparse::getVideoAttributes(DVDVIDEOSTREAM & videoAttributes, const uint8_t byVideoAttributes[2])
 {
     int nCoding     = (byVideoAttributes[0] & 0xC0) >> 6;
     int nStandard   = (byVideoAttributes[0] & 0x30) >> 4;
@@ -1150,20 +1198,20 @@ void dvdparse::getVideoAttributes(DVDVIDEOATTRIBUTES & videoAttributes, const ui
         switch (nResolution)
         {
         case 0:
-            videoAttributes.m_wResolutionX = 720;
-            videoAttributes.m_wResolutionY = 480;
+            videoAttributes.m_Resolution.m_wX = 720;
+            videoAttributes.m_Resolution.m_wY = 480;
             break;
         case 1:
-            videoAttributes.m_wResolutionX = 704;
-            videoAttributes.m_wResolutionY = 480;
+            videoAttributes.m_Resolution.m_wX = 704;
+            videoAttributes.m_Resolution.m_wY = 480;
             break;
         case 2:
-            videoAttributes.m_wResolutionX = 352;
-            videoAttributes.m_wResolutionY = 480;
+            videoAttributes.m_Resolution.m_wX = 352;
+            videoAttributes.m_Resolution.m_wY = 480;
             break;
         case 3:
-            videoAttributes.m_wResolutionX = 352;
-            videoAttributes.m_wResolutionY = 240;
+            videoAttributes.m_Resolution.m_wX = 352;
+            videoAttributes.m_Resolution.m_wY = 240;
             break;
         }
         break;
@@ -1173,20 +1221,20 @@ void dvdparse::getVideoAttributes(DVDVIDEOATTRIBUTES & videoAttributes, const ui
         switch (nResolution)
         {
         case 0:
-            videoAttributes.m_wResolutionX = 720;
-            videoAttributes.m_wResolutionY = 576;
+            videoAttributes.m_Resolution.m_wX = 720;
+            videoAttributes.m_Resolution.m_wY = 576;
             break;
         case 1:
-            videoAttributes.m_wResolutionX = 704;
-            videoAttributes.m_wResolutionY = 576;
+            videoAttributes.m_Resolution.m_wX = 704;
+            videoAttributes.m_Resolution.m_wY = 576;
             break;
         case 2:
-            videoAttributes.m_wResolutionX = 352;
-            videoAttributes.m_wResolutionY = 576;
+            videoAttributes.m_Resolution.m_wX = 352;
+            videoAttributes.m_Resolution.m_wY = 576;
             break;
         case 3:
-            videoAttributes.m_wResolutionX = 352;
-            videoAttributes.m_wResolutionY = 288;
+            videoAttributes.m_Resolution.m_wX = 352;
+            videoAttributes.m_Resolution.m_wY = 288;
             break;
         }
 
@@ -1217,13 +1265,13 @@ void dvdparse::getVideoAttributes(DVDVIDEOATTRIBUTES & videoAttributes, const ui
     videoAttributes.m_bLetterBoxed                  = (byVideoAttributes[1] & 0x04) ? true : false;
     videoAttributes.m_bSourceFilm                   = (byVideoAttributes[1] & 0x01) ? true : false;
 
-    videoAttributes.m_byID                          = 0xE0;  // Fixed
+    videoAttributes.m_wID                           = 0xE0;  // Fixed
 }
 
-void dvdparse::getAudioAttributes(DVDAUDIOATTRIBUTESMENU & audioAttributes, const uint8_t byAudioAttributes[8], uint16_t wAudioStream)
+void dvdparse::getAudioAttributes(DVDAUDIOSTREAM & audioAttributes, const uint8_t byAudioAttributes[DVDVTS_MAXAUDIOSTREAM], uint16_t wAudioStreamNo)
 {
     int nCoding                 = (byAudioAttributes[0] & 0xE0) >> 5;
-    int nSoundApplicationMode   = (byAudioAttributes[0] & 0x03);
+    //    int nSoundApplicationMode   = (byAudioAttributes[0] & 0x03);
     int nQuantisation           = (byAudioAttributes[1] & 0xC0) >> 6;
     int nSampleRate             = (byAudioAttributes[1] & 0x30) >> 4;
 
@@ -1232,71 +1280,71 @@ void dvdparse::getAudioAttributes(DVDAUDIOATTRIBUTESMENU & audioAttributes, cons
     case 0:	// 0 = AC3
     {
         audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_AC3;
-        audioAttributes.m_byID             = 0x80 + (wAudioStream - 1);
+        audioAttributes.m_wID                   = 0x80 + (wAudioStreamNo - 1);
         break;
     }
     case 1:	// 1 = Undefined
     {
         audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_INVALID;
-        audioAttributes.m_byID             = 0x80 + (wAudioStream - 1);  // ???
+        audioAttributes.m_wID                   = 0x80 + (wAudioStreamNo - 1);
         break;
     }
     case 2:	// 2 = MPEG-1
     {
         audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_MPEG1;
-        audioAttributes.m_byID             = 0xC0 + (wAudioStream - 1);
+        audioAttributes.m_wID                   = 0xC0 + (wAudioStreamNo - 1);
         break;
     }
     case 3:	// 3 = MPEG-2
     {
-        audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_MPEG2_EXT;
-        audioAttributes.m_byID             = 0xC8 + (wAudioStream - 1);
+        audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_MPEG2;
+        audioAttributes.m_wID                   = 0xC8 + (wAudioStreamNo - 1);
         break;
     }
     case 4:	// 4 = LPCM
     {
         audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_LPCM;
-        audioAttributes.m_byID             = 0xA0 + (wAudioStream - 1);
+        audioAttributes.m_wID                   = 0xA0 + (wAudioStreamNo - 1);
         break;
     }
     case 5:	// 5 = Undefined
     {
         audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_INVALID;
-        audioAttributes.m_byID             = 0x88 + (wAudioStream - 1);
+        audioAttributes.m_wID                   = 0x88 + (wAudioStreamNo - 1);
         break;
     }
     case 6:	// 6 = DTS
     {
         audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_DTS;
-        audioAttributes.m_byID             = 0x88 + (wAudioStream - 1);
+        audioAttributes.m_wID                   = 0x88 + (wAudioStreamNo - 1);
         break;
     }
     case 7:	// 7 = Undefined
     {
         audioAttributes.m_eCodingMode = DVDAUDIOCODINGMODE_INVALID;
-        audioAttributes.m_byID             = 0x88 + (wAudioStream - 1);    // ???
+        audioAttributes.m_wID                   = 0x88 + (wAudioStreamNo - 1);
         break;
     }
     }
 
     audioAttributes.m_bMultichannelExtPresent = (byAudioAttributes[0] & 0x10) ? true : false;
-    //audioAttributes.m_bLanguageTypePresent          = ((((byAudioAttributes[0] & 0x0C) >> 2) == 1) && byAudioAttributes[2]) ? true : false;
+    //audioAttributes.m_bLanguageCodePresent          = ((((byAudioAttributes[0] & 0x0C) >> 2) == 1) && byAudioAttributes[2]) ? true : false;
 
-    switch (nSoundApplicationMode)
-    {
-    case 0:
-        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_UNSPECIFIED;
-        break;
-    case 1:
-        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_KARAOKE;
-        break;
-    case 2:
-        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_SURROUND;
-        break;
-    default:
-        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_INVALID;
-        break;
-    }
+    //    switch (nSoundApplicationMode)
+    //    {
+    //    case 0:
+    //        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_UNSPECIFIED;
+    //        break;
+    //    case 1:
+    //        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_KARAOKE;
+    //        break;
+    //    case 2:
+    //        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_SURROUND;
+    //        break;
+    //    default:
+    //        audioAttributes.m_eApplicationMode = DVDAUDIOAPPLICATIONMODE_INVALID;
+    //        break;
+    //    }
 
     switch (nQuantisation)
     {
@@ -1330,144 +1378,144 @@ void dvdparse::getAudioAttributes(DVDAUDIOATTRIBUTESMENU & audioAttributes, cons
     audioAttributes.m_wChannels = (byAudioAttributes[1] & 0x07) + 1;
 }
 
-void dvdparse::getAudioAttributes(DVDAUDIOATTRIBUTESTITLE & audioAttributes, const uint8_t byAudioAttributes[8], uint16_t wAudioStream)
+void dvdparse::getAudioAttributesEx(DVDAUDIOSTREAMEX & audioAttributesEx, const uint8_t byAudioAttributes[DVDVTS_MAXAUDIOSTREAM])
 {
-    int nCoding                 = (byAudioAttributes[0] & 0xE0) >> 5;
+    //    int nCoding                 = (byAudioAttributes[0] & 0xE0) >> 5;
     int nSoundApplicationMode   = (byAudioAttributes[0] & 0x03);
-    int nQuantisation           = (byAudioAttributes[1] & 0xC0) >> 6;
-    int nSampleRate             = (byAudioAttributes[1] & 0x30) >> 4;
+    //    int nQuantisation           = (byAudioAttributes[1] & 0xC0) >> 6;
+    //    int nSampleRate             = (byAudioAttributes[1] & 0x30) >> 4;
     int nCodeExt                = byAudioAttributes[5];
 
-    switch (nCoding)
-    {
-    case 0:	// 0 = AC3
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_AC3;
-        audioAttributes.m_byID                  = 0x80 + (wAudioStream - 1);
-        break;
-    }
-    case 1:	// 1 = Undefined
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_INVALID;
-        audioAttributes.m_byID                  = 0x80 + (wAudioStream - 1);  // ???
-        break;
-    }
-    case 2:	// 2 = MPEG-1
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_MPEG1;
-        audioAttributes.m_byID                  = 0xC0 + (wAudioStream - 1);
-        break;
-    }
-    case 3:	// 3 = MPEG-2
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_MPEG2_EXT;
-        audioAttributes.m_byID                  = 0xC8 + (wAudioStream - 1);
-        break;
-    }
-    case 4:	// 4 = LPCM
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_LPCM;
-        audioAttributes.m_byID                  = 0xA0 + (wAudioStream - 1);
-        break;
-    }
-    case 5:	// 5 = Undefined
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_INVALID;
-        audioAttributes.m_byID                  = 0x88 + (wAudioStream - 1);
-        break;
-    }
-    case 6:	// 6 = DTS
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_DTS;
-        audioAttributes.m_byID                  = 0x88 + (wAudioStream - 1);
-        break;
-    }
-    case 7:	// 7 = Undefined
-    {
-        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_INVALID;
-        audioAttributes.m_byID                  = 0x88 + (wAudioStream - 1);    // ???
-        break;
-    }
-    }
+    //    switch (nCoding)
+    //    {
+    //    case 0:	// 0 = AC3
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_AC3;
+    //        audioAttributes.m_wID                  = 0x80 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    case 1:	// 1 = Undefined
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_INVALID;
+    //        audioAttributes.m_wID                  = 0x80 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    case 2:	// 2 = MPEG-1
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_MPEG1;
+    //        audioAttributes.m_wID                  = 0xC0 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    case 3:	// 3 = MPEG-2
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_MPEG2;
+    //        audioAttributes.m_wID                  = 0xC8 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    case 4:	// 4 = LPCM
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_LPCM;
+    //        audioAttributes.m_wID                  = 0xA0 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    case 5:	// 5 = Undefined
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_INVALID;
+    //        audioAttributes.m_wID                  = 0x88 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    case 6:	// 6 = DTS
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_DTS;
+    //        audioAttributes.m_wID                  = 0x88 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    case 7:	// 7 = Undefined
+    //    {
+    //        audioAttributes.m_eCodingMode           = DVDAUDIOCODINGMODE_INVALID;
+    //        audioAttributes.m_wID                  = 0x88 + (wAudioStreamNo - 1);
+    //        break;
+    //    }
+    //    }
 
-    audioAttributes.m_bMultichannelExtPresent   = (byAudioAttributes[0] & 0x10) ? true : false;
-    audioAttributes.m_bLanguageTypePresent      = ((((byAudioAttributes[0] & 0x0C) >> 2) == 1) && byAudioAttributes[2]) ? true : false;
+    //    audioAttributes.m_bMultichannelExtPresent   = (byAudioAttributes[0] & 0x10) ? true : false;
+    audioAttributesEx.m_bLanguageCodePresent      = ((((byAudioAttributes[0] & 0x0C) >> 2) == 1) && byAudioAttributes[2]) ? true : false;
 
     switch (nSoundApplicationMode)
     {
     case 0:
-        audioAttributes.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_UNSPECIFIED;
+        audioAttributesEx.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_UNSPECIFIED;
         break;
     case 1:
-        audioAttributes.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_KARAOKE;
+        audioAttributesEx.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_KARAOKE;
         break;
     case 2:
-        audioAttributes.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_SURROUND;
+        audioAttributesEx.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_SURROUND;
         break;
     default:
-        audioAttributes.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_INVALID;
+        audioAttributesEx.m_eApplicationMode      = DVDAUDIOAPPLICATIONMODE_INVALID;
         break;
     }
 
-    switch (nQuantisation)
-    {
-    case 0:
-        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_16BPS;                     // 0 = 16bps
-        break;
-    case 1:
-        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_20BPS;                     // 1 = 20bps
-        break;
-    case 2:
-        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_24BPS;                     // 2 = 24bps
-        break;
-    case 3:
-        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_DRC;                       // 3 = DRC
-        break;
-    }
+    //    switch (nQuantisation)
+    //    {
+    //    case 0:
+    //        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_16BPS;                     // 0 = 16bps
+    //        break;
+    //    case 1:
+    //        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_20BPS;                     // 1 = 20bps
+    //        break;
+    //    case 2:
+    //        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_24BPS;                     // 2 = 24bps
+    //        break;
+    //    case 3:
+    //        audioAttributes.m_eQuantisation         = DVDAUDIOQUANTISATION_DRC;                       // 3 = DRC
+    //        break;
+    //    }
 
-    switch (nSampleRate)
-    {
-    case 0:
-        audioAttributes.m_dwSampleRate          = 48000;
-        break;
-    case 2:
-        audioAttributes.m_dwSampleRate          = 96000;
-        break;
-    default:
-        audioAttributes.m_dwSampleRate          = 0;
-        break;
-    }
+    //    switch (nSampleRate)
+    //    {
+    //    case 0:
+    //        audioAttributes.m_dwSampleRate          = 48000;
+    //        break;
+    //    case 2:
+    //        audioAttributes.m_dwSampleRate          = 96000;
+    //        break;
+    //    default:
+    //        audioAttributes.m_dwSampleRate          = 0;
+    //        break;
+    //    }
 
-    audioAttributes.m_wChannels = (byAudioAttributes[1] & 0x07) + 1;
+    //    audioAttributes.m_wChannels = (byAudioAttributes[1] & 0x07) + 1;
 
-    if (audioAttributes.m_bLanguageTypePresent)
+    if (audioAttributesEx.m_bLanguageCodePresent)
     {
-        getString2(audioAttributes.m_szLanguageCode, &byAudioAttributes[2]);
+        getString2(audioAttributesEx.m_szLanguageCode, &byAudioAttributes[2]);
     }
 
     switch (nCodeExt)
     {
     case 0:
-        audioAttributes.m_eCodeExt              = DVDAUDIOCODEEXT_UNSPECIFIED;              // 0 = unspecified
+        audioAttributesEx.m_eCodeExt              = DVDAUDIOCODEEXT_UNSPECIFIED;              // 0 = unspecified
         break;
     case 1:
-        audioAttributes.m_eCodeExt              = DVDAUDIOCODEEXT_NORMAL;                   // 1 = normal,
+        audioAttributesEx.m_eCodeExt              = DVDAUDIOCODEEXT_NORMAL;                   // 1 = normal,
         break;
     case 2:
-        audioAttributes.m_eCodeExt              = DVDAUDIOCODEEXT_VISUALLY_IMPAIRED;        // 2 = for visually impaired
+        audioAttributesEx.m_eCodeExt              = DVDAUDIOCODEEXT_VISUALLY_IMPAIRED;        // 2 = for visually impaired
         break;
     case 3:
-        audioAttributes.m_eCodeExt              = DVDAUDIOCODEEXT_DIRECTORS_COMMENTS;       // 3 = director's comments
+        audioAttributesEx.m_eCodeExt              = DVDAUDIOCODEEXT_DIRECTORS_COMMENTS;       // 3 = director's comments
         break;
     case 4:
-        audioAttributes.m_eCodeExt              = DVDAUDIOCODEEXT_ALT_DIRECTORS_COMMENTS;    // 4 = alternate director's comments
+        audioAttributesEx.m_eCodeExt              = DVDAUDIOCODEEXT_ALT_DIRECTORS_COMMENTS;    // 4 = alternate director's comments
         break;
     default:
-        audioAttributes.m_eCodeExt              = DVDAUDIOCODEEXT_INVALID;
+        audioAttributesEx.m_eCodeExt              = DVDAUDIOCODEEXT_INVALID;
         break;
     }
 
-    switch (audioAttributes.m_eApplicationMode)
+    switch (audioAttributesEx.m_eApplicationMode)
     {
     case DVDAUDIOAPPLICATIONMODE_KARAOKE:
     {
@@ -1476,38 +1524,38 @@ void dvdparse::getAudioAttributes(DVDAUDIOATTRIBUTESTITLE & audioAttributes, con
         switch (nChannelAssignments)
         {
         case 2:
-            audioAttributes.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_2_0;  //  2 = 2/0 L,R
+            audioAttributesEx.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_2_0;  //  2 = 2/0 L,R
             break;
         case 3:
-            audioAttributes.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_3_0;  //  3 = 3/0 L,M,R
+            audioAttributesEx.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_3_0;  //  3 = 3/0 L,M,R
             break;
         case 4:
-            audioAttributes.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_2_1;  //  4 = 2/1 L,R,V1
+            audioAttributesEx.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_2_1;  //  4 = 2/1 L,R,V1
             break;
         case 5:
-            audioAttributes.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_3_1;  //  5 = 3/1 L,M,R,V1
+            audioAttributesEx.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_3_1;  //  5 = 3/1 L,M,R,V1
             break;
         case 6:
-            audioAttributes.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_2_2;  //  6 = 2/2 L,R,V1,V2
+            audioAttributesEx.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_2_2;  //  6 = 2/2 L,R,V1,V2
             break;
         case 7:
-            audioAttributes.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_3_2;  //  7 = 3/2 L,M,R,V1,V2
+            audioAttributesEx.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_3_2;  //  7 = 3/2 L,M,R,V1,V2
             break;
         default:
-            audioAttributes.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_INVALID;
+            audioAttributesEx.m_eChannelAssignment = DVDAUDIOCHANNELASSIGNMENT_INVALID;
             break;
         }
 
-        audioAttributes.m_wKaraokeVersion       = (byAudioAttributes[7] & 0x0C) >> 2;
+        audioAttributesEx.m_wKaraokeVersion       = (byAudioAttributes[7] & 0x0C) >> 2;
 
-        audioAttributes.m_bMCIntroPresent       = (byAudioAttributes[7] & 0x02) ? true : false;
-        audioAttributes.m_eKaraokeMode          = (byAudioAttributes[7] & 0x01) ? DVDKARAOKEMODE_DUET : DVDKARAOKEMODE_SOLO;
+        audioAttributesEx.m_bMCIntroPresent       = (byAudioAttributes[7] & 0x02) ? true : false;
+        audioAttributesEx.m_eKaraokeMode          = (byAudioAttributes[7] & 0x01) ? DVDKARAOKEMODE_DUET : DVDKARAOKEMODE_SOLO;
 
         break;
     }
     case DVDAUDIOAPPLICATIONMODE_SURROUND:
     {
-        audioAttributes.m_bSuitableForDolbySurroundDecoding = (byAudioAttributes[7] & 0x08) ? true : false;
+        audioAttributesEx.m_bSuitableForDolbySurroundDecoding = (byAudioAttributes[7] & 0x08) ? true : false;
         break;
     }
     default:
@@ -1515,14 +1563,14 @@ void dvdparse::getAudioAttributes(DVDAUDIOATTRIBUTESTITLE & audioAttributes, con
     }
 }
 
-void dvdparse::getSubpictureAttributes(DVDSUBPICTUREATTRIBUTES & subpictureAttributes, const uint8_t bySubpictureAttributes[6], uint16_t wSubpictureStream)
+void dvdparse::getSubpictureAttributes(DVDSUBPICSTREAM & subpictureAttributes, const uint8_t bySubpictureAttributes[6], uint16_t wSubpicStreamNo)
 {
     int nSoundApplicationMode                           = bySubpictureAttributes[5];
 
     subpictureAttributes.m_wCodingMode                  = (bySubpictureAttributes[0] & 0xE0) >> 5;
-    subpictureAttributes.m_bLanguageTypePresent         = (((bySubpictureAttributes[0] & 0x03) == 1) && bySubpictureAttributes[2]) ? true : false;
+    subpictureAttributes.m_bLanguageCodePresent         = (((bySubpictureAttributes[0] & 0x03) == 1) && bySubpictureAttributes[2]) ? true : false;
 
-    if (subpictureAttributes.m_bLanguageTypePresent)
+    if (subpictureAttributes.m_bLanguageCodePresent)
     {
         getString2(subpictureAttributes.m_szLanguageCode, &bySubpictureAttributes[2]);
     }
@@ -1530,53 +1578,53 @@ void dvdparse::getSubpictureAttributes(DVDSUBPICTUREATTRIBUTES & subpictureAttri
     switch (nSoundApplicationMode)
     {
     case 0:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_NOT_SPECIFIED;                       //  0 = not specified
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_NOT_SPECIFIED;                       //  0 = not specified
         break;
     case 1:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_NORMAL;                              //  1 = normal
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_NORMAL;                              //  1 = normal
         break;
     case 2:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_LARGE;                               //  2 = large
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_LARGE;                               //  2 = large
         break;
     case 3:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_CHILDREN;                            //  3 = children
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_CHILDREN;                            //  3 = children
         break;
     case 5:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_NORMAL_CAPTIONS;                     //  5 = normal captions
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_NORMAL_CAPTIONS;                     //  5 = normal captions
         break;
     case 6:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_LARGE_CAPTIONS;                      //  6 = large captions
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_LARGE_CAPTIONS;                      //  6 = large captions
         break;
     case 7:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_CHILDRENS_CAPTION;                   //  7 = children's captions
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_CHILDRENS_CAPTION;                   //  7 = children's captions
         break;
     case 9:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_FORCED;                              //  9 = forced
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_FORCED;                              //  9 = forced
         break;
     case 13:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_DIRECTORS_COMMENTS;                  // 13 = director comments
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_DIRECTORS_COMMENTS;                  // 13 = director comments
         break;
     case 14:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_LARGE_DIRECTORS_COMMENTS;            // 14 = large director comments
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_LARGE_DIRECTORS_COMMENTS;            // 14 = large director comments
         break;
     case 15:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_DIRECTORS_COMMENTS_FOR_CHILDREN;     // 15 = director comments for children
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_DIRECTORS_COMMENTS_FOR_CHILDREN;     // 15 = director comments for children
         break;
     default:
-        subpictureAttributes.m_eCodeExt = DVDSUBPICTURECODEEXT_INVALID;
+        subpictureAttributes.m_eCodeExt = DVDSUBPICCODEEXT_INVALID;
         break;
     }
 
-    subpictureAttributes.m_byID                         = 0x20 + wSubpictureStream - 1;
+    subpictureAttributes.m_wID                         = 0x20 + wSubpicStreamNo - 1;
 }
 
 uint64_t dvdparse::getSize() const
 {
     uint64_t size = 0;
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= m_DVDVMGM.m_wNumberOfTitleSets; wTitleSetNo++)
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getTitleSetCount(); wTitleSetNo++)
     {
-        size += m_dvdTitleLst[wTitleSetNo - 1].getSize();
+        size += m_lstDvdTitle[wTitleSetNo - 1]->getSize();
     }
 
     return size;
@@ -1586,9 +1634,9 @@ uint64_t dvdparse::getPlayTime() const
 {
     uint64_t qwPlayTime = 0;
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= m_DVDVMGM.m_wNumberOfTitleSets; wTitleSetNo++)
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getTitleSetCount(); wTitleSetNo++)
     {
-        qwPlayTime += m_dvdTitleLst[wTitleSetNo - 1].getPlayTime();
+        qwPlayTime += m_lstDvdTitle[wTitleSetNo - 1]->getPlayTime();
     }
 
     return qwPlayTime;
@@ -1598,7 +1646,7 @@ uint64_t dvdparse::getVirtSize() const
 {
     uint64_t size = 0;
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getDvdPttCount(); wTitleSetNo++)
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getDvdPttVmgCount(); wTitleSetNo++)
     {
         size += getDvdPttVmg(wTitleSetNo)->getSize();
     }
@@ -1610,7 +1658,7 @@ uint64_t dvdparse::getVirtPlayTime() const
 {
     uint64_t qwPlayTime = 0;
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getDvdPttCount(); wTitleSetNo++)
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getDvdPttVmgCount(); wTitleSetNo++)
     {
         qwPlayTime += getDvdPttVmg(wTitleSetNo)->getPlayTime();
     }
@@ -1620,6 +1668,7 @@ uint64_t dvdparse::getVirtPlayTime() const
 
 const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
 {
+    string strShortFilePath(getWin32ShortFilePath(strFilePath));
     string strError;
     std::FILE *fpi = NULL;
     struct stat buf;
@@ -1627,7 +1676,7 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
 
     m_strErrorString.clear();
 
-    fpi = std::fopen(getWin32ShortFilePath(strFilePath).c_str(), "rb");
+    fpi = std::fopen(strShortFilePath.c_str(), "rb");
     if (fpi == NULL)
     {
         strError = "Error opening file: " + strFilePath + "\n";
@@ -1638,11 +1687,11 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
 
     memset(&buf, 0, sizeof(buf));
 
-    if (fstat(fileno(fpi), &buf) == -1)
+    if (stat(strShortFilePath.c_str(), &buf) == -1)  //if (fstat(fileno(fpi), &buf) == -1)
     {
         strError = "Cannot stat file: " + strFilePath + "\n";
         strError += strerror(errno);
-        setError(strError, DVDERRORCODE_FILEOPEN);
+        setError(strError, DVDERRORCODE_FILESTAT);
     }
     else
     {
@@ -1654,7 +1703,7 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
             {
                 strError = "Error reading file: " + strFilePath + "\n";
                 strError += strerror(errno);
-                setError(strError, DVDERRORCODE_FILEOPEN);
+                setError(strError, DVDERRORCODE_FILEREAD);
                 delete [] pData;
                 pData = NULL;
             }
@@ -1683,18 +1732,16 @@ string dvdparse::getCode() const
 {
     std::string strCode;
 
-    LPCDVDVMGM pDVDVMGM = getDVDVMGM();
-
     strCode = "DVD";
-    strCode += toHexString(pDVDVMGM->m_wPTTNumberOfTitles);
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wPTTNumberOfTitles; wTitleSetNo++)
+    strCode += toHexString(getDvdPttVmgCount());
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getDvdPttVmgCount(); wTitleSetNo++)
     {
         const dvdpttvmg *pDvdPttVmg = getDvdPttVmg(wTitleSetNo);
 
-        strCode += toHexString(pDvdPttVmg->getPttCount());
-        for (uint16_t wPtt = 1; wPtt <= pDvdPttVmg->getPttCount(); wPtt++)
+        strCode += toHexString(pDvdPttVmg->getPttVtsCount());
+        for (uint16_t wPttNo = 1; wPttNo <= pDvdPttVmg->getPttVtsCount(); wPttNo++)
         {
-            const dvdpttvts * pDvdPttVts = pDvdPttVmg->getDvdPttVts(wPtt);
+            const dvdpttvts * pDvdPttVts = pDvdPttVmg->getDvdPttVts(wPttNo);
             strCode += ::toHexString(pDvdPttVts->getPlayTime());
         }
     }
@@ -1704,15 +1751,20 @@ string dvdparse::getCode() const
 
 string dvdparse::getHash() const
 {
+    if (m_strHash.size())
+    {
+        return m_strHash; // Use stored
+    }
+
     std::string strMD5;
     std::string strCode = getCode();
 
-    md5_state_t state;
-    md5_byte_t digest[16];
+    MD5_CTX state;
+    MD5_type digest[16];
 
-    ::md5_init(&state);
-    ::md5_append(&state, (const md5_byte_t *)strCode.c_str(), strCode.length());
-    ::md5_finish(&state, digest);
+    ::MD5_Init(&state);
+    ::MD5_Update(&state, (const void *)strCode.c_str(), strCode.length());
+    ::MD5_Final(digest, &state);
 
     for (size_t i = 0; i < sizeof(digest); i++)
     {
@@ -1722,7 +1774,12 @@ string dvdparse::getHash() const
     return strMD5;
 }
 
-std::string dvdparse::getAlbumArtist() const
+void dvdparse::setHash(const std::string & strHash)
+{
+    m_strHash = strHash;
+}
+
+const std::string & dvdparse::getAlbumArtist() const
 {
     return m_strAlbumArtist;
 }
@@ -1732,7 +1789,7 @@ void dvdparse::setAlbumArtist(const std::string & strAlbumArtist)
     m_strAlbumArtist = strAlbumArtist;
 }
 
-std::string dvdparse::getAlbum() const
+const std::string & dvdparse::getAlbum() const
 {
     return m_strAlbum;
 }
@@ -1742,7 +1799,7 @@ void dvdparse::setAlbum(const std::string & strAlbum)
     m_strAlbum = strAlbum;
 }
 
-std::string dvdparse::getGenre() const
+const std::string & dvdparse::getGenre() const
 {
     return m_strGenre;
 }
@@ -1752,10 +1809,7 @@ void dvdparse::setGenre(const std::string & strGenre)
     m_strGenre = strGenre;
 }
 
-//std::string dvdparse::getCover() const;
-//void dvdparse::setCover();
-
-std::string dvdparse::getCast() const
+const std::string & dvdparse::getCast() const
 {
     return m_strCast;
 }
@@ -1765,7 +1819,7 @@ void dvdparse::setCast(const std::string & strCast)
     m_strCast = strCast;
 }
 
-std::string dvdparse::getCrew() const
+const std::string & dvdparse::getCrew() const
 {
     return m_strCrew;
 }
@@ -1775,7 +1829,7 @@ void dvdparse::setCrew(const std::string & strCrew)
     m_strCrew = strCrew;
 }
 
-std::string dvdparse::getDirector() const
+const std::string & dvdparse::getDirector() const
 {
     return m_strDirector;
 }
@@ -1785,7 +1839,7 @@ void dvdparse::setDirector(const std::string & strDirector)
     m_strDirector = strDirector;
 }
 
-std::string dvdparse::getCountry() const
+const std::string & dvdparse::getCountry() const
 {
     return m_strCountry;
 }
@@ -1795,7 +1849,7 @@ void dvdparse::setCountry(const std::string & strCountry)
     m_strCountry = strCountry;
 }
 
-std::string dvdparse::getReleaseDate() const
+const std::string & dvdparse::getReleaseDate() const
 {
     return m_strReleaseDate;
 }
@@ -1805,7 +1859,7 @@ void dvdparse::setReleaseDate(const std::string & strReleaseDate)
     m_strReleaseDate = strReleaseDate;
 }
 
-std::string dvdparse::getSpecialFeatures() const
+const std::string & dvdparse::getSpecialFeatures() const
 {
     return m_strSpecialFeatures;
 }
@@ -1815,7 +1869,7 @@ void dvdparse::setSpecialFeatures(const std::string & strFeatures)
     m_strSpecialFeatures = strFeatures;
 }
 
-std::string dvdparse::getEAN_UPC() const
+const std::string & dvdparse::getEAN_UPC() const
 {
     return m_strEAN_UPC;
 }
@@ -1825,7 +1879,7 @@ void dvdparse::setEAN_UPC(const std::string & strEAN_UPC)
     m_strEAN_UPC = strEAN_UPC;
 }
 
-std::string dvdparse::getStoryline() const
+const std::string & dvdparse::getStoryline() const
 {
     return m_strStoryline;
 }
@@ -1835,7 +1889,7 @@ void dvdparse::setStoryline(const std::string & strStoryline)
     m_strStoryline = strStoryline;
 }
 
-std::string dvdparse::getRemarks() const
+const std::string & dvdparse::getRemarks() const
 {
     return m_strRemarks;
 }
@@ -1845,7 +1899,7 @@ void dvdparse::setRemarks(const std::string & strRemarks)
     m_strRemarks = strRemarks;
 }
 
-std::string dvdparse::getSubmitter() const
+const std::string & dvdparse::getSubmitter() const
 {
     return m_strSubmitter;
 }
@@ -1865,7 +1919,7 @@ void dvdparse::setSubmitter(const std::string & strSubmitter)
     m_strSubmitter = strSubmitter;
 }
 
-std::string dvdparse::getSubmitterIP() const
+const std::string & dvdparse::getSubmitterIP() const
 {
     return m_strSubmitterIP;
 }
@@ -1875,7 +1929,7 @@ void dvdparse::setSubmitterIP(const std::string & strSubmitterIP)
     m_strSubmitterIP = strSubmitterIP;
 }
 
-std::string dvdparse::getClient() const
+const std::string & dvdparse::getClient() const
 {
     return m_strClient;
 }
@@ -1885,7 +1939,7 @@ void dvdparse::setClient(const std::string & strClient)
     m_strClient = strClient;
 }
 
-std::string dvdparse::getDateCreated() const
+const std::string & dvdparse::getDateCreated() const
 {
     return m_strDateCreated;
 }
@@ -1900,12 +1954,12 @@ void dvdparse::setDateLastChanged(const std::string & strDateLastChanged)
     m_strDateLastChanged = strDateLastChanged;
 }
 
-std::string dvdparse::getDateLastChanged() const
+const std::string & dvdparse::getDateLastChanged() const
 {
     return m_strDateLastChanged;
 }
 
-std::string dvdparse::getKeywords() const
+const std::string & dvdparse::getKeywords() const
 {
     return m_strKeywords;
 }
@@ -1915,34 +1969,77 @@ void dvdparse::setKeywords(const std::string & strKeywords)
     m_strKeywords = strKeywords;
 }
 
-void dvdparse::update(const dvdparse & dvdParse)    // TODO: Safety checks
+int dvdparse::getProtocolVersion() const
 {
-    LPCDVDVMGM pDVDVMGM = getDVDVMGM();
+    return m_nProtocolVersion;
+}
 
-    m_strAlbumArtist        = dvdParse.m_strAlbumArtist;
-    m_strAlbum              = dvdParse.m_strAlbum;
-    m_strGenre              = dvdParse.m_strGenre;
-    m_strCast               = dvdParse.m_strCast;
-    m_strCrew               = dvdParse.m_strCrew;
-    m_strDirector           = dvdParse.m_strDirector;
-    m_strCountry            = dvdParse.m_strCountry;
-    m_strReleaseDate        = dvdParse.m_strReleaseDate;
-    m_strSpecialFeatures    = dvdParse.m_strSpecialFeatures;
-    m_strEAN_UPC            = dvdParse.m_strEAN_UPC;
-    m_strStoryline          = dvdParse.m_strStoryline;
-    m_strRemarks            = dvdParse.m_strRemarks;
-    m_nRevision             = dvdParse.m_nRevision;
-    m_strSubmitter          = dvdParse.m_strSubmitter;
-    m_strSubmitterIP        = dvdParse.m_strSubmitterIP;
-    m_strClient             = dvdParse.m_strClient;
-    m_strDateCreated        = dvdParse.m_strDateCreated;
-    m_strDateLastChanged    = dvdParse.m_strDateLastChanged;
-    m_strKeywords           = dvdParse.m_strKeywords;
+void dvdparse::setProtocolVersion(int nProtocolVersion)
+{
+    m_nProtocolVersion = nProtocolVersion;
+}
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= pDVDVMGM->m_wPTTNumberOfTitles; wTitleSetNo++)
+const std::string & dvdparse::getLibraryVersion() const
+{
+    return m_strLibraryVersion;
+}
+
+void dvdparse::setLibraryVersion(const std::string & strLibraryVersion)
+{
+    m_strLibraryVersion = strLibraryVersion;
+}
+
+const std::string & dvdparse::getLibraryName() const
+{
+    return m_strLibraryName;
+}
+
+void dvdparse::setLibraryName(const std::string & strLibraryName)
+{
+    m_strLibraryName = strLibraryName;
+}
+
+const std::string & dvdparse::getClientName() const
+{
+    return m_strClientName;
+}
+
+void dvdparse::setClientName(const std::string & strClientName)
+{
+    m_strClientName = strClientName;
+}
+
+void dvdparse::update(const dvdparse * dvdParse)
+{
+    // Do not update: m_strHash
+    m_strAlbumArtist        = dvdParse->m_strAlbumArtist;
+    m_strAlbum              = dvdParse->m_strAlbum;
+    m_strGenre              = dvdParse->m_strGenre;
+    m_strCast               = dvdParse->m_strCast;
+    m_strCrew               = dvdParse->m_strCrew;
+    m_strDirector           = dvdParse->m_strDirector;
+    m_strCountry            = dvdParse->m_strCountry;
+    m_strReleaseDate        = dvdParse->m_strReleaseDate;
+    m_strSpecialFeatures    = dvdParse->m_strSpecialFeatures;
+    m_strEAN_UPC            = dvdParse->m_strEAN_UPC;
+    m_strStoryline          = dvdParse->m_strStoryline;
+    m_strRemarks            = dvdParse->m_strRemarks;
+    m_nRevision             = dvdParse->m_nRevision;
+    m_strSubmitter          = dvdParse->m_strSubmitter;
+    m_strSubmitterIP        = dvdParse->m_strSubmitterIP;
+    m_strClient             = dvdParse->m_strClient;
+    m_strDateCreated        = dvdParse->m_strDateCreated;
+    m_strDateLastChanged    = dvdParse->m_strDateLastChanged;
+    m_strKeywords           = dvdParse->m_strKeywords;
+    m_nProtocolVersion           = dvdParse->m_nProtocolVersion;
+    m_strLibraryVersion     = dvdParse->m_strLibraryVersion;
+    m_strLibraryName        = dvdParse->m_strLibraryName;
+    m_strClientName         = dvdParse->m_strClientName;
+
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= getDvdPttVmgCount(); wTitleSetNo++)
     {
         dvdpttvmg *pDvdPttVmg = (dvdpttvmg *)getDvdPttVmg(wTitleSetNo);
-        const dvdpttvmg *pDvdPttVmg2 = dvdParse.getDvdPttVmg(wTitleSetNo);
+        const dvdpttvmg *pDvdPttVmg2 = dvdParse->getDvdPttVmg(wTitleSetNo);
 
         if (pDvdPttVmg == NULL || pDvdPttVmg2 == NULL)
         {
@@ -1951,10 +2048,10 @@ void dvdparse::update(const dvdparse & dvdParse)    // TODO: Safety checks
 
         pDvdPttVmg->m_strTitle = pDvdPttVmg2->m_strTitle;
 
-        for (uint16_t wPtt = 1; wPtt <= pDvdPttVmg->getPttCount(); wPtt++)
+        for (uint16_t wPttNo = 1; wPttNo <= pDvdPttVmg->getPttVtsCount(); wPttNo++)
         {
-            dvdpttvts * pDvdPttVts = (dvdpttvts *)pDvdPttVmg->getDvdPttVts(wPtt);
-            const dvdpttvts * pDvdPttVts2 = pDvdPttVmg2->getDvdPttVts(wPtt);
+            dvdpttvts * pDvdPttVts = (dvdpttvts *)pDvdPttVmg->getDvdPttVts(wPttNo);
+            const dvdpttvts * pDvdPttVts2 = pDvdPttVmg2->getDvdPttVts(wPttNo);
 
             if (pDvdPttVts == NULL || pDvdPttVts2 == NULL)
             {

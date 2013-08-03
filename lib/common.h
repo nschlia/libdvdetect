@@ -158,4 +158,42 @@ typedef sa_family_t ADDRESS_FAMILY;
 
 #endif
 
+/*! If the submitter name is set to this value, it will never be written
+ * into the database. In fact it will be treated like NULL. This can be
+ * used to mark it in xml to be changed.
+ */
+#define DEFSUBMITTER    "***ChangeMe!***"
+
+typedef enum
+{
+    XMLMODE_INVALID,                    //!< Invalid query
+    XMLMODE_QUERY,                      //!< Query DVD
+    XMLMODE_QUERY_RESPONSE,             //!< Response
+    XMLMODE_SEARCH,                     //!< Search DVD
+    XMLMODE_SEARCH_RESPONSE,            //!< Response
+    XMLMODE_SUBMIT,                     //!< Submit DVD
+    XMLMODE_SUBMIT_RESPONSE,            //!< Response
+    XMLMODE_EXPORT                      //!< Export DVD
+
+} XMLMODE, *LPXMLMODE;
+
+typedef const XMLMODE* LPCXMLMODE;      //!< constant version
+
+typedef enum
+{
+    XMLRESULT_SUCCESS,                  //!< Success
+    XMLRESULT_NOTFOUND,                 //!< Query not successful
+    XMLRESULT_NOT_IMPLEMENTED,          //!< Not implemented
+    XMLRESULT_SQL_ERROR,                //!< SQL error, description see error string
+    XMLRESULT_DUPLICATE_SUBMISSION,     //!< DBD already in database
+    XMLRESULT_XML_ERROR,                //!< XML error, description see error string
+    XMLRESULT_UNSUPPORTED_VERSION       //!< Unsupported XML version
+
+} XMLRESULT, *LPXMLRESULT;
+
+typedef const XMLRESULT* LPCXMLRESULT;  //!< constant version
+
+#define setInvalidParameterError(text)  setError(__PRETTY_FUNCTION__ + std::string("\nInvalid parameter: ") + std::string(text), DVDERRORCODE_INVALID_PARAMETER)
+#define setInternalError(text)          setError(__PRETTY_FUNCTION__ + std::string("\nInternal error: ") + std::string(text), DVDERRORCODE_INTERNAL_ERROR)
+
 #endif // COMMON_H
