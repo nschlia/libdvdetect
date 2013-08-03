@@ -33,35 +33,7 @@
 #include <dvdetect/dvdetectdll.h>
 #include <dvdetect/dvdetectbase.h>
 
-class dvdparse;
-class TiXmlHandle;
-class TiXmlElement;
-
-typedef enum
-{
-    XMLMODE_INVALID,                    //!< Invalid query
-    XMLMODE_QUERY,                      //!< Query DVD
-    XMLMODE_SEARCH,                     //!< Search DVD
-    XMLMODE_SUBMIT_CONDENSED,           //!< Submit DVD (small data set)
-    XMLMODE_SUBMIT_VERBOSE,             //!< Submit DVD (large data set)
-    XMLMODE_RESPONSE                    //!< Response
-
-} XMLMODE, *LPXMLMODE;
-
-typedef const XMLMODE* LPCXMLMODE;      //!< constant version
-
-typedef enum
-{
-    XMLRESULT_SUCCESS,                  //!< Success
-    XMLRESULT_NOTFOUND,                 //!< Query not successful
-    XMLRESULT_NOT_IMPLEMENTED,          //!< Not implemented
-    XMLRESULT_SQL_ERROR,                //!< SQL error, description see error string
-    XMLRESULT_DUPLICATE_SUBMISSION,     //!< DBD already in database
-    XMLRESULT_XML_ERROR                 //!< XML error, description see error string
-
-} XMLRESULT, *LPXMLRESULT;
-
-typedef const XMLRESULT* LPCXMLRESULT;  //!< constant version
+#include <tinyxml.h>
 
 class DLL_LOCAL xmldoc : public dvdetectbase
 {
@@ -69,80 +41,192 @@ public:
     explicit xmldoc(const std::string & strClientName);
     virtual ~xmldoc();
 
-    //! Query current DVD from database.
-    /*!
-     *  \param strXML std::string
-     *  \return
-     */
-    int                 query(std::string & strXML, const dvdparse & dvdParseSearch);
-
-    //! Search DVD in database.
-    /*!
-     *  \param strXML std::string
-     *  \return
-     */
-    int                 search(std::string & strXML, dvdparselst & dvdParseLstResponse, const std::string & strSearch);
-
-    //! Submit current DVD to database.
-    /*!
-     *  \param strXML std::string
-     *  \return
-     */
-    int                 submit(std::string & strXML, const dvdparselst & dvdParseLst, bool bVerbose);
-
     //! If an error occurred, this string will return (English) details.
     /*!
      *  \return Error text.
      */
-    std::string         getErrorString() const;
+    std::string         	getErrorString() const;
+
+    //! If an error occurred, this will return the code.
+    /*!
+     *  \return Error code.
+     */
+    DVDERRORCODE            getErrorCode() const;
 
     //! Set the client name
     /*!
      *  \param strClientName std::string
-     *  \return Error text.
      */
-    void                setClientName(const std::string &strClientName);
+    void                	setClientName(const std::string & strClientName);
 
     //! Get the client name
     /*!
      *  \return Client name.
      */
-    std::string         getClientName() const;
-
-    //!
-    /*!
-     *  \param strXML std::string
-     *  \return Client name.
-     */
-    int                 parseXmlResponse(const std::string & strXMLIn, XMLMODE & eXmlModeOut);
-
-    //!
-    /*!
-     *  \param strXML std::string
-     *  \return Client name.
-     */
-    int                 parseXml(const std::string & strXMLIn, XMLMODE & eXmlModeOut, dvdparselst & dvdParseLstOut);
-
-    //!
-    /*!
-     *  \param strXML std::string
-     *  \return Client name.
-     */
-    int                 buildXml(std::string & strXMLOut, XMLMODE eXmlModeIn, const dvdparselst & dvdParseLstIn, const std::string & strSearchIn = "");
+    std::string         	getClientName() const;
 
 protected:
-    int                 getResponse(TiXmlHandle hRoot);
-    std::string         getVideoCodingMode(DVDVIDEOCODINGMODE eDvdVideoCodingMode) const;
-    std::string         getVideoStandard(DVDVIDEOTVSTANDARD eDvdVideoStandard) const;
-    std::string         getVideoAspect(DVDVIDEOASPECT eDvdVideoAspect) const;
-    std::string         getAudioCodingMode(DVDAUDIOCODINGMODE eAudioCodingMode) const;
-    std::string         getAudioQuantisation(DVDAUDIOQUANTISATION eQuantisation) const;
-    std::string         getLanguage(const char *pszLanguage) const;
-    void                saveSetAttribute(TiXmlElement* element, const char *name, const std::string &strValue) const;
+    std::string         	saveGet(const char * psz) const;
+    void                	safeSetAttribute(TiXmlElement* pElement, const char *pszName, const std::string & strValue, bool bSaveEmpty = false) const;
+    void                	safeSetAttribute(TiXmlElement* pElement, const char *pszName, const char *pszValue, bool bSaveEmpty = false) const;
+    template<typename T>
+    void                    safeSetAttribute(TiXmlElement* pElement, const char *pszName, const T & value, bool bSaveEmpty = false) const
+    {
+        if (value != 0 || bSaveEmpty)
+        {
+            pElement->SetAttribute(pszName, valueToString(value));
+        }
+    }
+
+    template<typename T>
+    int                     safeQueryAttribute(TiXmlElement* pElement, const char *pszName, T * value) const
+    {
+        std::string strValue;
+        int res = pElement->QueryValueAttribute(pszName, &strValue);
+
+        if (res != TIXML_SUCCESS)
+        {
+            return res;
+        }
+
+        fromString(value, strValue);
+
+        return TIXML_SUCCESS;
+    }
+
+    template<typename T>
+    int                     setValue(TiXmlElement* pElement, const std::string& strNode, const T & value, bool bCDATA = false) const
+    {
+        std::stringstream ss;
+
+        ss << value;
+
+        TiXmlNode* pNode = new TiXmlElement(strNode);
+
+        pElement->LinkEndChild(pNode);
+
+        TiXmlText * pText = new TiXmlText(ss.str());
+
+        pText->SetCDATA(bCDATA);
+        pNode->LinkEndChild(pText);
+
+        return (ss.fail() ? -1 : 0);
+    }
+    int                     setValue(TiXmlElement* pElement, const std::string& strNode, const char * pszValue, bool bCDATA = true) const;
+    int                     setValue(TiXmlElement* pElement, const std::string& strNode, const std::string & strValue, bool bCDATA = true) const;
+
+    template<typename T>
+    int                     safeSetValue(TiXmlElement* pElement, const std::string& strNode, const T & value, bool bCDATA = false) const
+    {
+        std::stringstream ss;
+
+        ss << value;
+
+        if (!ss.str().empty())
+        {
+            TiXmlNode* pNode = new TiXmlElement(strNode);
+
+            pElement->LinkEndChild(pNode);
+
+            TiXmlText * pText = new TiXmlText(ss.str());
+
+            pText->SetCDATA(bCDATA);
+            pNode->LinkEndChild(pText);
+        }
+
+        return (ss.fail() ? -1 : 0);
+    }
+    int                     safeSetValue(TiXmlElement* pElement, const std::string& strNode, const char * pszValue, bool bCDATA = true) const;
+    int                     safeSetValue(TiXmlElement* pElement, const std::string& strNode, const std::string & strValue, bool bCDATA = true) const;
+
+    template< typename T >
+    int                     queryValue(TiXmlElement* pElement, const std::string& strNode, T* value) const
+    {
+        TiXmlNode* pNode = pElement->FirstChild(strNode);
+        if (pNode == NULL)
+        {
+            return -1;
+        }
+
+        pNode = pNode->FirstChild();
+        if (pNode == NULL)
+        {
+            return -1;
+        }
+
+        TiXmlText * pText = pNode->ToText();
+        if (pText == NULL)
+        {
+            return -1;
+        }
+        std::stringstream ss(pText->Value());
+        ss >> *value;
+
+        return (ss.fail() ? -1 : 0);
+    }
+    int                     queryText(TiXmlElement* pElement, const std::string& strNode, std::string * pstrValue) const;
+
+    int                 	getResponse(TiXmlHandle hRoot);
+
+    // Video
+    std::string         	valueToString(DVDVIDEOCODINGMODE eDvdVideoCodingMode) const;
+    std::string         	valueToString(DVDVIDEOTVSTANDARD eDvdVideoStandard) const;
+    std::string         	valueToString(DVDVIDEOASPECT eDvdVideoAspect) const;
+    std::string 			valueToString(LPCDVDVIDEORESOLUTION pVideoResolution) const;
+    // Audio
+    std::string         	valueToString(DVDAUDIOCODINGMODE eAudioCodingMode) const;
+    std::string         	valueToString(DVDAUDIOQUANTISATION eQuantisation) const;
+    std::string         	valueToString(DVDAUDIOCHANNELASSIGNMENT eAudioChannelAssignment) const;
+    std::string         	valueToString(DVDAUDIOAPPLICATIONMODE eAudioApplicationMode) const;
+    std::string         	valueToString(DVDAKARAOKEMODE eKaraokeMode) const;
+    std::string         	valueToString(DVDAUDIOCODEEXT eAudioCodeExt) const;
+    // Subpicture
+    std::string         	valueToString(DVDSUBPICCODEEXT eSubpictCodeExt) const;
+    // Cells
+    std::string             valueToString(CELLTYPE eCellType) const;
+    std::string             valueToString(BLOCKTYPE eBlockType) const;
+    // Files
+    std::string             valueToString(DVDFILETYPE eDvdFileType) const;
+
+    std::string 			valueToString(const time_t *pUnixTime) const;
+    template<class T>
+    std::string             valueToString(T i) const    // Anything else
+    {
+        std::stringstream ss;
+        ss << i;
+        return ss.str();
+    }
+    std::string         	languageToString(const char pszLangCode[]) const;
+
+    // Video
+    void                    fromString(LPDVDVIDEOCODINGMODE peVideoCodingMode, const std::string & strDvdVideoCodingMode) const;
+    void                    fromString(LPDVDVIDEOTVSTANDARD peVideoStandard, const std::string & strDvdVideoStandard) const;
+    void                    fromString(LPDVDVIDEORESOLUTION pVideoResolution, const std::string & strResolution) const;
+    void                    fromString(LPDVDVIDEOASPECT peVideoAspect, const std::string & strDvdVideoAspect) const;
+    // Audio
+    void                    fromString(LPDVDAUDIOCODINGMODE peAudioCodingMode, const std::string & strAudioCodingMode) const;
+    void                    fromString(LPDVDAUDIOQUANTISATION peAudioQuantisation, const std::string & strQuantisation) const;
+    void                    fromString(LPDVDAUDIOCHANNELASSIGNMENT peAudioChannelAssignment, const std::string & strAudioChannelAssignment) const;
+    void                    fromString(LPDVDAUDIOAPPLICATIONMODE peAudioApplicationMode, const std::string & strAudioApplicationMode) const;
+    void                    fromString(LPDVDAKARAOKEMODE peKaraokeMode, const std::string & strKaraokeMode) const;
+    void                    fromString(LPDVDAUDIOCODEEXT peAudioCodeExt, const std::string & strAudioCodeExt) const;
+    // Subpicture
+    void                    fromString(LPDVDSUBPICCODEEXT peSubpictCodeExt, const std::string & strSubpictCodeExt) const;
+    // Cells
+    void                    fromString(LPCELLTYPE peCellType, const std::string & strCellType) const;
+    void                    fromString(LPBLOCKTYPE peBlockType, const std::string & strBlockType) const;
+    // Files
+    void                    fromString(LPDVDFILETYPE peDvdFileType, const std::string & strFileType) const;
+
+    void                    languageFromString(char pszLangCode[DVD_LANGCODELEN + 1], const std::string & strLanguage) const;
+    void                    fromString(time_t *pUnixTime, const std::string & strDate) const;
+
+    void                    setError(const std::string & strErrorString, DVDERRORCODE eErrorCode);
 
 protected:
-    std::string         m_strErrorString;			//!< Last error as clear text (English)
-    std::string         m_strClientName;            //!< Name of client
+    std::string         	m_strErrorString;			//!< Last error as clear text (English)
+    DVDERRORCODE            m_eErrorCode;               //!< Error code
+    std::string         	m_strClientName;            //!< Name of client
 };
 
 #endif // XMLDOC_H

@@ -1,16 +1,28 @@
-There are two examples:
+There are three examples:
 
-dvd-info
+dvdinfo
 
-    a program which checks a DVD in the drive and displays DVD information: 
-    number of titles, chapters, DVD-format and if possible basic information 
-    about the structure.
+  This example reads the information of a DVD and displays them in a rather
+  confusing manner. The purpose of this example is to demonstrate how to
+  traverse through the DVD structure. 
 
-dvd-lookup
+dvdlookup
+  
+  This example reads structure of a DVD, tries to look it up on the
+  server and displays the information (or simply that it is not found). 
+  The purpose of this example is to demonstrate how to get the 
+  information from the server and then traverse through the DVD 
+  structure to display it. There is also an option to write the data 
+  retrieved into an xml file that can be edited and submitted to the 
+  server (using the dvdsubmit example program).
 
-    checks a DVD in the drive and does a lookup in the database. Displays 
-    information like DVD title, chapters, release date and more.
+dvdsubmit
+
+  This example reads the information of a DVD from an xml file, and
+  submits it to the server. The purpose of this example is to
+  demonstrate how to submit information to the server.
 
 Examples are available in both C and C++.
 
-For an example how to use the libray with Qt GUI, see the Qt directory.
+If you want a more clearly arranged look, better check out the Qt GUI 
+example instead, see the Qt directory.

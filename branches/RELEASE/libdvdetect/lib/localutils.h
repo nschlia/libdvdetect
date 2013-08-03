@@ -34,10 +34,9 @@ using namespace std;
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-#include <vector>
 
-    //! Split a string by a delimiter
-    /*!
+//! Split a string by a delimiter
+/*!
      * \param s TSTRING Source string
      * \param delim TCHAR Delimiter (e.g. ";")
      * \param elems vector<TSTRING> & Separated parts of the string
@@ -45,16 +44,16 @@ using namespace std;
      */
 vector<TSTRING> &	split(const TSTRING & s, TCHAR delim, vector<TSTRING> & elems);
 
-    //! Split a string by a delimiter
-    /*!
+//! Split a string by a delimiter
+/*!
      * \param s TSTRING Source string
      * \param delim TCHAR Delimiter (e.g. ";")
      * \return vector array of strings
      */
 vector<TSTRING>		split(const TSTRING & s, TCHAR delim);
 
-    //! Convert an IP address from string form to INET_ADDRESS
-    /*!
+//! Convert an IP address from string form to INET_ADDRESS
+/*!
      * \param strIP const TSTRING & IP address string
      * \param pSocketAddr INET_ADDRESS * IP address in binary format
      * \return Success: 0
@@ -62,15 +61,15 @@ vector<TSTRING>		split(const TSTRING & s, TCHAR delim);
      */
 int					string2IP(const TSTRING & strIP, INET_ADDRESS *pSocketAddr);
 
-    //! Convert binary IP address to string form
-    /*!
+//! Convert binary IP address to string form
+/*!
      * \param pSocketAddr INET_ADDRESS * IP address in binary format
      * \return IP address string
      */
 TSTRING				IP2String(const INET_ADDRESS *pSocketAddr);
 
-    //! Get the directory application resides in
-    /*!
+//! Get the directory application resides in
+/*!
      * Returns the directory application resides in. This is not the same
      * as the current path and may be different.
      *
@@ -79,52 +78,52 @@ TSTRING				IP2String(const INET_ADDRESS *pSocketAddr);
 TSTRING				getAppDir();
 
 #ifdef _UNICODE
-    // Prototype for conversion functions
+// Prototype for conversion functions
 
-    //! Convert standard string to wide string
-    /*!
+//! Convert standard string to wide string
+/*!
      * \param mbs const std::string& Standard (multibyte) string
      * \return Wide string
      */
 std::wstring		stringToWString(const std::string& mbs);
 
-    //! Convert wide string to standard string
-    /*!
+//! Convert wide string to standard string
+/*!
      * \param wcs const std::string& Wide string
      * \return Standard string
      */
 std::string			wstringToString(const std::wstring& wcs);
 #endif
 
-    //! Pause execution
-    /*!
+//! Pause execution
+/*!
      * \param seconds int Halt execution for number of seconds
      */
 void				nap(int seconds);
 
-    //! Remove whitespaces from right part of string
-    /*!
+//! Remove whitespaces from right part of string
+/*!
      * \param source TSTRING &
      * \param t const TSTRING &
      */
 void				trimRight(TSTRING &source, const TSTRING &t = _T(" "));
 
-    //! Remove whitespaces from left part of string
-    /*!
+//! Remove whitespaces from left part of string
+/*!
      * \param source TSTRING &
      * \param t const TSTRING &
      */
 void				trimLeft(TSTRING &source, const TSTRING &t = _T(" "));
 
-    //! Get error text for code
-    /*!
+//! Get error text for code
+/*!
      * \param error int Error code
      * \return Error description as text
      */
 TSTRING				getError(int error);
 
-    //! Decode uri
-    /*!
+//! Decode uri
+/*!
      * Decodes an uri according to RFC1630, RFC1738, RFC2396
      *
      * \param sSrc const TSTRING &
@@ -133,8 +132,8 @@ TSTRING				getError(int error);
      */
 TSTRING				uriDecode(const TSTRING & sSrc);
 
-    //! Encode uri
-    /*!
+//! Encode uri
+/*!
      * Encodes an uri according to RFC1630, RFC1738, RFC2396
      *
      * \param sSrc const TSTRING &
@@ -143,48 +142,48 @@ TSTRING				uriDecode(const TSTRING & sSrc);
      */
 TSTRING				uriEncode(const TSTRING & sSrc);
 
-    //! Convert big endian 16 bit integer to native format (for Intel: to little endian)
-    /*!
+//! Convert big endian 16 bit integer to native format (for Intel: to little endian)
+/*!
      * \param dwData uint32_t
      * \return Success:
      * \return Fail:
      */
 uint32_t            be2native(uint32_t dwData);
 
-    //! Convert big endian 16 bit integer to native format (for Intel: to little endian)
-    /*!
+//! Convert big endian 16 bit integer to native format (for Intel: to little endian)
+/*!
      * \param wData uint16_t
      * \return Success:
      * \return Fail:
      */
 uint16_t            be2native(uint16_t wData);
 
-    //! Convert byte to 16 bit integer (bytes can cause trible with modern compilers)
-    /*!
+//! Convert byte to 16 bit integer (bytes can cause trible with modern compilers)
+/*!
      * \param bData uint8_t
      * \return Success:
      * \return Fail:
      */
 uint16_t            getbyte(uint8_t bData);
 
-    //! Convert DVD BCD coded time to integer
-    /*!
+//! Convert DVD BCD coded time to integer
+/*!
      * \param ptr const uint8_t * BCD coded time
      * \return Decoded time as integer
      */
 uint64_t            BCDtime(const uint8_t *ptr);
 
-    //! Get frame from DVD BCD coded time
-    /*!
+//! Get frame from DVD BCD coded time
+/*!
      * \param ptr const uint8_t * BCD coded time
      * \return Frame rate (25 or 30)
      */
 uint16_t            frameRate(const uint8_t* ptr);
 
 #ifdef _WIN32
-    //! Windows: Windoze does not support utf-8 file names. Using the short file path trick to open them anyway.
-    //! other: dos nothing
-    /*!
+//! Windows: Windoze does not support utf-8 file names. Using the short file path trick to open them anyway.
+//! other: dos nothing
+/*!
      * \param strFilePath const string &
      * \return Success: Short file path
      * \return Fail: Empty string. Call GetLastError() for details.
@@ -194,8 +193,8 @@ std::string         getWin32ShortFilePath(const string & strFilePath);
 #define             getWin32ShortFilePath
 #endif
 
-    //! Get string
-    /*!
+//! Get string
+/*!
      * Reads a not zero terminated string from input string up to the maximum size
      * of the input string.
      *
@@ -223,8 +222,8 @@ template <size_t size> std::string getString(const uint8_t (&byDataIn)[size])
     return buffer;
 }
 
-    //! Get string
-    /*!
+//! Get string
+/*!
      * Reads a not zero terminated string from input string up to the maximum size
      * of the input string. If output string is too small, the string will be
      * truncated. A trailing "\0" will always be added.
@@ -246,8 +245,8 @@ template <size_t sizeout, size_t sizein> void getString(char (&szDataOut)[sizeou
     }
 }
 
-    //! Get string
-    /*!
+//! Get string
+/*!
      * Reads a not zero terminated string from input string. If output string is too
      * small, the string will be truncated. A trailing "\0" will always be added.
      *
@@ -266,8 +265,8 @@ template <size_t sizeout> void getString2(char (&szDataOut)[sizeout], const uint
     }
 }
 
-    //! Safely copy input string to output
-    /*!
+//! Safely copy input string to output
+/*!
      * Reads a zero terminated string from input string. If output string is too
      * small, the string will be truncated. A trailing "\0" will always be added.
      *
@@ -281,20 +280,20 @@ template <size_t sizeout> void safecpy(char (&szDataOut)[sizeout], const char* p
     szDataOut[sizeout - 1] = '\0';
 }
 
-    //! Remove the filename from a path
-    /*!
+//! Remove the filename from a path
+/*!
      * \param strPath std::string & Path
      */
 void                removeFileSpec(std::string & strPath);
 
-    //! Adds a path separator at the end of the path if missing
-    /*!
+//! Adds a path separator at the end of the path if missing
+/*!
      * \param strPath std::string & Path
      */
 void                addSeparator(std::string & strPath);
 
-    //! Get a DVD file name
-    /*!
+//! Get a DVD file name
+/*!
      * \param eFileType DVDFILETYPE File type, e.g. VIDEO_TS.IFO
      * \param wTitleSetNo uint16_t For VTS_* files, number of title set
      * \param wVtsNo  uint16_t For VTS_* files, number of IF or VOB
@@ -302,23 +301,24 @@ void                addSeparator(std::string & strPath);
      */
 std::string         getDvdFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo = 0, uint16_t wVtsNo = 0);
 
-//! Convert (preferrably a numeric value) to std::string
+//! Convert numeric to std::string
 /*!
+ * Convert (preferrably a numeric value) to std::string
+ *
  * \param i T Value to convert
  * \return String representation
  */
 template<class T> std::string toString(T i)
 {
     std::stringstream ss;
-    std::string s;
     ss << i;
-    s = ss.str();
-
-    return s;
+    return ss.str();
 }
 
 //! Convert numeric value into hexadecimal represented std::string
 /*!
+ * Convert numeric value into hexadecimal represented std::string
+ *
  * \param i T Value to convert
  * \return String representation
  */
@@ -331,5 +331,52 @@ template<class T> std::string toHexString(T i)
 
     return s;
 }
+
+//! Convert std::string into (preferrably a numeric value)
+/*!
+ * Convert std::string into (preferrably a numeric value)
+ *
+ * \param i T* Converted value
+ * \param strText const std::string & Value to convert
+     * \return Success: returns true
+     * \return Fail: returns false (if value did not convert)
+ */
+template<class T> int fromString(T * i, const std::string & strText)
+{
+    istringstream convert(strText);
+
+    return ((convert >> *i) ? true : false);
+}
+
+#ifdef _WIN32
+//! Replacement implementation for setenv/unsetenv under windoze
+/*!
+ * Replacement implementation for setenv/unsetenv under windoze
+ *
+ * \param name const char * Variable to set in environment
+ * \param value const char * Value to set variable to
+ * \param overwrite int Unused, set to 1
+ * \return The setenv() function returns zero on success, or -1 on error, with errno set to indicate the cause of the error.
+ */
+int setenv(const char *name, const char *value, int /*overwrite*/);
+
+//! Replacement implementation for setenv/unsetenv under windoze
+/*!
+ * Replacement implementation for setenv/unsetenv under windoze
+ *
+ * \param name const char * Variable to unset from environment
+ * \return The unsetenv() function returns zero on success, or -1 on error, with errno set to indicate the cause of the error.
+ */
+int unsetenv(const char *name);
+
+//! Replacement implementation for setenv/unsetenv under windoze
+/*!
+ * Replacement implementation for setenv/unsetenv under windoze
+ *
+ * \param name const char * Variable to read from environment
+ * \return The getenv() function returns a pointer to the value in the environment, or NULL if there is no match.
+ */
+char *getenv(const char *name);
+#endif
 
 #endif // LOCALUTILS_H

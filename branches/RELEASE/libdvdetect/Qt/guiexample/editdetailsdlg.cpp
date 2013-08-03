@@ -25,7 +25,7 @@
 #include "editdetailsdlg.h"
 #include "ui_editdetailsdlg.h"
 
-#include "dvdparse.h"
+#include "dvdetect/dvdparse.h"
 #include "explorerutils.h"
 
 #include <QStandardItemModel>
@@ -67,77 +67,97 @@ void editdetailsdlg::setParser(dvdparse *pDVD)
 
     aitems.clear();
     aitems.append(getItem(tr("Keywords:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getKeywords(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getKeywords(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Cast:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getCast(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getCast(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Crew:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getCrew(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getCrew(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Director:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getDirector(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getDirector(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Country:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getCountry(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getCountry(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("ReleaseDate:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getReleaseDate(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getReleaseDate(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Special Features:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getSpecialFeatures(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getSpecialFeatures(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("EAN/UPC:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getEAN_UPC(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getEAN_UPC(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Storyline/Synopsis:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getStoryline(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getStoryline(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Remarks:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getRemarks(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getRemarks(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Submitter:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getSubmitter(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getSubmitter(), true));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Submitter IP:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getSubmitterIP()));
+    aitems.append(getItemFromStdString(m_pDVD->getSubmitterIP()));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Submission Client:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getClient()));
+    aitems.append(getItemFromStdString(m_pDVD->getClient()));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Protocol Version:")));
+    aitems.append(getItem(QString::number(m_pDVD->getProtocolVersion())));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Library Version:")));
+    aitems.append(getItemFromStdString(m_pDVD->getLibraryVersion()));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Library Name:")));
+    aitems.append(getItemFromStdString(m_pDVD->getLibraryName()));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Client Name:")));
+    aitems.append(getItemFromStdString(m_pDVD->getClientName()));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Date Created:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getDateCreated()));
+    aitems.append(getItemFromStdString(m_pDVD->getDateCreated()));
     model->appendRow(aitems);
 
     aitems.clear();
     aitems.append(getItem(tr("Date Last Changed:")));
-    aitems.append(getItemFromUtf8(m_pDVD->getDateLastChanged()));
+    aitems.append(getItemFromStdString(m_pDVD->getDateLastChanged()));
     model->appendRow(aitems);
 }
 
@@ -167,15 +187,15 @@ void editdetailsdlg::on_buttonBox_accepted()
         return;
     }
 
-    m_pDVD->setKeywords((const char*)pModel->item(1, 1)->text().toUtf8());
-    m_pDVD->setCast((const char*)pModel->item(2, 1)->text().toUtf8());
-    m_pDVD->setCrew((const char*)pModel->item(3, 1)->text().toUtf8());
-    m_pDVD->setDirector((const char*)pModel->item(4, 1)->text().toUtf8());
-    m_pDVD->setCountry((const char*)pModel->item(5, 1)->text().toUtf8());
-    m_pDVD->setReleaseDate((const char*)pModel->item(6, 1)->text().toUtf8());
-    m_pDVD->setSpecialFeatures((const char*)pModel->item(7, 1)->text().toUtf8());
-    m_pDVD->setEAN_UPC((const char*)pModel->item(8, 1)->text().toUtf8());
-    m_pDVD->setStoryline((const char*)pModel->item(9, 1)->text().toUtf8());
-    m_pDVD->setRemarks((const char*)pModel->item(10, 1)->text().toUtf8());
-    m_pDVD->setSubmitter((const char*)pModel->item(11, 1)->text().toUtf8());
+    m_pDVD->setKeywords(pModel->item(1, 1)->text().toStdString());
+    m_pDVD->setCast(pModel->item(2, 1)->text().toStdString());
+    m_pDVD->setCrew(pModel->item(3, 1)->text().toStdString());
+    m_pDVD->setDirector(pModel->item(4, 1)->text().toStdString());
+    m_pDVD->setCountry(pModel->item(5, 1)->text().toStdString());
+    m_pDVD->setReleaseDate(pModel->item(6, 1)->text().toStdString());
+    m_pDVD->setSpecialFeatures(pModel->item(7, 1)->text().toStdString());
+    m_pDVD->setEAN_UPC(pModel->item(8, 1)->text().toStdString());
+    m_pDVD->setStoryline(pModel->item(9, 1)->text().toStdString());
+    m_pDVD->setRemarks(pModel->item(10, 1)->text().toStdString());
+    m_pDVD->setSubmitter(pModel->item(11, 1)->text().toStdString());
 }

@@ -26,6 +26,7 @@
 
 #include <dvdetect/dvdetectc++.h>
 
+#include "localutils.h"
 #include "dvdetect/dvdutils.h"
 
 DLL_PUBLIC uint64_t dvdSector2bytes(uint32_t dwSectorAddress)
@@ -85,4 +86,11 @@ DLL_PUBLIC const char * dvdGetFileType(DVDFILETYPE eFileType)
         return "";
         break;
     }
+}
+
+DLL_PUBLIC void dvdGetFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo, uint16_t wVtsNo, char * pszFileName, size_t maxlen)
+{
+    *pszFileName = '\0';
+    strncat(pszFileName, getDvdFileName(eFileType, wTitleSetNo, wVtsNo).c_str(), maxlen);
+    *(pszFileName + (maxlen - 1)) = '\0';
 }

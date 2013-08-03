@@ -25,11 +25,13 @@
  */
 
 #pragma once
+
 #ifndef DVDDATABASE_H
 #define DVDDATABASE_H
 
 class dvdparse;
-class xmldoc;
+class xmldocparser;
+class xmldocbuilder;
 class http;
 
 /*!
@@ -55,25 +57,61 @@ public:
     /*!
      *  \return
      */
-    int                 query(dvdparselst & dvdParseLstIn, const dvdparse & dvdParseOut);
+    int                 query(dvdparselst * pLstDvdParse, const dvdparse * pDvdParse);
 
     //! Search DVD in database.
-    /*!
-     *  \return
+    /*! Search DVD in database.
+     *
+     *  \return Success: 0
+     *  \return Fail: generally non-zero value; if > 0 a http code (404, 500, etc); -1 otherwise. Call getErrorString() and getErrorCode() for details.
      */
-    int                 search(dvdparselst & dvdParseLstIn, const std::string & strSearchOut);
+    int                 search(dvdparselst * pLstDvdParse, const std::string & strSearch);
 
     //! Submit current DVD to database.
-    /*!
-     *  \return
+    /*! Submit current DVD to database (single DVD submit).
+     *
+     *  \return Success: 0
+     *  \return Fail: generally non-zero value; if > 0 a http code (404, 500, etc); -1 otherwise. Call getErrorString() and getErrorCode() for details.
      */
-    int                 submit(const dvdparselst & dvdParseLstOut);
+    int                 submit(const dvdparse *pDvdParse);
+
+    //! Submit current DVD to database.
+    /*! Submit current DVD to database (submit several DVDs at once).
+     *
+     *  \return Success: 0
+     *  \return Fail: generally non-zero value; if > 0 a http code (404, 500, etc); -1 otherwise. Call getErrorString() and getErrorCode() for details.
+     */
+    int                 submit(const dvdparselst *pLstDvdParse);
+
+    //! Read a xml file into memory.
+    /*! Read a xml file into memory.
+     *
+     *  \return Success: 0
+     *  \return Fail: generally non-zero value; if > 0 a http code (404, 500, etc); -1 otherwise. Call getErrorString() and getErrorCode() for details.
+     */
+    int                 read(dvdparselst *pLstDvdParse, const std::string & strInFile);
+
+    //! Write a xml file to disk.
+    /*! Write a xml file to disk (single DVD).
+     *
+     *  \return Success: 0
+     *  \return Fail: generally non-zero value. Call getErrorString() and getErrorCode() for details.
+     */
+    int                 write(const dvdparse *pDvdParse, const std::string & strOutFile);
+
+    //! Write a xml file to disk.
+    /*! Write a xml file to disk (several DVDs).
+     *
+     *  \return Success: 0
+     *  \return Fail: generally non-zero value. Call getErrorString() and getErrorCode() for details.
+     */
+    int                 write(const dvdparselst *pLstDvdParse, const std::string & strOutFile);
 
     //! If an error occurred, this string will return (English) details.
     /*!
      *  \return Error text.
      */
-    std::string         getErrorString() const;
+    const std::string & getErrorString() const;
 
     //! If an error occurred, this will return the code.
     /*!
@@ -81,31 +119,45 @@ public:
      */
     DVDERRORCODE        getErrorCode() const;
 
-    dvddatabase& operator= (dvddatabase const& rhs);
+    dvddatabase& operator= (dvddatabase const & source);
 
-    //! Set the client name
-    /*!
-     *  \return Error text.
+    //! Set the client name.
+    /*! Set the client name.
      */
     void                setClientName(const std::string & strClientName);
 
-    //! Get the client name
-    /*!
+    //! Get the client name.
+    /*! Get the client name.
+     *
      *  \return Client name.
      */
-    std::string         getClientName() const;
+    const std::string & getClientName() const;
+
+    //! Set the server url.
+    /*! Set the server url.
+     */
+    void                setServerUrl(const std::string & strServerUrl);
+
+    //! Get the server url.
+    /*! Get the server url.
+     *
+     *  \return Server url.
+     */
+    const std::string & getServerUrl() const;
 
     //! Set the proxy name (and optionally port), e.g. proxy:3128
     void                setProxy(const std::string & strProxy);
 
 protected:
     void                setError(const std::string & strErrorString, DVDERRORCODE eErrorCode);
-    void                setError(const xmldoc & xmlDoc);
+    void                setError(const xmldocparser & xmlDoc);
+    void                setError(const xmldocbuilder & xmlDoc);
     void                setError(const http & httpServer);
 
 protected:
     std::string         m_strErrorString;			//!< Last error as clear text (English)
     DVDERRORCODE        m_eErrorCode;               //!< Error code
+    std::string         m_strServerUrl;             //!< Url of dvdetect server
     std::string         m_strClientName;            //!< Name of client
     std::string         m_strProxy;                 //!< Proxy server
 };

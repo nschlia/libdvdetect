@@ -27,6 +27,8 @@
 #ifndef DVDEXPLORERDLG_H
 #define DVDEXPLORERDLG_H
 
+#define PROGRAM_NAME "libDVDetect Explorer Example V" DVDETECT_PRODUCTVERSION_STR
+
 #include <stdint.h>
 
 #include <dvdetect/dvdetectc++.h>
@@ -109,22 +111,33 @@ protected:
     QString             getPlayTime(uint64_t qwPlaytimems, uint16_t wFrameRate = (uint16_t)-1) const;
 
     int                 queryDVD();
-    int                 searchDVD();
+    int                 findDVD();
     int                 submitDVD();
     int                 editDetails();
+    int                 editOptions();
+    int                 exportXml();
+    int                 importXml();
+
+    void                loadSettings(dvddatabase & dvdDatabase);
+    void                updateData();
+
+    bool                isPhysicalView() const;
 
 private slots:
-    void                on_action_Open_triggered();
-    void                on_actionE_xit_triggered();
-    void                on_treeViewDVD_clicked(const QModelIndex &index);
-    void                on_checkBoxPhysicalView_clicked();
+    void                on_actionOpen_triggered();
+    void                on_actionExport_XML_triggered();
+    void                on_actionImport_XML_triggered();
+    void                on_actionOptions_triggered();
+    void                on_actionExit_triggered();
     void                on_actionQuery_DVD_triggered();
-    void                on_actionSearch_DVD_triggered();
+    void                on_actionFind_DVD_triggered();
     void                on_actionSubmit_DVD_triggered();
-    void                on_action_Edit_View_Details_triggered();
     void                on_actionAbout_triggered();
+    void                on_treeViewDVD_clicked(const QModelIndex &index);
+    void                on_action_Edit_View_Details_triggered();
     void                on_treeViewDVD_customContextMenuRequested(const QPoint &pos);
     void                handleContextMenuEditDetails();
+    void                on_checkBoxPhysicalView_clicked();
 
 protected:
     dvdparse            m_DVD;              //!< dvdparse parser object

@@ -1,13 +1,10 @@
-Release Version 0.10
+Release Version 0.40
 ********************
 
 There ist still a lot to do...
 
-* Actual database access
-* Lots of code review/commenting
 * Support for menus (implement virtual machine)
 * Cell handling (playback of angles)
-* DVD database support (create database, enable queries)
 * Refactoring/code clean-up
 * Revamp variable names in structures (more common and clearer concepts)
 * VS2010 project ready

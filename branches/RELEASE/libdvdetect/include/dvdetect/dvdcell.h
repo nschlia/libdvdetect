@@ -39,7 +39,8 @@
 class DLL_PUBLIC dvdcell : public dvdetectbase
 {
     friend class dvdparse;
-    friend class xmldoc;
+    friend class xmldocbuilder;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
@@ -62,11 +63,11 @@ public:
 
     //! Get a DVD unit in this cell.
     /*!
-     *  \param wUnit uint16_t Index of unit (1...n)
+     *  \param wUnitNo uint16_t Index of unit (1...n)
      *  \return Success: Pointer to dvdunit class
-     *  \return Fail: NULL if wUnit out of bounds.
+     *  \return Fail: NULL if wUnitNo out of bounds.
      */
-    const dvdunit *     getDvdUnit(uint16_t wUnit) const;
+    dvdunit *           getDvdUnit(uint16_t wUnitNo) const;
 
     //! Get the number of units in this cell.
     /*!
@@ -80,13 +81,13 @@ public:
      */
     uint64_t            getSize() const;
 
-    dvdcell& operator= (dvdcell const& rhs);
+    dvdcell& operator= (dvdcell const & source);
 
 protected:
     DVDCELL             m_DVDCELL;			//!< DVDCELL structure (DVD cell information)
-    dvdunitlst          m_dvdUnitLst;		//!< list of units of this cell
+    dvdunitlst          m_lstDvdUnit;		//!< list of units of this cell
 };
 
-typedef std::vector<dvdcell> dvdcelllst;	//!< shortcut for a list of dvdcells
+typedef vector_ptr<dvdcell> dvdcelllst;     //!< shortcut for a list of dvdcells
 
 #endif // DVDCELL_H

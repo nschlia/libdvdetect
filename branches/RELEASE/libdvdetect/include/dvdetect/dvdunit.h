@@ -36,7 +36,8 @@
 class DLL_PUBLIC dvdunit : public dvdetectbase
 {
     friend class dvdparse;
-    friend class xmldoc;
+    friend class xmldocbuilder;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
@@ -63,12 +64,12 @@ public:
      */
     uint64_t            getSize() const;
 
-    dvdunit& operator= (dvdunit const& rhs);
+    dvdunit& operator= (dvdunit const & source);
 
 protected:
     DVDUNIT             m_DVDUNIT;          //!< DVDUNIT structure (DVD unit information)
 };
 
-typedef std::vector<dvdunit> dvdunitlst;    //!< shortcut for a list of dvdunits
+typedef vector_ptr<dvdunit> dvdunitlst;     //!< shortcut for a list of dvdunits
 
 #endif // DVDUNIT_H

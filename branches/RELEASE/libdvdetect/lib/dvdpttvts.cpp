@@ -38,12 +38,14 @@ dvdpttvts::~dvdpttvts()
 {
 }
 
-dvdpttvts& dvdpttvts::operator= (dvdpttvts const& rhs)
+dvdpttvts& dvdpttvts::operator= (dvdpttvts const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDPTTVTS, &rhs.m_DVDPTTVTS, sizeof(DVDPTTVTS));
-        m_pDvdParse = rhs.m_pDvdParse;
+        memcpy(&m_DVDPTTVTS, &source.m_DVDPTTVTS, sizeof(DVDPTTVTS));
+        m_pDvdParse     = source.m_pDvdParse;
+        m_strArtist     = source.m_strArtist;
+        m_strTitle      = source.m_strTitle;
     }
     return *this;
 }
@@ -53,7 +55,7 @@ LPCDVDPTTVTS dvdpttvts::getDVDPTTVTS() const
     return &m_DVDPTTVTS;
 }
 
-const dvdprogram * dvdpttvts::getDvdChapter() const
+dvdprogram * dvdpttvts::getDvdChapter() const
 {
     if (m_pDvdParse == NULL)
     {
@@ -66,12 +68,16 @@ const dvdprogram * dvdpttvts::getDvdChapter() const
 uint64_t dvdpttvts::getSize() const
 {
     const dvdprogram *pDvdProgram = getDvdChapter();
-    LPCDVDPROGRAM pDVDPROGRAM = pDvdProgram->getDVDPROGRAM();
     uint64_t size = 0;
 
-    for (uint16_t wCell = 1; wCell <= pDVDPROGRAM->m_wCells; wCell++)
+    if (pDvdProgram == NULL)	// Safety net
     {
-        const dvdcell *pDvdCell = pDvdProgram->getDvdCell(wCell);
+        return 0;
+    }
+
+    for (uint16_t wCellNo = 1; wCellNo <= pDvdProgram->getCellCount(); wCellNo++)
+    {
+        const dvdcell *pDvdCell = pDvdProgram->getDvdCell(wCellNo);
         LPCDVDCELL pDVDCELL = pDvdCell->getDVDCELL();
 
         if (pDVDCELL->m_eCellType == CELLTYPE_NORMAL || pDVDCELL->m_eCellType == CELLTYPE_FIRST)
@@ -87,12 +93,16 @@ uint64_t dvdpttvts::getSize() const
 uint64_t dvdpttvts::getPlayTime() const
 {
     const dvdprogram *pDvdProgram = getDvdChapter();
-    LPCDVDPROGRAM pDVDPROGRAM = pDvdProgram->getDVDPROGRAM();
     uint64_t qwPlayTime = 0;
 
-    for (uint16_t wCell = 1; wCell <= pDVDPROGRAM->m_wCells; wCell++)
+    if (pDvdProgram == NULL)	// Safety net
     {
-        const dvdcell *pDvdCell = pDvdProgram->getDvdCell(wCell);
+        return 0;
+    }
+
+    for (uint16_t wCellNo = 1; wCellNo <= pDvdProgram->getCellCount(); wCellNo++)
+    {
+        const dvdcell *pDvdCell = pDvdProgram->getDvdCell(wCellNo);
         LPCDVDCELL pDVDCELL = pDvdCell->getDVDCELL();
 
         if (pDVDCELL->m_eCellType == CELLTYPE_NORMAL || pDVDCELL->m_eCellType == CELLTYPE_FIRST)
@@ -105,7 +115,7 @@ uint64_t dvdpttvts::getPlayTime() const
     return qwPlayTime;
 }
 
-std::string dvdpttvts::getArtist() const
+const std::string & dvdpttvts::getArtist() const
 {
     return m_strArtist;
 }
@@ -115,7 +125,7 @@ void dvdpttvts::setArtist(const std::string & strArtist)
     m_strArtist = strArtist;
 }
 
-std::string dvdpttvts::getTitle() const
+const std::string & dvdpttvts::getTitle() const
 {
     return m_strTitle;
 }

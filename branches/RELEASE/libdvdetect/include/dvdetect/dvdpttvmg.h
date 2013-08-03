@@ -43,14 +43,15 @@ class dvdparse;
 class DLL_PUBLIC dvdpttvmg : public dvdetectbase
 {
     friend class dvdparse;
-    friend class xmldoc;
+    friend class xmldocbuilder;
+    friend class xmldocparser;
 
 public:
     //! Constructor.
     /*!
      *  Construct a dvdpttvmg element.
      */
-    explicit dvdpttvmg(dvdparse *pDvdParse);
+    explicit dvdpttvmg(dvdparse *pDvdParse = NULL);
     //! Destructor.
     /*!
      *  Destruct a dvdpttvmg element.
@@ -67,23 +68,23 @@ public:
     //! Get a DVD title set of this part of title (PTT).
     /*!
      *  \return Success: Pointer to dvdtitle class
-     *  \return Fail: NULL if not found.
+     *  \return Fail: NULL if not class initialised/no DVD parsed.
      */
-    const dvdtitle *    getDvdTitle() const;
+    dvdtitle *          getDvdTitle() const;
 
     //! Get a DVD part of program (PTT) in this video manager PTT.
     /*!
-     *  \param wPtt uint16_t Index of PTT (1...n)
+     *  \param wPttNo uint16_t Index of PTT (1...n)
      *  \return Success: Pointer to dvdpttvts class
-     *  \return Fail: NULL if wPtt out of bounds.
+     *  \return Fail: NULL if wPttNo out of bounds.
      */
-    const dvdpttvts *   getDvdPttVts(uint16_t wPtt) const;
+    dvdpttvts *         getDvdPttVts(uint16_t wPttNo) const;
 
     //! Get the number of PTTs in this video manager PTT.
     /*!
      *  \return Number of units (1...n)
      */
-    uint16_t            getPttCount() const;
+    uint16_t            getPttVtsCount() const;
 
     //! Get the size (in bytes) of this virtual title.
     /*!
@@ -113,17 +114,17 @@ public:
      */
     void                setTitle(const std::string & strTitle);
 
-    dvdpttvmg& operator= (dvdpttvmg const& rhs);
+    dvdpttvmg& operator= (dvdpttvmg const & source);
 
 protected:
     DVDPTTVMG           m_DVDPTTVMG;			//!< DVDPTTVMG structure (DVD part of title)
     dvdparse *          m_pDvdParse;			//!< Owner DVD parse object
-    dvdpttvtslst        m_dvdPttVtsLst;			//!< list of DVD part-of-programs (PTT)
+    dvdpttvtslst        m_lstDvdPttVts;			//!< list of DVD part-of-programs (PTT)
 
     // database data
     std::string         m_strTitle;             //!<
 };
 
-typedef std::vector<dvdpttvmg> dvdpttvmglst;	//!< shortcut for a list of dvdpttvmgs
+typedef vector_ptr<dvdpttvmg> dvdpttvmglst;     //!< shortcut for a list of dvdpttvmgs
 
 #endif // DVDPTTVMG_H

@@ -47,6 +47,9 @@ public:
     
     QString     getSearch() const;
 
+private slots:
+    void        on_buttonBox_accepted();
+
 private:
     Ui::searchtextdlg *ui;
 };

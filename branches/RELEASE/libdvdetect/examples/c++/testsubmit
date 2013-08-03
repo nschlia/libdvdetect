@@ -1,0 +1,27 @@
+#/bin/bash
+
+# Get hostname w/o domain (Wiseguys: yes I know hostname -s, but this is not supported everywhere!)
+MACHINE=`hostname | sed 's/\..*//g'`
+ 
+echo "Running on: $MACHINE"
+echo "Add parameter \"-i\" to submit mydvd.xml"
+echo "Use \"-x proxy:port\" set proxy"
+
+for parm in $@
+do
+  if [ "$parm" == "-i" ]
+  then
+    IMPORT="-i mydvd.xml"
+  fi
+  if [ "$PROXY" == "-x" ]
+  then
+    PROXY="-x $parm"
+  fi
+  if [ "$parm" == "-x" ]
+  then
+    PROXY="-x"
+  fi
+done
+
+./dvdsubmitcxx $IMPORT $PROXY
+

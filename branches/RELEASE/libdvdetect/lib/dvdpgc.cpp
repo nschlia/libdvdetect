@@ -37,12 +37,12 @@ dvdpgc::~dvdpgc()
 {
 }
 
-dvdpgc& dvdpgc::operator= (dvdpgc const& rhs)
+dvdpgc& dvdpgc::operator= (dvdpgc const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDPGC, &rhs.m_DVDPGC, sizeof(DVDPGC));
-        m_dvdProgramLst = rhs.m_dvdProgramLst;
+        memcpy(&m_DVDPGC, &source.m_DVDPGC, sizeof(DVDPGC));
+        m_lstDvdProgram = source.m_lstDvdProgram;
     }
     return *this;
 }
@@ -52,33 +52,28 @@ LPCDVDPGC dvdpgc::getDVDPGC() const
     return &m_DVDPGC;
 }
 
-const dvdprogram * dvdpgc::getDvdProgram(uint16_t wProgram) const
+dvdprogram * dvdpgc::getDvdProgram(uint16_t wProgramNo) const
 {
-    if (!wProgram || wProgram > m_dvdProgramLst.size())
+    if (!wProgramNo || wProgramNo > getProgramCount())
     {
         return NULL;
     }
 
-    return &m_dvdProgramLst[wProgram - 1];
+    return m_lstDvdProgram[wProgramNo - 1];
 }
 
 uint16_t dvdpgc::getProgramCount() const
 {
-    return m_DVDPGC.m_wNumberOfPrograms;
-}
-
-uint16_t dvdpgc::getCellCount() const
-{
-    return m_DVDPGC.m_wNumberOfCells;
+    return m_lstDvdProgram.size();
 }
 
 uint64_t dvdpgc::getSize() const
 {
     uint64_t size = 0;
 
-    for (uint16_t wProgram = 1; wProgram <= m_DVDPGC.m_wNumberOfPrograms; wProgram++)
+    for (uint16_t wProgramNo = 1; wProgramNo <= getProgramCount(); wProgramNo++)
     {
-        size += m_dvdProgramLst[wProgram - 1].getSize();
+        size += m_lstDvdProgram[wProgramNo - 1]->getSize();
     }
 
     return size;
@@ -88,9 +83,9 @@ uint64_t dvdpgc::getPlayTime() const
 {
     uint64_t qwPlayTime = 0;
 
-    for (uint16_t wProgram = 1; wProgram <= m_DVDPGC.m_wNumberOfPrograms; wProgram++)
+    for (uint16_t wProgramNo = 1; wProgramNo <= getProgramCount(); wProgramNo++)
     {
-        qwPlayTime += m_dvdProgramLst[wProgram - 1].getPlayTime();
+        qwPlayTime += m_lstDvdProgram[wProgramNo - 1]->getPlayTime();
     }
 
     return qwPlayTime;

@@ -1,0 +1,52 @@
+#/bin/bash
+
+# Get hostname w/o domain (Wiseguys: yes I know hostname -s, but this is not supported everywhere!)
+MACHINE=`hostname | sed 's/\..*//g'`
+ 
+echo "Running on: $MACHINE"
+echo "Add parameter \"-o\" to export to mydvd.xml"
+echo "Use \"-x proxy:port\" set proxy"
+
+if [ "$MACHINE" == "schleppeimer" ]
+then
+  DIRECTORY="/windows/C/temp/Metal - A Headbanger's Journey/DVD1/"
+elif [ "$MACHINE" == "develop" ] 
+then
+  DIRECTORY="/windows/C/temp/Metal - A Headbanger's Journey/DVD1/"
+elif [ "$MACHINE" == "GER-NB-SCNO-7" ]
+then
+  if [ "$OSTYPE" == "cygwin" ]
+  then
+  	DIRECTORY="/cygdrive/d/mmedia/#DVD/Arch Enemy"
+  else
+  	DIRECTORY="/D/mmedia/#DVD/Arch Enemy"
+  fi
+elif [ "$MACHINE" == "samba" ]
+then
+  DIRECTORY="/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1"
+elif [ "$MACHINE" == "mailout" ]
+then
+  DIRECTORY="/home/o/oblivion-admin.de/public_html/mp3mania/mp3base/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1"
+else
+  echo Machine unknown. Stop.
+  exit 1
+fi
+
+for parm in $@
+do
+  if [ "$parm" == "-o" ]
+  then
+    EXPORT="-o mydvd.xml"
+  fi
+  if [ "$PROXY" == "-x" ]
+  then
+    PROXY="-x $parm"
+  fi
+  if [ "$parm" == "-x" ]
+  then
+    PROXY="-x"
+  fi
+done
+
+./dvdlookup -d "$DIRECTORY" $EXPORT $PROXY
+

@@ -25,11 +25,19 @@
 #include "searchtextdlg.h"
 #include "ui_searchtextdlg.h"
 
+#include <QSettings>
+
 searchtextdlg::searchtextdlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::searchtextdlg)
 {
     ui->setupUi(this);
+
+    QSettings settings("guiexample.conf");
+
+    settings.beginGroup("searchdlg");
+    ui->lineEditSearch->setText(settings.value("search").toString());
+    settings.endGroup();
 }
 
 searchtextdlg::~searchtextdlg()
@@ -42,3 +50,11 @@ QString searchtextdlg::getSearch() const
     return ui->lineEditSearch->text();
 }
 
+void searchtextdlg::on_buttonBox_accepted()
+{
+    QSettings settings("guiexample.conf");
+
+    settings.beginGroup("searchdlg");
+    settings.setValue("search", ui->lineEditSearch->text());
+    settings.endGroup();
+}

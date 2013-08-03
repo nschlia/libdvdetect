@@ -37,12 +37,12 @@ dvdcell::~dvdcell()
 {
 }
 
-dvdcell& dvdcell::operator= (dvdcell const& rhs)
+dvdcell& dvdcell::operator= (dvdcell const & source)
 {
-    if (this != &rhs)
+    if (this != &source)
     {
-        memcpy(&m_DVDCELL, &rhs.m_DVDCELL, sizeof(DVDCELL));
-        m_dvdUnitLst = rhs.m_dvdUnitLst;
+        memcpy(&m_DVDCELL, &source.m_DVDCELL, sizeof(DVDCELL));
+        m_lstDvdUnit = source.m_lstDvdUnit;
     }
     return *this;
 }
@@ -52,28 +52,28 @@ LPCDVDCELL dvdcell::getDVDCELL() const
     return &m_DVDCELL;
 }
 
-const dvdunit * dvdcell::getDvdUnit(uint16_t wUnit) const
+dvdunit *dvdcell::getDvdUnit(uint16_t wUnitNo) const
 {
-    if (!wUnit || wUnit > m_dvdUnitLst.size())
+    if (!wUnitNo || wUnitNo > m_lstDvdUnit.size())
     {
         return NULL;
     }
 
-    return &m_dvdUnitLst[wUnit - 1];
+    return m_lstDvdUnit[wUnitNo - 1];
 }
 
 uint16_t dvdcell::getUnitCount() const
 {
-    return (uint16_t)m_dvdUnitLst.size();
+    return (uint16_t)m_lstDvdUnit.size();
 }
 
 uint64_t dvdcell::getSize() const
 {
     uint64_t size = 0;
 
-    for (uint16_t wUnit = 1; wUnit <= getUnitCount(); wUnit++)
+    for (uint16_t wUnitNo = 1; wUnitNo <= getUnitCount(); wUnitNo++)
     {
-        size += m_dvdUnitLst[wUnit - 1].getSize();
+        size += m_lstDvdUnit[wUnitNo - 1]->getSize();
     }
 
     return size;

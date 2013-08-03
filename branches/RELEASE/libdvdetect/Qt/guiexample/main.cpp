@@ -23,11 +23,20 @@
  */
 
 #include <QApplication>
+#include <QTextCodec>
 #include "dvdexplorerdlg.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    // See: http://stackoverflow.com/questions/6520485/qt-unicode-and-umlauts
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0) // Qt 5.0.0
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#endif
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+
     dvdexplorerdlg w;
     w.show();
 

@@ -24,6 +24,8 @@
  */
 
     include_once 'inc/functions.inc.php';
+    include_once 'inc/functions.buildxml.inc.php';
+    include_once 'inc/functions.search.inc.php';
 
     //$path_parts = pathinfo($_SERVER['PHP_SELF']);
     //$strLangId = SaveSession("strLangId");
@@ -37,43 +39,86 @@
         header('Location: http://www.dvdetect.de/');
     }
 
-    $Result = XMLRESULT_NOT_IMPLEMENTED;
-    $ResponseText = "Not implemented";
+    $Result = XMLRESULT_SUCCESS;
+    $ResponseText = "Operation successful";
 
-    $XmlMode = XMLMODE_RESPONSE;
+    $XmlMode = XMLMODE_SEARCH_RESPONSE;
     $mysqli = null;
 
     try
     {
-    	// create a dom document with encoding utf8
-    	$domtree = new DOMDocument('1.0', 'UTF-8');
+        createXmlDocument($domtree, $xmlRoot, $XmlMode);
 
-    	// create the root element of the xml tree
-    	$xmlRoot = $domtree->createElement("xml");
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($xmlstr);
 
-    	$comment = $domtree->createComment("libdvdetect data exchange");
-    	$xmlRoot->appendChild($comment);
+        if (!$xml)
+        {
+            $ResponseText = "XML Error: " . get_xml_error($xmlstr);
+            throw new Exception($ResponseText, XMLRESULT_XML_ERROR);
+        }
 
-    	// append it to the document created
-    	$xmlRoot = $domtree->appendChild($xmlRoot);
+        $attributes = $xml->attributes();
+        $XmlMode            = $attributes["XmlMode"];
+        $ProtocolVersion    = $attributes["ProtocolVersion"];
+        $LibraryVersion     = $attributes["LibraryVersion"];
+        $LibraryName        = $attributes["LibraryName"];
+        $ClientName         = $attributes["ClientName"];
 
-    	$xmlRoot->setAttribute("XmlMode", $XmlMode);
-    	$xmlRoot->setAttribute("XmlVersion", XMLVERSION);
-    	$xmlRoot->setAttribute("LibraryVersion", LIBRARYVERSION);
-    	$xmlRoot->setAttribute("LibraryName", LIBRARYNAME);
-    	$xmlRoot->setAttribute("ClientName", CLIENTNAME);
+        // Use requested version
+        $xmlRoot->setAttribute("ProtocolVersion", $ProtocolVersion);
 
-    	$responseTag = $domtree->createElement("response");
-    	$xmlRoot->appendChild($responseTag);
-   	}
+        checkVersion($ProtocolVersion, LIBDVDETECT_PROTOCOL_VERSION);
+
+        $mysqli = connect_server();
+
+        // Check connection
+        if (!$mysqli)
+        {
+            $ResponseText = "Cannot connect to database.\nSQL Error: " . mysqli_connect_error();
+            throw new Exception($ResponseText, XMLRESULT_SQL_ERROR);
+        }
+
+        search_dvd($mysqli, $xml, $rsDVDVMGM);
+
+        $found = buildResults($domtree, $mysqli, $xmlRoot, null, $rsDVDVMGM, $ProtocolVersion);
+
+        if (!$found)
+        {
+            $Result = XMLRESULT_NOTFOUND;
+            $ResponseText = "No data found for '" . $xml->Search . "'";
+        }
+        else
+        {
+            $Result = XMLRESULT_SUCCESS;
+            $ResponseText = "Operation successful";
+        }
+
+        // free result set
+        $rsDVDVMGM->close();
+        $rsDVDVMGM = null;
+    }
     catch (Exception $e)
     {
+        $Result = $e->getCode();
+        $ResponseText = $e->getMessage();
     }
 
+    disconnect_server($mysqli);
+    $mysqli = null;
+
+    // Create response
+    $responseTag = $domtree->createElement("response");
     $responseTag->setAttribute("Result", $Result);
     $responseTag->appendChild($domtree->createElement('ResponseText', $ResponseText));
+    $xmlRoot->appendChild($responseTag);
+    $responseTag = null;
 
     // Send the xml document out
-    header('Content-type: text/xml');
-    echo $domtree->saveXML();
+    header('Content-type: text/xml; charset=utf-8');
+    $xml = $domtree->saveXML();
+    header('Content-Length: ' . strlen($xml));
+
+    print($xml);
+    $domtree = null;
 ?>

@@ -24,8 +24,11 @@ EXTRA_DIST = \
        	doc/doxygen.conf \
        	doc/build \
 	examples/README \
+	examples/c/README \
+	examples/c++/README \
 	Qt/README \
 	Qt/guiexample/guiexample.pro \
+	Qt/guiexample/guiexamplestatic.pro \
 	Qt/guiexample/main.cpp \
 	Qt/guiexample/dvdexplorerdlg.cpp \
 	Qt/guiexample/dvdexplorerdlg.h \
@@ -39,13 +42,21 @@ EXTRA_DIST = \
 	Qt/guiexample/editdetailsdlg.cpp \
 	Qt/guiexample/editdetailsdlg.h \
 	Qt/guiexample/editdetailsdlg.ui \
+	Qt/guiexample/editoptionsdlg.cpp \
+	Qt/guiexample/editoptionsdlg.h \
+	Qt/guiexample/editoptionsdlg.ui \
 	Qt/guiexample/explorerutils.cpp \
 	Qt/guiexample/explorerutils.h \
 	sql/dbdvdetect.mysql.sql \
+	php/inc/functions.inc.php \
+	php/inc/functions.query.inc.php \
+	php/inc/functions.search.inc.php \
+	php/inc/functions.submit.inc.php \
+	php/inc/index.php \
 	php/index.php \
 	php/query.php \
 	php/search.php \
-	php/submit.php \
+	php/submit.php	\
 	php/robots.txt \
 	win/tinyxml_2_6_2.zip \
 	win/readme.txt

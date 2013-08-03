@@ -21,7 +21,7 @@
  *
  *  \brief dvdetectbase class declaration
  *
- * Base class for all dvd* classes. Provides type information..
+ * Base class for all dvd* classes. Provides type information.
  */
 
 #pragma once
