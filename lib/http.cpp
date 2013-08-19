@@ -45,7 +45,7 @@
 #define RECVBUFFSIZE            (1024*50)           // 50 kB
 
 #define POLLDELAY               10                  // 10 ms
-#define POLLTIMEOUT             (1000/POLLDELAY)    // 1000 ms
+#define POLLTIMEOUT             (1000/POLLDELAY)    // 5000 ms
 
 bool getLoggingEnabled(int) { return false; }
 
@@ -457,13 +457,13 @@ int http::recv(SOCKET s, char ** ppBuffer, int flags, METHOD eMethod)
         }
         else if (rv == 0)
         {
-            if (++nNoDataCount > POLLTIMEOUT)
-            {
-                // Timeout, leaving loop
-                nRetBytes = SOCKET_ERROR;
-                setError(_T("recv has timed out"));
-                break;
-            }
+//            if (++nNoDataCount > POLLTIMEOUT)
+//            {
+//                // Timeout, leaving loop
+//                nRetBytes = SOCKET_ERROR;
+//                setError(_T("recv has timed out"));
+//                break;
+//            }
 
             if (qwMaxSize != -1 && nRetBytes >= qwMaxSize)
             {
