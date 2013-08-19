@@ -24,7 +24,8 @@ dnl ---------------------------------------------
 #    If binary compatibility has been broken, e.g. due to removed or changed interfaces, change to current+1:0:0
 #    If the interface is the same as the previous version, change to current:revision+1:age
 
-AC_INIT(libdvdetect library, 0.40.0, bugs@dvdetect.de,,http://www.dvdetect.de)
+#AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AC_INIT(libdvdetect library, 0.50.0, bugs@dvdetect.de,,http://www.dvdetect.de)
 
 AC_SUBST(LIBDVDETECT_VERSION_MAJOR, `echo $PACKAGE_VERSION | sed 's/\(.*\)\..*\..*/\1/g'`)
 AC_SUBST(LIBDVDETECT_VERSION_MINOR, `echo $PACKAGE_VERSION | sed 's/.*\.\(.*\)\..*/\1/g'`)
@@ -42,16 +43,6 @@ dnl ---------------------------------------------
 AC_CONFIG_SRCDIR(configure.ac)
 #AC_CONFIG_SRCDIR(config.h.in)
 AC_CONFIG_HEADERS(config.h)
-AC_CONFIG_FILES([Makefile \
-                 examples/Makefile \
-                 examples/c/Makefile \
-                 examples/c++/Makefile \
-                 include/Makefile \
-                 include/dvdetect/Makefile \
-                 include/dvdetect/version.h \
-                 lib/Makefile \
-                 tests/Makefile])
-AC_CHECK_HEADERS([unistd.h sys/socket.h sys/types.h sys/stat.h netinet/in.h arpa/inet.h poll.h netdb.h stdint.h stdbool.h assert.h openssl/md5.h])                                                                                                  
 
 dnl ---------------------------------------------
 dnl See if system has md5 support. If not, use our code.
@@ -92,17 +83,71 @@ AC_CHECK_HEADERS([windows.h winsock2.h Ws2tcpip.h], [], [],
 dnl ---------------------------------------------
 dnl Checks for programs.
 dnl ---------------------------------------------
-AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+LT_INIT
 AC_PROG_LIBTOOL
 AC_CONFIG_MACRO_DIR([m4])
 AC_LIBTOOL_WIN32_DLL
-AC_PROG_MAKE_SET
+
+# Checks for libraries.
+# FIXME: Replace `main' with a function in `-lQtCore':
+#AC_CHECK_LIB([QtCore], [main])
+# FIXME: Replace `main' with a function in `-lQtGui':
+#AC_CHECK_LIB([QtGui], [main])
+# FIXME: Replace `main' with a function in `-lcrypto':
+#AC_CHECK_LIB([crypto], [main])
+# FIXME: Replace `main' with a function in `-lpthread':
+#AC_CHECK_LIB([pthread], [main])
+# FIXME: Replace `main' with a function in `-ltinyxml':
+#AC_CHECK_LIB([tinyxml], [main])
+# FIXME: Replace `main' with a function in `-lws2_32':
+#AC_CHECK_LIB([ws2_32], [main])
 
 dnl ---------------------------------------------
 dnl Check if we are running on a big endian machine
 dnl ---------------------------------------------
 AC_C_BIGENDIAN
+
+# Checks for header files.
+AC_CHECK_HEADERS([limits.h stddef.h unistd.h sys/socket.h sys/types.h sys/stat.h netinet/in.h arpa/inet.h poll.h netdb.h stdint.h stdbool.h assert.h openssl/md5.h])                                                                                                  
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_HEADER_STDBOOL
+AC_C_INLINE
+AC_TYPE_INT16_T
+AC_TYPE_INT64_T
+AC_TYPE_INT8_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
+AC_CHECK_TYPES([ptrdiff_t])
+
+# Checks for library functions.
+AC_FUNC_ERROR_AT_LINE
+AC_FUNC_MALLOC
+AC_FUNC_MKTIME
+# http://rickfoosusa.blogspot.de/2011/11/howto-fix-undefined-reference-to.html
+#AC_FUNC_REALLOC
+AC_CHECK_FUNCS([memmove memset select setenv setlocale socket strchr strdup strerror strncasecmp strrchr strstr strtoul tzset])
+
+AC_CONFIG_FILES([Makefile \
+                 examples/Makefile \
+                 examples/c/Makefile \
+                 examples/c++/Makefile \
+                 include/Makefile \
+                 include/dvdetect/Makefile \
+                 include/dvdetect/version.h \
+                 lib/Makefile \
+                 tests/Makefile])
 
 dnl ---------------------------------------------
 dnl Check for doxygen (dynamic documentation generator)

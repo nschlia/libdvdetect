@@ -47,7 +47,9 @@ public:
     typedef enum
     {
         GET,                            //!< http get
-        POST                            //!< http post
+        POST,                           //!< http post
+        GET_HEADERSONLY,                //!< http get - retrieve headers only
+        POST_HEADERSONLY                //!< http post - retrieve headers only
     } METHOD;
 public:
     //! Constructor.
@@ -99,6 +101,42 @@ public:
     TSTRING		getContent() const;
 
     /*!
+     *  \brief Get the header size
+     *
+     * Get the header size
+     *
+     *  \return Header size
+     */
+    int         getHeaderSize() const;
+
+    /*!
+     *  \brief Get the http content
+     *
+     * Get the http content without any headers (normally used for binary data)
+     *
+     *  \return Content
+     */
+    int64_t     getContent(char *pContent, int64_t qwSize) const;
+
+    /*!
+     *  \brief Get the content size
+     *
+     * Get the content size without any headers
+     *
+     *  \return Content size
+     */
+    int64_t     getContentSize() const;
+
+    /*!
+     *  \brief Get time stamp of the content
+     *
+     * Get time stamp of the content
+     *
+     *  \return Unix time stamp or -1 if unknown/not supported
+     */
+    time_t      getTimeStamp() const;
+
+    /*!
      *  \brief Get the http response
      *
      * Get the http response code, e.g. 404 (not found), 200 (OK) etc.
@@ -145,8 +183,14 @@ protected:
      *  \param strError TSTRING & Error text
      *  \param nErrorCode int Error code (see "man errno")
      */
-    void		setError(const TSTRING & strError, int nErrorCode = 0);
+    void		setError(const TSTRING & strError, int nErrorCode);
 
+    /*!
+     *  \brief Set the error text
+     *
+     *  \param strError TSTRING & Error text
+     */
+    void		setError(const TSTRING & strError);
 
     /*!
      *  \brief Send data via tcp
@@ -159,7 +203,7 @@ protected:
      *  \return Success: Number of bytes sent
      *  \return Fail: -1
      */
-    int         send(SOCKET s, const TSTRING & strBuffer, int flags) const;
+    int         send(SOCKET s, const TSTRING & strBuffer, int flags);
 
     /*!
      *  \brief Receive data via tcp
@@ -168,17 +212,44 @@ protected:
      * If the block is fragmented, the function waits until there is actually
      * no more data to receive (that means, it is almost guaranteed that the
      * complete web page transmitted will be returned).
+     * ppBuffer is allocated and must be freed with "free" if not NULL.
      *
      *  \param s SOCKET Connected socket to send data on
-     *  \param strBuffer TSTRING & Buffer to store received data in
+     *  \param ppBuffer char ** Buffer to store received data in
      *  \param flags int Flags (see "man recv" for details)
+     *  \param eMethod METHOD Request method: POST, GET or POST/GET without data
      *  \return Number of bytes received
      */
-    int         recv(SOCKET s, TSTRING & strBuffer, int flags);
+    int         recv(SOCKET s, char ** ppBuffer, int flags, METHOD eMethod);
+
+    /*!
+     *  \brief Allocate memory for content
+     *
+     * Allocates memory for the content.
+     *
+     *  \param qwSize int64_t Size in bytes of the content
+     */
+    void        allocContent(int64_t qwSize);
+
+    /*!
+     *  \brief Free memory allocated for content
+     *
+     * Free memory allocated for the content.
+     */
+    void        deleteContent();
+
+    // DOCUMENTATION ???
+    int64_t     extractHeaders(const char* pBuffer);
+    std::string extractHeader(const char *pszHeader) const;
+    time_t      parseLastModified(const std::string &str) const;
 
 protected:
     TSTRING		m_strProxyServer;       //!< Proxy server name
-    TSTRING		m_strContent;           //!< Content received from server
+    std::string m_strHeaders;           //!< Headers received from server
+    int         m_nHeaderSize;          //!< Size of received headers
+    char *      m_pContent;             //!< Content received from server
+    int64_t     m_qwContentSize;        //!< Size of received content
+    time_t      m_TimeStamp;            //!< Time stamp of content (if supported by server)
     int         m_nResponse;            //!< http result code, e.g, 404 not found or 200 OK.
     TSTRING		m_strErrorString;       //!< Error code
 };

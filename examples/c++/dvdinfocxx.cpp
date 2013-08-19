@@ -36,11 +36,55 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
 #include <dvdetect/dvdetectc++.h>
 
 const char *pszProgramName = NULL;
 
 using namespace std;
+
+#ifdef _WIN32
+// Windoze requires the TCP stack explicitly to be initialised, so let's do this here
+static int WSAInit()
+{
+    WORD wVersionRequested;
+    WSADATA wsaData;
+    int err;
+
+    /* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
+    wVersionRequested = MAKEWORD(2, 2);
+
+    err = WSAStartup(wVersionRequested, &wsaData);
+    if (err != 0)
+    {
+        /* Tell the user that we could not find a usable */
+        /* Winsock DLL.                                  */
+        cerr << "WSAStartup failed with error: " << err << endl;
+        return err;
+    }
+    else
+    {
+        /* Confirm that the WinSock DLL supports 2.2.*/
+        /* Note that if the DLL supports versions greater    */
+        /* than 2.2 in addition to 2.2, it will still return */
+        /* 2.2 in wVersion since that is the version we      */
+        /* requested.                                        */
+
+        if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+        {
+            /* Tell the user that we could not find a usable */
+            /* WinSock DLL.                                  */
+            cerr << "Could not find a usable version of Winsock.dll" << endl;
+            WSACleanup();
+            return 1;
+        }
+    }
+    return 0;
+}
+#endif
 
 static const char * getFileName(const char *pszFilePath)
 {
@@ -88,7 +132,8 @@ static void usage()
 {
     cout << endl;
     cout << "Usage:" << endl << endl;
-    cout << pszProgramName << " -d PATH-TO-DVD        list DVD structure" << endl;
+    cout << pszProgramName << " [-px] -d PATH-TO-DVD  list DVD structure" << endl;
+    cout << pszProgramName << " -x proxy:port         enable proxy" << endl;
     cout << pszProgramName << " -h                    show help" << endl;
     cout << endl << "To list the physical structure, use \"-p\", otherwise the virtual structure will" << endl << "be shown." << endl;
     cout << endl;
@@ -293,7 +338,9 @@ int main(int argc, char *argv[])
 {
     string strPath;
     bool bPhysicalStructure = false;
+    string strProxy;
     bool bMissingParameter = true;
+    bool bUseProxy = false;
     int res = 0;
     int c;
 
@@ -302,9 +349,17 @@ int main(int argc, char *argv[])
     cout << pszProgramName << "/c++ V" << LIBDVDETECT_VERSION << endl;
     cout << LIBDVDETECT_COPYRIGHT << endl << endl;
 
+#ifdef _WIN32
+    res = WSAInit();
+    if (res)
+    {
+        return res;
+    }
+#endif
+
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hpd:")) != -1)
+    while ((c = getopt (argc, argv, "hxpd:")) != -1)
     {
         switch (c)
         {
@@ -319,15 +374,24 @@ int main(int argc, char *argv[])
             strPath = optarg;
             bMissingParameter = false;
             break;
+        case 'x':
+            strProxy = optarg;
+            bUseProxy = true;
+            bMissingParameter = false;
+            break;
         case '?':
-            if (optopt == 'd')
+            if (optopt == 'd' || optopt == 'x'|| optopt == 'o')
+            {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+            }
             else if (isprint (optopt))
+            {
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            }
             else
-                fprintf (stderr,
-                         "Unknown option character `\\x%x'.\n",
-                         optopt);
+            {
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+            }
 
             usage();
             return 1;
@@ -345,6 +409,13 @@ int main(int argc, char *argv[])
     }
 
     dvdparse DVD;
+
+    if (bUseProxy)
+    {
+        cout << "Using proxy server: " << strProxy << endl;
+        DVD.setProxy(strProxy);
+    }
+
     res = DVD.parse(strPath);
 
     if (res == 0)
@@ -361,7 +432,12 @@ int main(int argc, char *argv[])
     else
     {
         cerr << DVD.getErrorString() << endl;
+        res = 1;
     }
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
 
     return res;
 }

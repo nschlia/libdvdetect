@@ -23,6 +23,4 @@ automake --add-missing -a --foreign
 echo Doing configure
 ./configure
 
-make -s
-#make -s dist
-
+make -s clean all

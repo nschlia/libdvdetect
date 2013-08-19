@@ -576,12 +576,18 @@ function submit($mysqli, $xml, $XmlVersion)
         $SubmitterIP        = value_or_null($_SERVER['REMOTE_ADDR']);
 
         $Album              = value_or_null($tagDVDVMGM->Album);
+        $OriginalAlbum      = value_or_null($tagDVDVMGM->OriginalAlbum);
         $AlbumArtist        = value_or_null($tagDVDVMGM->AlbumArtist);
         $Genre              = value_or_null($tagDVDVMGM->Genre);
         $Cast               = value_or_null($tagDVDVMGM->Cast);
         $Crew               = value_or_null($tagDVDVMGM->Crew);
         $Director           = value_or_null($tagDVDVMGM->Director);
+        $Screenplay         = value_or_null($tagDVDVMGM->Screenplay);
+        $Producer           = value_or_null($tagDVDVMGM->Producer);
+        $Editing            = value_or_null($tagDVDVMGM->Editing);
+        $Cinematography     = value_or_null($tagDVDVMGM->Cinematography);
         $Country            = value_or_null($tagDVDVMGM->Country);
+        $OriginalLanguage   = value_or_null($tagDVDVMGM->OriginalLanguage);
         $ReleaseDate        = date_or_null($tagDVDVMGM->ReleaseDate);
         $SpecialFeatures    = value_or_null($tagDVDVMGM->SpecialFeatures);
         $EAN_UPC            = value_or_null($tagDVDVMGM->EAN_UPC);
@@ -641,7 +647,7 @@ function submit($mysqli, $xml, $XmlVersion)
         if (!$found)
         {
             // Not found: insert new
-            $strSQL = "INSERT INTO `DVDVMGM` (`Hash`, `Album`, `AlbumArtist`, `Genre`, `Cast`, `Crew`, `Director`, `Country`, `ReleaseDate`, `SpecialFeatures`, `EAN_UPC`, `Storyline`, `Remarks`, `Submitter`, `SubmitterIP`, `Client`, `Keywords`, `RegionProhibited1`, `RegionProhibited2`, `RegionProhibited3`, `RegionProhibited4`, `RegionProhibited5`, `RegionProhibited6`, `RegionProhibited7`, `RegionProhibited8`, `VersionNumberMajor`, `VersionNumberMinor`, `NumberOfVolumes`, `VolumeNumber`, `SideID`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+            $strSQL = "INSERT INTO `DVDVMGM` (`Hash`, `Album`, `AlbumArtist`, `Genre`, `Cast`, `Crew`, `Director`, `Country`, `ReleaseDate`, `SpecialFeatures`, `EAN_UPC`, `Storyline`, `Remarks`, `Submitter`, `SubmitterIP`, `Client`, `Keywords`, `RegionProhibited1`, `RegionProhibited2`, `RegionProhibited3`, `RegionProhibited4`, `RegionProhibited5`, `RegionProhibited6`, `RegionProhibited7`, `RegionProhibited8`, `VersionNumberMajor`, `VersionNumberMinor`, `NumberOfVolumes`, `VolumeNumber`, `SideID`, `OriginalAlbum`, `Screenplay`, `Producer`, `Editing`, `Cinematography`, `OriginalLanguage`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
             $stmt = $mysqli->prepare($strSQL);
 
@@ -651,7 +657,7 @@ function submit($mysqli, $xml, $XmlVersion)
                 throw new Exception($ResponseText, XMLRESULT_SQL_ERROR);
             }
 
-            if (!$stmt->bind_param("sssssssssssssssssiiiiiiiiiiiii", $Hash, $Album, $AlbumArtist, $Genre, $Cast, $Crew, $Director, $Country, $ReleaseDate, $SpecialFeatures, $EAN_UPC, $Storyline, $Remarks, $Submitter, $SubmitterIP, $Client, $Keywords, $RegionProhibited1, $RegionProhibited2, $RegionProhibited3, $RegionProhibited4, $RegionProhibited5, $RegionProhibited6, $RegionProhibited7, $RegionProhibited8, $VersionNumberMajor, $VersionNumberMinor, $NumberOfVolumes, $VolumeNumber, $SideID))
+            if (!$stmt->bind_param("sssssssssssssssssiiiiiiiiiiiiissssss", $Hash, $Album, $AlbumArtist, $Genre, $Cast, $Crew, $Director, $Country, $ReleaseDate, $SpecialFeatures, $EAN_UPC, $Storyline, $Remarks, $Submitter, $SubmitterIP, $Client, $Keywords, $RegionProhibited1, $RegionProhibited2, $RegionProhibited3, $RegionProhibited4, $RegionProhibited5, $RegionProhibited6, $RegionProhibited7, $RegionProhibited8, $VersionNumberMajor, $VersionNumberMinor, $NumberOfVolumes, $VolumeNumber, $SideID, $OriginalAlbum, $Screenplay, $Producer, $Editing, $Cinematography, $OriginalLanguage))
             {
                 $ResponseText = "Error binding parameters for DVDVMGM table.\nSQL Error: " . $mysqli->error . "\nSQL State: " . $mysqli->sqlstate;
                 $stmt->close();
@@ -1032,7 +1038,7 @@ function submit($mysqli, $xml, $XmlVersion)
         else
         {
             // Found: do an update
-            $strSQL = "UPDATE `DVDVMGM` SET `Album` = ?, `AlbumArtist` = ?, `Genre` = ?, `Cast` = ?, `Crew` = ?, `Director` = ?, `Country` = ?, `ReleaseDate` = ?, `SpecialFeatures` = ?, `EAN_UPC` = ?, `Storyline` = ?, `Remarks` = ?, `Submitter` = ?, `SubmitterIP` = ?, `Client` = ?, `Keywords` = ?, `RegionProhibited1` = ?, `RegionProhibited2` = ?, `RegionProhibited3` = ?, `RegionProhibited4` = ?, `RegionProhibited5` = ?, `RegionProhibited6` = ?, `RegionProhibited7` = ?, `RegionProhibited8` = ?, `VersionNumberMajor` = ?, `VersionNumberMinor` = ?, `NumberOfVolumes` = ?, `VolumeNumber` = ?, `SideID` = ? WHERE `idDVDVMGM` = ?;";
+            $strSQL = "UPDATE `DVDVMGM` SET `Album` = ?, `AlbumArtist` = ?, `Genre` = ?, `Cast` = ?, `Crew` = ?, `Director` = ?, `Country` = ?, `ReleaseDate` = ?, `SpecialFeatures` = ?, `EAN_UPC` = ?, `Storyline` = ?, `Remarks` = ?, `Submitter` = ?, `SubmitterIP` = ?, `Client` = ?, `Keywords` = ?, `RegionProhibited1` = ?, `RegionProhibited2` = ?, `RegionProhibited3` = ?, `RegionProhibited4` = ?, `RegionProhibited5` = ?, `RegionProhibited6` = ?, `RegionProhibited7` = ?, `RegionProhibited8` = ?, `VersionNumberMajor` = ?, `VersionNumberMinor` = ?, `NumberOfVolumes` = ?, `VolumeNumber` = ?, `OriginalAlbum` = ?, `Screenplay` = ?, `Producer` = ?, `Editing` = ?, `Cinematography` = ?, `OriginalLanguage` = ?, `SideID` = ? WHERE `idDVDVMGM` = ?;";
 
             $stmt = $mysqli->prepare($strSQL);
 
@@ -1042,7 +1048,7 @@ function submit($mysqli, $xml, $XmlVersion)
                 throw new Exception($ResponseText, XMLRESULT_SQL_ERROR);
             }
 
-            if (!$stmt->bind_param("ssssssssssssssssiiiiiiiiiiiiii", $Album, $AlbumArtist, $Genre, $Cast, $Crew, $Director, $Country, $ReleaseDate, $SpecialFeatures, $EAN_UPC, $Storyline, $Remarks, $Submitter, $SubmitterIP, $Client, $Keywords, $RegionProhibited1, $RegionProhibited2, $RegionProhibited3, $RegionProhibited4, $RegionProhibited5, $RegionProhibited6, $RegionProhibited7, $RegionProhibited8, $VersionNumberMajor, $VersionNumberMinor, $NumberOfVolumes, $VolumeNumber, $SideID, $idDVDVMGM))
+            if (!$stmt->bind_param("ssssssssssssssssiiiiiiiiiiiissssssii", $Album, $AlbumArtist, $Genre, $Cast, $Crew, $Director, $Country, $ReleaseDate, $SpecialFeatures, $EAN_UPC, $Storyline, $Remarks, $Submitter, $SubmitterIP, $Client, $Keywords, $RegionProhibited1, $RegionProhibited2, $RegionProhibited3, $RegionProhibited4, $RegionProhibited5, $RegionProhibited6, $RegionProhibited7, $RegionProhibited8, $VersionNumberMajor, $VersionNumberMinor, $NumberOfVolumes, $VolumeNumber, $OriginalAlbum, $Screenplay, $Producer, $Editing, $Cinematography, $OriginalLanguage, $SideID, $idDVDVMGM))
             {
                 $ResponseText = "Error binding parameters for DVDVMGM table.\nSQL Error: " . $mysqli->error . "\nSQL State: " . $mysqli->sqlstate;
                 $stmt->close();

@@ -29,6 +29,10 @@
 
 #include <dvdetect/dvdetect.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +41,47 @@
 #include <inttypes.h>
 
 const char *pszProgramName = NULL;
+
+#ifdef _WIN32
+// Windoze requires the TCP stack explicitly to be initialised, so let's do this here
+static int WSAInit()
+{
+    WORD wVersionRequested;
+    WSADATA wsaData;
+    int err;
+
+    /* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
+    wVersionRequested = MAKEWORD(2, 2);
+
+    err = WSAStartup(wVersionRequested, &wsaData);
+    if (err != 0)
+    {
+        /* Tell the user that we could not find a usable */
+        /* Winsock DLL.                                  */
+        fprintf(stderr, "WSAStartup failed with error: %i\n", err);
+        return err;
+    }
+    else
+    {
+        /* Confirm that the WinSock DLL supports 2.2.*/
+        /* Note that if the DLL supports versions greater    */
+        /* than 2.2 in addition to 2.2, it will still return */
+        /* 2.2 in wVersion since that is the version we      */
+        /* requested.                                        */
+
+        if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+        {
+            /* Tell the user that we could not find a usable */
+            /* WinSock DLL.                                  */
+            fprintf(stderr, "Could not find a usable version of Winsock.dll\n");
+            WSACleanup();
+            return 1;
+        }
+
+    }
+    return 0;
+}
+#endif
 
 static const char * getFileName(const char *pszFilePath)
 {
@@ -57,7 +102,7 @@ static const char * getFileName(const char *pszFilePath)
  * Print playtime (and optionally frame rate)
  *
  *  \param qwPlaytimems uint32_t Play time in milliseconds
- *  \param wFrameRate uint16_t Frame rate (25/30) or 0 to not display
+ *  \param wFrameRate uint16_t Frame rate (25/30) or -1 to not display
  *  \return Adress in bytes
  */
 static void playTime(uint64_t qwPlaytimems, uint16_t wFrameRate)
@@ -84,7 +129,8 @@ static void usage()
 {
     printf("\n");
     printf("Usage:\n\n");
-    printf("%s [-p] -d PATH-TO-DVD   list DVD structure\n", pszProgramName);
+    printf("%s [-px] -d PATH-TO-DVD  list DVD structure\n", pszProgramName);
+    printf("%s -x proxy:port         enable proxy\n", pszProgramName);
     printf("%s -h                    show help\n", pszProgramName);
     printf("\nTo list the physical structure, use \"-p\", otherwise the virtual structure will\nbe shown.\n");
     printf("\n");
@@ -285,9 +331,11 @@ static int showVirtualStructure(LPDVDETECTHANDLE pDvDetectHandle)
 int main(int argc, char *argv[])
 {
     const char *pszPath = "";
+    const char *pszProxy = "";
     LPDVDETECTHANDLE pDvDetectHandle = NULL;
     bool bPhysicalStructure = false;
     bool bMissingParameter = true;
+    bool bUseProxy = false;
     int res = 0;
     int c;
 
@@ -296,9 +344,17 @@ int main(int argc, char *argv[])
     printf("%s V%s\n", pszProgramName, LIBDVDETECT_VERSION);
     printf("%s\n\n", LIBDVDETECT_COPYRIGHT);
 
+#ifdef _WIN32
+    res = WSAInit();
+    if (res)
+    {
+        return res;
+    }
+#endif
+
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hpd:")) != -1)
+    while ((c = getopt (argc, argv, "hxpd:")) != -1)
     {
         switch (c)
         {
@@ -313,15 +369,24 @@ int main(int argc, char *argv[])
             pszPath = optarg;
             bMissingParameter = false;
             break;
+        case 'x':
+            pszProxy = optarg;
+            bUseProxy = true;
+            bMissingParameter = false;
+            break;
         case '?':
-            if (optopt == 'd')
+            if (optopt == 'd' || optopt == 'x')
+            {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+            }
             else if (isprint (optopt))
+            {
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            }
             else
-                fprintf (stderr,
-                         "Unknown option character `\\x%x'.\n",
-                         optopt);
+            {
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+            }
 
             usage();
             return 1;
@@ -341,7 +406,14 @@ int main(int argc, char *argv[])
     pDvDetectHandle = dvdOpenLib();
     if (pDvDetectHandle != NULL)
     {
+        if (bUseProxy)
+        {
+            printf("Using proxy server: %s\n", pszProxy);
+            dvdSetProxy(pDvDetectHandle, pszProxy);
+        }
+
         res = dvdParse(pDvDetectHandle, pszPath);
+
         if (res == 0)
         {
             if (bPhysicalStructure)
@@ -367,8 +439,10 @@ int main(int argc, char *argv[])
         res = 1;
     }
 
+#ifdef _WIN32
+    WSACleanup();
+#endif
+
     return res;
 }
-
-
 

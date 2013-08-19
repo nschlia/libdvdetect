@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
             bMissingParameter = false;
             break;
         case '?':
-            if (optopt == 'd' || optopt == 'x'|| optopt == 'o')
+            if (optopt == 'd' || optopt == 'x' || optopt == 'o')
             {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             }
@@ -280,6 +280,12 @@ int main(int argc, char *argv[])
     pDvDetectHandle = dvdOpenLib();
     if (pDvDetectHandle != NULL)
     {
+        if (bUseProxy)
+        {
+            printf("Using proxy server: %s\n", pszProxy);
+            dvdSetProxy(pDvDetectHandle, pszProxy);
+        }
+
         res = dvdParse(pDvDetectHandle, pszPath);
 
         if (res == 0)

@@ -44,12 +44,26 @@
 #define MD5_Final(c, md)            md5_finish(md, c)
 #endif
 
-
 #include <sys/stat.h>
 
 #include <fstream>
 
-dvdparse::dvdparse()
+// #undef HAVE_ASSERT_H
+
+dvdparse::dvdparse(
+        void *  (*openFile)(const char *, const char *, const char *),
+        size_t  (*readFile)(void*, size_t, size_t, void*),
+        int     (*writeFile)(const void*, size_t, size_t, void*),
+        int     (*closeFile)(void *),
+        int     (*statFile)(const char *, LPDVDFILESTAT, const char *),
+        int     (*fstatFile)(void*, LPDVDFILESTAT)) :
+    m_eScanMode(DVDSCANMODE_AUTO),
+    m_pOpenFile(openFile),
+    m_pReadFile(readFile),
+    m_pWriteFile(writeFile),
+    m_pCloseFile(closeFile),
+    m_pStatFile(statFile),
+    m_pFstatFile(fstatFile)
 {
     clear();
 }
@@ -78,17 +92,23 @@ dvdparse& dvdparse::operator= (dvdparse const & source)
         m_lstDvdFile            = source.m_lstDvdFile;
         m_strErrorString        = source.m_strErrorString;
         m_eErrorCode            = source.m_eErrorCode;
-        m_bFullScan             = source.m_bFullScan;
+        m_eScanMode             = source.m_eScanMode;
         m_nVirtTitleCount       = source.m_nVirtTitleCount;
         m_bIsLoaded             = source.m_bIsLoaded;
         m_strHash               = source.m_strHash;
         m_strAlbumArtist        = source.m_strAlbumArtist;
         m_strAlbum              = source.m_strAlbum;
+        m_strOriginalAlbum      = source.m_strOriginalAlbum;
         m_strGenre              = source.m_strGenre;
         m_strCast               = source.m_strCast;
         m_strCrew               = source.m_strCrew;
         m_strDirector           = source.m_strDirector;
+        m_strScreenplay         = source.m_strScreenplay;
+        m_strProducer           = source.m_strProducer;
+        m_strEditing            = source.m_strEditing;
+        m_strCinematography     = source.m_strCinematography;
         m_strCountry            = source.m_strCountry;
+        m_strOriginalLanguage   = source.m_strOriginalLanguage;
         m_strReleaseDate        = source.m_strReleaseDate;
         m_strSpecialFeatures    = source.m_strSpecialFeatures;
         m_strEAN_UPC            = source.m_strEAN_UPC;
@@ -101,10 +121,11 @@ dvdparse& dvdparse::operator= (dvdparse const & source)
         m_strDateCreated        = source.m_strDateCreated;
         m_strDateLastChanged    = source.m_strDateLastChanged;
         m_strKeywords           = source.m_strKeywords;
-        m_nProtocolVersion           = source.m_nProtocolVersion;
+        m_nProtocolVersion      = source.m_nProtocolVersion;
         m_strLibraryVersion     = source.m_strLibraryVersion;
         m_strLibraryName        = source.m_strLibraryName;
         m_strClientName         = source.m_strClientName;
+        m_strProxy              = source.m_strProxy;
     }
     return *this;
 }
@@ -118,18 +139,23 @@ void dvdparse::clear()
     m_lstDvdFile.clear();
     m_strPath.clear();
     m_strErrorString.clear();
-    m_eErrorCode = DVDERRORCODE_NOERROR;
-    m_bFullScan = true;
+    m_eErrorCode = DVDERRORCODE_SUCCESS;
     m_nVirtTitleCount = 0;
     m_bIsLoaded = false;
     m_strHash.clear();
     m_strAlbumArtist.clear();
     m_strAlbum.clear();
+    m_strOriginalAlbum.clear();
     m_strGenre.clear();
     m_strCast.clear();
     m_strCrew.clear();
     m_strDirector.clear();
+    m_strScreenplay.clear();
+    m_strProducer.clear();
+    m_strEditing.clear();
+    m_strCinematography.clear();
     m_strCountry.clear();
+    m_strOriginalLanguage.clear();
     m_strReleaseDate.clear();
     m_strSpecialFeatures.clear();
     m_strEAN_UPC.clear();
@@ -150,34 +176,37 @@ void dvdparse::clear()
 
 bool dvdparse::locateDVD()
 {
-    struct stat buf;
+    if (!isUrl(m_strPath))
+    {
+        DVDFILESTAT filestat;
 
 #ifdef _WIN32
-    if (*m_strPath.rbegin() == ':')
-    {
-        ::addSeparator(m_strPath);
-    }
+        if (*m_strPath.rbegin() == ':')
+        {
+            ::addSeparator(m_strPath);
+        }
 #endif
 
-    if (stat(getWin32ShortFilePath(m_strPath).c_str(), &buf) == -1)
-    {
-        setError(((std::string)"Error reading directory '" + m_strPath + "': ") + strerror(errno), DVDERRORCODE_DIROPEN);
-        return false;
-    }
+        if (m_pStatFile(m_strPath.c_str(), &filestat, m_strProxy.c_str()) == -1)
+        {
+            setError(((std::string)"Error reading directory '" + m_strPath + "': ") + strerror(errno), DVDERRORCODE_DIROPEN);
+            return false;
+        }
 
-    if (!S_ISDIR(buf.st_mode))
-    {
-        ::removeFileSpec(m_strPath);
-    }
+        if (!filestat.m_bIsDirectory)
+        {
+            ::removeFileSpec(m_strPath);
+        }
 
-    ::addSeparator(m_strPath);
+        ::addSeparator(m_strPath);
 
-    std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
+        std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) == -1)
-    {
-        // If not DVD files found, autoadd subdirectory
-        m_strPath += "VIDEO_TS/";
+        if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) == -1)
+        {
+            // If not DVD files found, autoadd subdirectory
+            m_strPath += "VIDEO_TS/";
+        }
     }
 
     return true;
@@ -219,6 +248,14 @@ int dvdparse::parse(const std::string & strPath)
             }
         }
     }
+    catch (std::bad_alloc& ba)
+    {
+        stringstream streamError;
+
+        streamError << "Internal error: bad_alloc caught: " << ba.what();
+        setError(streamError.str(), DVDERRORCODE_INTERNAL_ERROR);
+        res = -1;
+    }
     catch (int _res)
     {
         res = _res;
@@ -232,9 +269,9 @@ int dvdparse::parse(const std::string & strPath)
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
 void dvdparse::checkFile(const dvdfile * dvdFile)
 {
-    struct stat buf;
-    assert(stat(getWin32ShortFilePath(m_strPath + dvdFile->getFileName()).c_str(), &buf) != -1);
-    assert(dvdFile->m_DVDFILE.m_dwSize == (uint32_t)buf.st_size);
+    DVDFILESTAT filestat;
+    assert(m_pStatFile((m_strPath + dvdFile->getFileName()).c_str(), &filestat, m_strProxy.c_str()) != -1);
+    assert(dvdFile->m_DVDFILE.m_dwSize == (uint32_t)filestat.m_qwFileSize);
 }
 #endif
 
@@ -278,70 +315,76 @@ void dvdparse::getVmgAttributes(const uint8_t* pData)
     }
 }
 
-void dvdparse::getVmgIfo()
+int dvdparse::getVmgIfo()
 {
-    struct stat buf;
+    DVDFILESTAT filestat;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
+    int res = -1;
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
+    if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) != -1)
     {
         dvdfile *dvdFile = new dvdfile;
 
         dvdFile->m_DVDFILE.m_eDvdFileType   = DVDFILETYPE_VMG_IFO;
         //dvdFile->m_DVDFILE.m_wTitleSetNo  = 0;
-        dvdFile->m_DVDFILE.m_dwSize         = buf.st_size;
-        dvdFile->m_DVDFILE.m_Date           = buf.st_mtime;
+        //dvdFile->m_DVDFILE.m_wVobNo       = 0;
+        dvdFile->m_DVDFILE.m_dwSize         = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date           = filestat.m_FileTime;
 
         m_lstDvdFile.push_back(dvdFile);
+        res = 0;
     }
 
     strFileName = getDvdFileName(DVDFILETYPE_VMG_BUP);
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
+    if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) != -1)
     {
         dvdfile *dvdFile = new dvdfile;
 
         dvdFile->m_DVDFILE.m_eDvdFileType   = DVDFILETYPE_VMG_BUP;
         //dvdFile->m_DVDFILE.m_wTitleSetNo  = 0;
         //dvdFile->m_DVDFILE.m_wVobNo       = 0;
-        dvdFile->m_DVDFILE.m_dwSize         = buf.st_size;
-        dvdFile->m_DVDFILE.m_Date           = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_dwSize         = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date           = filestat.m_FileTime;
 
         m_lstDvdFile.push_back(dvdFile);
+        res = 0;
     }
+
+    return res;
 }
 
-void dvdparse::getVmgMenuVob()
+int dvdparse::getVmgMenuVob()
 {
-    struct stat buf;
+    DVDFILESTAT filestat;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_VOB);
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
+    if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) != -1)
     {
         dvdfile *dvdFile = new dvdfile;
 
         dvdFile->m_DVDFILE.m_eDvdFileType   = DVDFILETYPE_VMG_VOB;
         //dvdFile->m_DVDFILE.m_wTitleSetNo  = 0;
         //dvdFile->m_DVDFILE.m_wVobNo       = 0;
-        dvdFile->m_DVDFILE.m_dwSize         = buf.st_size;
-        dvdFile->m_DVDFILE.m_Date           = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_dwSize         = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date           = filestat.m_FileTime;
 
         m_lstDvdFile.push_back(dvdFile);
+        return 0;
     }
+    return -1;
 }
 
 void dvdparse::getVmgIfo(time_t ftime, uint64_t qwSizeOfVMGI)
 {
-    std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_IFO);
-
     {
         dvdfile *dvdFile = new dvdfile;
 
-        dvdFile->m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_IFO;
-        //dvdFile->m_DVDFILE.m_wTitleSetNo       = 0;
-        //dvdFile->m_DVDFILE.m_wVobNo            = 0;
-        dvdFile->m_DVDFILE.m_dwSize              = qwSizeOfVMGI;         // Path cannot be empty
-        dvdFile->m_DVDFILE.m_Date                = ftime;                // simply use date of title IFO
+        dvdFile->m_DVDFILE.m_eDvdFileType       = DVDFILETYPE_VMG_IFO;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo      = 0;
+        //dvdFile->m_DVDFILE.m_wVobNo           = 0;
+        dvdFile->m_DVDFILE.m_dwSize             = qwSizeOfVMGI;         // Path cannot be empty
+        dvdFile->m_DVDFILE.m_Date               = ftime;                // simply use date of title IFO
 
         m_lstDvdFile.push_back(dvdFile);
 
@@ -354,13 +397,11 @@ void dvdparse::getVmgIfo(time_t ftime, uint64_t qwSizeOfVMGI)
     {
         dvdfile *dvdFile = new dvdfile;
 
-        strFileName = getDvdFileName(DVDFILETYPE_VMG_BUP);
-
-        dvdFile->m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_BUP;
-        //dvdFile->m_DVDFILE.m_wTitleSetNo       = 0;
-        //dvdFile->m_DVDFILE.m_wVobNo            = 0;
-        //dvdFile->m_DVDFILE.m_dwSize            = qwSizeOfVMGI;
-        //dvdFile->m_DVDFILE.m_Date              = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_eDvdFileType       = DVDFILETYPE_VMG_BUP;
+        //dvdFile->m_DVDFILE.m_wTitleSetNo      = 0;
+        //dvdFile->m_DVDFILE.m_wVobNo           = 0;
+        dvdFile->m_DVDFILE.m_dwSize             = qwSizeOfVMGI;
+        dvdFile->m_DVDFILE.m_Date               = ftime;
 
         m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
@@ -372,8 +413,6 @@ void dvdparse::getVmgIfo(time_t ftime, uint64_t qwSizeOfVMGI)
 void dvdparse::getVmgMenuVob(time_t ftime, uint32_t dwMenuVobSize)
 {
     dvdfile *dvdFile = new dvdfile;
-
-    std::string strFileName = getDvdFileName(DVDFILETYPE_VMG_VOB);
 
     dvdFile->m_DVDFILE.m_eDvdFileType        = DVDFILETYPE_VMG_VOB;
     //dvdFile->m_DVDFILE.m_wTitleSetNo       = 0;
@@ -403,8 +442,8 @@ void dvdparse::getVmgPtt(const uint8_t* pData)
         dvdPttVmg->m_DVDPTTVMG.m_wNumberOfVideoAngles   = getbyte(pVMG_PTT_SRPT->m_byNumberOfVideoAngles);
         dvdPttVmg->m_DVDPTTVMG.m_byParentalMgmMaskVMG   = getbyte(pVMG_PTT_SRPT->m_byParentalMgmMaskVMG);
         dvdPttVmg->m_DVDPTTVMG.m_byParentalMgmMaskVTS   = getbyte(pVMG_PTT_SRPT->m_byParentalMgmMaskVTS);
-        dvdPttVmg->m_DVDPTTVMG.m_wVideoTitleSetNo         = getbyte(pVMG_PTT_SRPT->m_byVideoTitleSet);
-        dvdPttVmg->m_DVDPTTVMG.m_wTitleNo           = getbyte(pVMG_PTT_SRPT->m_byTitleNumber);
+        dvdPttVmg->m_DVDPTTVMG.m_wVideoTitleSetNo       = getbyte(pVMG_PTT_SRPT->m_byVideoTitleSet);
+        dvdPttVmg->m_DVDPTTVMG.m_wTitleNo               = getbyte(pVMG_PTT_SRPT->m_byTitleNumber);
 
         m_lstDvdPttVmg.push_back(dvdPttVmg);
     }
@@ -441,7 +480,7 @@ uint16_t dvdparse::parseVideoManager()
 
             getVmgAttributes(pData);
 
-            if (m_bFullScan)
+            if (getFullScan())
             {
                 // Menu IFO
                 getVmgIfo();
@@ -568,9 +607,6 @@ void dvdparse::addCell(const uint8_t* pData, dvdprogram * dvdProgram, uint16_t w
     dvdCell->m_DVDCELL.m_dwLastVOBUStartSector       = be2native(pVTS_PGC->m_dwLastVOBUStartSector);
     dvdCell->m_DVDCELL.m_dwLastVOBUEndSector         = be2native(pVTS_PGC->m_dwLastVOBUEndSector);
 
-#ifdef ASSERT_H
-    assert(wCellPositionOffset);                // Can this be 0??? (not required)
-#endif
     if (wCellPositionOffset != 0)
     {
         LPCVTS_CELLPOS pVTS_CELLPOS = (LPCVTS_CELLPOS)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC + wCellPositionOffset + (sizeof(VTS_CELLPOS) * (wCellNo - 1))));
@@ -634,90 +670,96 @@ void dvdparse::addPrograms(const uint8_t* pData, dvdpgc *dvdPgc, uint16_t wTitle
     }
 }
 
-void dvdparse::getVtsIfo(dvdtitle *dvdTitle, uint16_t wTitleSetNo)
+int dvdparse::getVtsIfo(dvdtitle *dvdTitle, uint16_t wTitleSetNo)
 {
-    struct stat buf;
+    DVDFILESTAT filestat;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_IFO, wTitleSetNo, 0);
+    int res = -1;
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
+    if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) != -1)
     {
         dvdfile *dvdFile = new dvdfile;
 
         dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_VTS_IFO;
         dvdFile->m_DVDFILE.m_wTitleSetNo            = wTitleSetNo;
         dvdFile->m_DVDFILE.m_wVobNo                 = 0;
-        dvdFile->m_DVDFILE.m_dwSize                 = buf.st_size;
-        dvdFile->m_DVDFILE.m_Date                   = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_dwSize                 = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date                   = filestat.m_FileTime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
+        res = 0;
     }
 
     strFileName = getDvdFileName(DVDFILETYPE_VTS_BUP, wTitleSetNo, 0);
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
+    if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) != -1)
     {
         dvdfile *dvdFile = new dvdfile;
 
         dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_VTS_BUP;
-        //dvdFile->m_DVDFILE.m_wTitleSetNo          = wTitleSetNo;
-        //dvdFile->m_DVDFILE.m_wVobNo               = 0;
-        dvdFile->m_DVDFILE.m_dwSize                 = buf.st_size;
-        dvdFile->m_DVDFILE.m_Date                   = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_wTitleSetNo            = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                 = 0;
+        dvdFile->m_DVDFILE.m_dwSize                 = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date                   = filestat.m_FileTime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
+        res = 0;
     }
+    return res;
 }
 
-void dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, uint16_t wTitleSetNo)
+int dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, uint16_t wTitleSetNo)
 {
-    struct stat buf;
+    DVDFILESTAT filestat;
     std::string strFileName = getDvdFileName(DVDFILETYPE_MENU_VOB, wTitleSetNo, 0);
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
+    if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) != -1)
     {
         dvdfile *dvdFile = new dvdfile;
 
         dvdFile->m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_MENU_VOB;
         dvdFile->m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
         dvdFile->m_DVDFILE.m_wVobNo                  = 0;
-        dvdFile->m_DVDFILE.m_dwSize                  = buf.st_size;
-        dvdFile->m_DVDFILE.m_Date                    = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_dwSize                  = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date                    = filestat.m_FileTime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
+        return 0;
     }
+    return -1;
 }
 
-void dvdparse::getVtsVob(dvdtitle *dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo)
+int dvdparse::getVtsVob(dvdtitle *dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo)
 {
-    struct stat buf;
+    DVDFILESTAT filestat;
     std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_VOB, wTitleSetNo, wVobNo);
 
-    if (stat(getWin32ShortFilePath(m_strPath + strFileName).c_str(), &buf) != -1)
+    if (m_pStatFile((m_strPath + strFileName).c_str(), &filestat, m_strProxy.c_str()) != -1)
     {
         dvdfile *dvdFile = new dvdfile;
 
         dvdFile->m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_VTS_VOB;
         dvdFile->m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
         dvdFile->m_DVDFILE.m_wVobNo                  = wVobNo;
-        dvdFile->m_DVDFILE.m_dwSize                  = buf.st_size;
-        dvdFile->m_DVDFILE.m_Date                    = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_dwSize                  = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date                    = filestat.m_FileTime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
+        return 0;
     }
+    return -1;
 }
 
 void dvdparse::getVtsIfo(dvdtitle *dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI, uint16_t wTitleSetNo)
 {
-    std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_IFO, wTitleSetNo, 0);
-
     {
         dvdfile *dvdFile = new dvdfile;
 
-        dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_IFO;
-        dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
-        dvdFile->m_DVDFILE.m_wVobNo                      = 0;
-        dvdFile->m_DVDFILE.m_dwSize                      = qwSizeOfVMGI;
-        dvdFile->m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
+        dvdFile->m_DVDFILE.m_eDvdFileType               = DVDFILETYPE_VTS_IFO;
+        dvdFile->m_DVDFILE.m_wTitleSetNo                = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                     = 0;
+        dvdFile->m_DVDFILE.m_dwSize                     = qwSizeOfVMGI;
+        dvdFile->m_DVDFILE.m_Date                       = ftime;           // simply use date of title IFO
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
@@ -725,16 +767,14 @@ void dvdparse::getVtsIfo(dvdtitle *dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI
 #endif
     }
 
-    strFileName = getDvdFileName(DVDFILETYPE_VTS_BUP, wTitleSetNo, 0);
-
     {
         dvdfile *dvdFile = new dvdfile;
 
-        dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_BUP;
-        //dvdFile->m_DVDFILE.m_wTitleSetNo               = wTitleSetNo;
-        //dvdFile->m_DVDFILE.m_wVobNo                    = 0;
-        //dvdFile->m_DVDFILE.m_dwSize                    = qwSizeOfVMGI;
-        //dvdFile->m_DVDFILE.m_Date                      = buf.st_mtime;
+        dvdFile->m_DVDFILE.m_eDvdFileType               = DVDFILETYPE_VTS_BUP;
+        dvdFile->m_DVDFILE.m_wTitleSetNo                = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                     = 0;
+        dvdFile->m_DVDFILE.m_dwSize                     = qwSizeOfVMGI;
+        dvdFile->m_DVDFILE.m_Date                       = ftime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
@@ -746,7 +786,6 @@ void dvdparse::getVtsIfo(dvdtitle *dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI
 void dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, time_t ftime, uint32_t dwMenuVobSize, uint16_t wTitleSetNo)
 {
     dvdfile *dvdFile = new dvdfile;
-    std::string strFileName = getDvdFileName(DVDFILETYPE_MENU_VOB, wTitleSetNo, 0);
 
     dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_MENU_VOB;
     dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
@@ -763,7 +802,6 @@ void dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, time_t ftime, uint32_t dwMenuVo
 void dvdparse::getVtsVob(dvdtitle *dvdTitle, time_t ftime, uint32_t dwSize, uint16_t wVobNo, uint16_t wTitleSetNo)
 {
     dvdfile *dvdFile = new dvdfile;
-    std::string strFileName = getDvdFileName(DVDFILETYPE_VTS_VOB, wTitleSetNo, wVobNo);
 
     dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_VOB;
     dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
@@ -836,9 +874,9 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
             dvdtitle * dvdTitle = new dvdtitle;
             m_lstDvdTitle.push_back(dvdTitle);
 
-            dvdTitle->m_DVDVTS.m_wTitleSetNo                 = wTitleSetNo;
-            dvdTitle->m_DVDVTS.m_wVersionNumberMajor         = ((pVTS_IFO->m_wVersionNumber & 0xF000) >> 12);
-            dvdTitle->m_DVDVTS.m_wVersionNumberMinor         = ((pVTS_IFO->m_wVersionNumber & 0x0F00) >> 8);
+            dvdTitle->m_DVDVTS.m_wTitleSetNo                = wTitleSetNo;
+            dvdTitle->m_DVDVTS.m_wVersionNumberMajor        = ((pVTS_IFO->m_wVersionNumber & 0xF000) >> 12);
+            dvdTitle->m_DVDVTS.m_wVersionNumberMinor        = ((pVTS_IFO->m_wVersionNumber & 0x0F00) >> 8);
 
             uint32_t dwStartAddressVTS_PTT_SRPT             = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTS_PTT_SRPT));
 
@@ -918,7 +956,7 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                 addPrograms(pData, dvdPgc, wTitleSetNo, wProgramChainNo);
             }
 
-            if (m_bFullScan)
+            if (getFullScan())
             {
                 // Menu IFO
                 getVtsIfo(dvdTitle, wTitleSetNo);
@@ -927,15 +965,18 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
 
                 for (uint16_t wVobNo = 1; wVobNo <= DVD_MAX_VOB; wVobNo++)
                 {
-                    getVtsVob(dvdTitle, wVobNo, wTitleSetNo);
+                    if (getVtsVob(dvdTitle, wVobNo, wTitleSetNo) == -1)
+                    {
+                        break;
+                    }
                 }
             }
             else
             {
-                uint64_t qwSizeOfVTS = dvdSector2bytes(be2native(pVTS_IFO->m_dwLastSectorVTS) + 1);             // 00C 	4		last sector of VMG set (last sector of BUP)
-                uint64_t qwSizeOfVMGI = dvdSector2bytes(be2native(pVTS_IFO->m_dwLastSectorVMGI) + 1);           // 01C 	4		last sector of IFO
-                uint64_t qwSizeOfVTSM_VOBS = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTSM_VOBS));  // 0C0 	4		sector pointer to VTSM_VOBS (Menu VOB)
-                uint64_t qwSizeOfVTST_VOBS = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTST_VOBS));  // 0C4 	4		sector pointer to VTST_VOBS (Title VOB)
+                uint64_t qwSizeOfVTS        = dvdSector2bytes(be2native(pVTS_IFO->m_dwLastSectorVTS) + 1);      // 00C 	4		last sector of VMG set (last sector of BUP)
+                uint64_t qwSizeOfVMGI       = dvdSector2bytes(be2native(pVTS_IFO->m_dwLastSectorVMGI) + 1);     // 01C 	4		last sector of IFO
+                uint64_t qwSizeOfVTSM_VOBS  = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTSM_VOBS)); // 0C0 	4		sector pointer to VTSM_VOBS (Menu VOB)
+                uint64_t qwSizeOfVTST_VOBS  = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTST_VOBS)); // 0C4 	4		sector pointer to VTST_VOBS (Title VOB)
 
                 // Calculate size of VTS_##_0.VOB
                 uint32_t dwMenuVobSize = qwSizeOfVTSM_VOBS ? (qwSizeOfVTST_VOBS - qwSizeOfVTSM_VOBS) : 0;
@@ -1160,14 +1201,41 @@ const std::string & dvdparse::getPath() const
     return m_strPath;
 }
 
-void dvdparse::setFullScan(bool bFullScan)
+void dvdparse::setScanMode(DVDSCANMODE eScanMode)
 {
-    m_bFullScan = bFullScan;
+    m_eScanMode = eScanMode;
+}
+
+bool dvdparse::getScanMode() const
+{
+    return m_eScanMode;
 }
 
 bool dvdparse::getFullScan() const
 {
-    return m_bFullScan;
+    bool bFullScan = true;
+
+    switch (m_eScanMode)
+    {
+    case DVDSCANMODE_FAST:
+    {
+        bFullScan = false;
+        break;
+    }
+    case DVDSCANMODE_FULL:
+    {
+        bFullScan = true;
+        break;
+    }
+    case DVDSCANMODE_AUTO:
+    {
+        bFullScan = !::isUrl(m_strPath);    // Auto: full scan only for local files
+        break;
+    }
+    default:
+        break;
+    }
+    return bFullScan;
 }
 
 void dvdparse::getVideoAttributes(DVDVIDEOSTREAM & videoAttributes, const uint8_t byVideoAttributes[2])
@@ -1668,15 +1736,14 @@ uint64_t dvdparse::getVirtPlayTime() const
 
 const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
 {
-    string strShortFilePath(getWin32ShortFilePath(strFilePath));
     string strError;
-    std::FILE *fpi = NULL;
-    struct stat buf;
+    void *fpi = NULL;
+    DVDFILESTAT filestat;
     uint8_t* pData = NULL;
 
     m_strErrorString.clear();
 
-    fpi = std::fopen(strShortFilePath.c_str(), "rb");
+    fpi = m_pOpenFile(strFilePath.c_str(), "rb", m_strProxy.c_str());
     if (fpi == NULL)
     {
         strError = "Error opening file: " + strFilePath + "\n";
@@ -1685,21 +1752,21 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
         return NULL;
     }
 
-    memset(&buf, 0, sizeof(buf));
+    memset(&filestat, 0, sizeof(filestat));
 
-    if (stat(strShortFilePath.c_str(), &buf) == -1)  //if (fstat(fileno(fpi), &buf) == -1)
+    if (m_pFstatFile(fpi, &filestat) == -1)
     {
         strError = "Cannot stat file: " + strFilePath + "\n";
         strError += strerror(errno);
         setError(strError, DVDERRORCODE_FILESTAT);
     }
-    else
+    else if (filestat.m_qwFileSize)
     {
-        pData = new uint8_t[buf.st_size];
+        pData = new uint8_t[filestat.m_qwFileSize];
         if (pData != NULL)
         {
-            memset(pData, 0, buf.st_size);
-            if (std::fread(pData, 1, buf.st_size, fpi) != (size_t)buf.st_size)
+            memset(pData, 0, filestat.m_qwFileSize);
+            if (m_pReadFile(pData, 1, filestat.m_qwFileSize, fpi) != (size_t)filestat.m_qwFileSize)
             {
                 strError = "Error reading file: " + strFilePath + "\n";
                 strError += strerror(errno);
@@ -1709,10 +1776,16 @@ const uint8_t* dvdparse::readIFO(const string & strFilePath, time_t & ftime)
             }
         }
 
-        ftime = buf.st_mtime;
+        ftime = filestat.m_FileTime;
+    }
+    else
+    {
+        strError = "Error opening file: " + strFilePath + "\nCould not get file size.";
+        setError(strError, DVDERRORCODE_FILEOPEN);
+        return NULL;
     }
 
-    std::fclose(fpi);
+    m_pCloseFile(fpi);
 
     return pData;
 }
@@ -1799,6 +1872,16 @@ void dvdparse::setAlbum(const std::string & strAlbum)
     m_strAlbum = strAlbum;
 }
 
+const std::string & dvdparse::getOriginalAlbum() const
+{
+    return m_strOriginalAlbum;
+}
+
+void dvdparse::setOriginalAlbum(const std::string & strOriginalAlbum)
+{
+    m_strOriginalAlbum = strOriginalAlbum;
+}
+
 const std::string & dvdparse::getGenre() const
 {
     return m_strGenre;
@@ -1839,6 +1922,46 @@ void dvdparse::setDirector(const std::string & strDirector)
     m_strDirector = strDirector;
 }
 
+const std::string & dvdparse::getScreenplay() const
+{
+    return m_strScreenplay;
+}
+
+void dvdparse::setScreenplay(const std::string & strScreenplay)
+{
+    m_strScreenplay = strScreenplay;
+}
+
+const std::string & dvdparse::getProducer() const
+{
+    return m_strProducer;
+}
+
+void dvdparse::setProducer(const std::string & strProducer)
+{
+    m_strProducer = strProducer;
+}
+
+const std::string & dvdparse::getEditing() const
+{
+    return m_strEditing;
+}
+
+void dvdparse::setEditing(const std::string & strEditing)
+{
+    m_strEditing = strEditing;
+}
+
+const std::string & dvdparse::getCinematography() const
+{
+    return m_strCinematography;
+}
+
+void dvdparse::setCinematography(const std::string & strCinematography)
+{
+    m_strCinematography = strCinematography;
+}
+
 const std::string & dvdparse::getCountry() const
 {
     return m_strCountry;
@@ -1847,6 +1970,16 @@ const std::string & dvdparse::getCountry() const
 void dvdparse::setCountry(const std::string & strCountry)
 {
     m_strCountry = strCountry;
+}
+
+const std::string & dvdparse::getOriginalLanguage() const
+{
+    return m_strOriginalLanguage;
+}
+
+void dvdparse::setOriginalLanguage(const std::string & strOriginalLanguage)
+{
+    m_strOriginalLanguage = strOriginalLanguage;
 }
 
 const std::string & dvdparse::getReleaseDate() const
@@ -2014,11 +2147,17 @@ void dvdparse::update(const dvdparse * dvdParse)
     // Do not update: m_strHash
     m_strAlbumArtist        = dvdParse->m_strAlbumArtist;
     m_strAlbum              = dvdParse->m_strAlbum;
+    m_strOriginalAlbum      = dvdParse->m_strOriginalAlbum;
     m_strGenre              = dvdParse->m_strGenre;
     m_strCast               = dvdParse->m_strCast;
     m_strCrew               = dvdParse->m_strCrew;
     m_strDirector           = dvdParse->m_strDirector;
+    m_strScreenplay         = dvdParse->m_strScreenplay;
+    m_strProducer           = dvdParse->m_strProducer;
+    m_strEditing            = dvdParse->m_strEditing;
+    m_strCinematography     = dvdParse->m_strCinematography;
     m_strCountry            = dvdParse->m_strCountry;
+    m_strOriginalLanguage   = dvdParse->m_strOriginalLanguage;
     m_strReleaseDate        = dvdParse->m_strReleaseDate;
     m_strSpecialFeatures    = dvdParse->m_strSpecialFeatures;
     m_strEAN_UPC            = dvdParse->m_strEAN_UPC;
@@ -2031,7 +2170,7 @@ void dvdparse::update(const dvdparse * dvdParse)
     m_strDateCreated        = dvdParse->m_strDateCreated;
     m_strDateLastChanged    = dvdParse->m_strDateLastChanged;
     m_strKeywords           = dvdParse->m_strKeywords;
-    m_nProtocolVersion           = dvdParse->m_nProtocolVersion;
+    m_nProtocolVersion      = dvdParse->m_nProtocolVersion;
     m_strLibraryVersion     = dvdParse->m_strLibraryVersion;
     m_strLibraryName        = dvdParse->m_strLibraryName;
     m_strClientName         = dvdParse->m_strClientName;
@@ -2063,3 +2202,14 @@ void dvdparse::update(const dvdparse * dvdParse)
         }
     }
 }
+
+void dvdparse::setProxy(const std::string & strProxy)
+{
+    m_strProxy = strProxy;
+}
+
+string dvdparse::getProxy() const
+{
+    return m_strProxy;
+}
+

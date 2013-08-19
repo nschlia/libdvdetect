@@ -46,7 +46,13 @@ public:
     /*!
      *  Construct a dvddatabase element.
      */
-    explicit dvddatabase(const std::string & strClientName);
+    explicit dvddatabase(const std::string & strClientName,
+                         void *  (*openFile)(const char *, const char *, const char *) = ::openFile,
+                         size_t  (*readFile)(void*, size_t, size_t, void*) = ::readFile,
+                         int     (*writeFile)(const void*, size_t, size_t, void*) = ::writeFile,
+                         int     (*closeFile)(void *) = ::closeFile,
+                         int     (*statFile)(const char *, LPDVDFILESTAT, const char *) = ::statFile,
+                         int     (*fstatFile)(void*, LPDVDFILESTAT) = ::fstatFile);
     //! Destructor.
     /*!
      *  Destruct a dvddatabase element.
@@ -147,6 +153,7 @@ public:
 
     //! Set the proxy name (and optionally port), e.g. proxy:3128
     void                setProxy(const std::string & strProxy);
+    std::string         getProxy() const;
 
 protected:
     void                setError(const std::string & strErrorString, DVDERRORCODE eErrorCode);
@@ -159,7 +166,15 @@ protected:
     DVDERRORCODE        m_eErrorCode;               //!< Error code
     std::string         m_strServerUrl;             //!< Url of dvdetect server
     std::string         m_strClientName;            //!< Name of client
-    std::string         m_strProxy;                 //!< Proxy server
+    std::string         m_strProxy;                 //!< Proxy server address/port
+
+    // I/O functions
+    void *              (*m_pOpenFile)(const char *, const char *, const char *);
+    size_t              (*m_pReadFile)(void*, size_t, size_t, void*);
+    int                 (*m_pWriteFile)(const void*, size_t, size_t, void*);
+    int                 (*m_pCloseFile)(void *);
+    int                 (*m_pStatFile)(const char *, LPDVDFILESTAT, const char *);
+    int                 (*m_pFstatFile)(void*, LPDVDFILESTAT);
 };
 
 #endif // DVDDATABASE_H

@@ -19,7 +19,7 @@
 
 /*! \file common.h
  *
- *  \brief Compatibility layer (all playtforms)
+ *  \brief Compatibility layer (all platforms)
 */
 
 #pragma once
@@ -27,24 +27,35 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#if !defined(WIN32)
+#if defined(_MSC_VER)
+#error "Do not include this file for MS visual C++"
+#endif
+
+// ***************** Special *nix stuff goes here *****************
+
+#ifndef ___WSA_SOCKET_TYPES_H
 typedef int	SOCKET;
 #endif
 
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET				(-1)
 #endif
+#ifndef SOCKET_ERROR
 #define SOCKET_ERROR				(-1)
+#endif
 
 #ifndef _WIN32
 #define closesocket					close
 #endif
 
-#ifdef _GLIBCXX_USE_WCHAR_T
-#define _UNICODE
+#ifdef _UNICODE
+#ifndef _GLIBCXX_USE_WCHAR_T
+#define _GLIBCXX_USE_WCHAR_T
+#endif
+#define USE_WCHAR_T
 #endif
 
-#ifndef _UNICODE
+#ifndef USE_WCHAR_T
 #define TSTRING						string
 #define TOFSTREAM					ofstream
 #define TIFSTREAM					ifstream
@@ -53,7 +64,7 @@ typedef int	SOCKET;
 #define TCOUT						cout
 #define TCERR						cerr
 #define _T(x)						x
-#define TSTRERROR					strerror
+#define TSTRERROR					gai_strerror
 #define TUNLINK						unlink
 #define TGETADDRINFO				getaddrinfo
 #define TADDRINFO					addrinfo
@@ -63,9 +74,10 @@ typedef int	SOCKET;
 #define WTOI						atoi
 #define WTOL						atol
 #define	WSPRINTF					sprintf
-#define stringToWString				std::string
-#define wstringToString				std::string
 #define STRTOKEN					"%s"
+#define TSTRSTR                     strstr
+#define TSTRLEN                     strlen
+#define TSTRTOUL                    strtoul
 #else
 #define TSTRING						wstring
 #define TOFSTREAM					ofstream
@@ -75,7 +87,7 @@ typedef int	SOCKET;
 #define TCOUT						wcout
 #define TCERR						wcerr
 #define _T(x)						L ## x
-#define TSTRERROR(err)				stringToWString(strerror(err)).c_str()
+#define TSTRERROR(err)				stringToWString(gai_strerror(err)).c_str()
 #define TUNLINK(x)					unlink(wstringToString(x).c_str())
 #define TGETADDRINFO				getaddrinfo
 #define TADDRINFO					addrinfo
@@ -86,6 +98,9 @@ typedef int	SOCKET;
 #define WTOL(x)						wcstol(x, (wchar_t **) NULL, 10)
 #define	WSPRINTF					swprintf
 #define STRTOKEN					L"%ls"
+#define TSTRSTR                     wcsstr
+#define TSTRLEN                     wcslen
+#define TSTRTOUL                    wcstoul
 #endif
 
 #ifndef _WIN32
@@ -100,6 +115,8 @@ typedef USHORT ADDRESS_FAMILY;
 typedef sa_family_t ADDRESS_FAMILY;
 #endif
 
+// Architecture
+
 // Detected FreeBSD
 #if defined(__FreeBSD__)
 
@@ -109,7 +126,7 @@ typedef sa_family_t ADDRESS_FAMILY;
 #elif defined(__CYGWIN32__)
 
 #define _PLATFORM					_T("cygwin")
-#ifdef _GLIBCXX_USE_WCHAR_T
+#ifdef USE_WCHAR_T
 #error "std::wstring not supported with cygwin"
 #endif
 
@@ -144,56 +161,6 @@ typedef sa_family_t ADDRESS_FAMILY;
 
 #endif
 
-#if defined(__amd64) || defined(__amd64__) || defined(__x86_64) || defined(__x86_64__)
-
-// Detected 64 bit
-#define ARCH						_T("amd64")
-#define PLATFORM					_PLATFORM _T(" (") ARCH _T(")")
-
-#else
-
-// Unknown
-#define ARCH						_T("")
-#define PLATFORM					_PLATFORM
-
-#endif
-
-/*! If the submitter name is set to this value, it will never be written
- * into the database. In fact it will be treated like NULL. This can be
- * used to mark it in xml to be changed.
- */
-#define DEFSUBMITTER    "***ChangeMe!***"
-
-typedef enum
-{
-    XMLMODE_INVALID,                    //!< Invalid query
-    XMLMODE_QUERY,                      //!< Query DVD
-    XMLMODE_QUERY_RESPONSE,             //!< Response
-    XMLMODE_SEARCH,                     //!< Search DVD
-    XMLMODE_SEARCH_RESPONSE,            //!< Response
-    XMLMODE_SUBMIT,                     //!< Submit DVD
-    XMLMODE_SUBMIT_RESPONSE,            //!< Response
-    XMLMODE_EXPORT                      //!< Export DVD
-
-} XMLMODE, *LPXMLMODE;
-
-typedef const XMLMODE* LPCXMLMODE;      //!< constant version
-
-typedef enum
-{
-    XMLRESULT_SUCCESS,                  //!< Success
-    XMLRESULT_NOTFOUND,                 //!< Query not successful
-    XMLRESULT_NOT_IMPLEMENTED,          //!< Not implemented
-    XMLRESULT_SQL_ERROR,                //!< SQL error, description see error string
-    XMLRESULT_DUPLICATE_SUBMISSION,     //!< DBD already in database
-    XMLRESULT_XML_ERROR,                //!< XML error, description see error string
-    XMLRESULT_UNSUPPORTED_VERSION       //!< Unsupported XML version
-
-} XMLRESULT, *LPXMLRESULT;
-
-typedef const XMLRESULT* LPCXMLRESULT;  //!< constant version
-
-#define setInvalidParameterError(text)  setError(__PRETTY_FUNCTION__ + std::string("\nInvalid parameter: ") + std::string(text), DVDERRORCODE_INVALID_PARAMETER)
-#define setInternalError(text)          setError(__PRETTY_FUNCTION__ + std::string("\nInternal error: ") + std::string(text), DVDERRORCODE_INTERNAL_ERROR)
+// ***************** End Special *nix stuff *****************
 
 #endif // COMMON_H

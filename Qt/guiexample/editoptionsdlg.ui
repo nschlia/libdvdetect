@@ -7,116 +7,83 @@
     <x>0</x>
     <y>0</y>
     <width>430</width>
-    <height>170</height>
+    <height>182</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Options</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>130</y>
-     <width>341</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="groupBox_7">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>411</width>
-     <height>111</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>libDVDetect Lookup</string>
-   </property>
-   <widget class="QLineEdit" name="lineEditDVDetectSubmitter">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>30</y>
-      <width>231</width>
-      <height>20</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_43">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>30</y>
-      <width>131</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Submitter Name:</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_44">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>50</y>
-      <width>131</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Server Name:</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEditDVDetectServerName">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>50</y>
-      <width>231</width>
-      <height>20</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_45">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>70</y>
-      <width>131</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Proxy Server:</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEditDVDetectProxyServer">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>70</y>
-      <width>231</width>
-      <height>20</height>
-     </rect>
-    </property>
-   </widget>
-  </widget>
+  <property name="locale">
+   <locale language="English" country="UnitedKingdom"/>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupBox_7">
+     <property name="title">
+      <string>libDVDetect Lookup</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_43">
+        <property name="text">
+         <string>Submitter Name:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEditDVDetectSubmitter"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_44">
+        <property name="text">
+         <string>Server Name:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEditDVDetectServerName"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_45">
+        <property name="text">
+         <string>Proxy Server:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="lineEditDVDetectProxyServer"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_46">
+        <property name="text">
+         <string>Scan Mode:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="comboBoxScanMode"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <tabstops>
   <tabstop>buttonBox</tabstop>
+  <tabstop>lineEditDVDetectProxyServer</tabstop>
   <tabstop>lineEditDVDetectSubmitter</tabstop>
   <tabstop>lineEditDVDetectServerName</tabstop>
-  <tabstop>lineEditDVDetectProxyServer</tabstop>
+  <tabstop>comboBoxScanMode</tabstop>
  </tabstops>
  <resources/>
  <connections>

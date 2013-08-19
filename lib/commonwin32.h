@@ -27,83 +27,15 @@
 
 #define COMMONWIN32_H
 
+#ifndef WIN32
+#error "Include this file for windows only"
+#endif
 
 // ***************** Special windoze stuff goes here *****************
 
-/*!
- * \def TSTRING
- * \brief Unicode layer: std::string or std::wstring
- *
- * \def TOFSTREAM
- * \brief Unicode layer: std::ofstream or std::wofstream
- *
- * \def TIFSTREAM
- * \brief Unicode layer: std::ifstream or std::wifstream
- *
- * \def TSTRINGSTREAM
- * \brief Unicode layer: std::stringstream or std::wstringstream
- *
- * \def TCHAR
- * \brief Unicode layer: char or wchar_t
- *
- * \def TCOUT
- * \brief Unicode layer: std::cout or std::wcout
- *
- * \def TCERR
- * \brief Unicode layer: std::cerr or std::wcerr
- *
- * \def _T(x)
- * \brief Unicode layer: for unicode defined as L ## x, otherwise empty
- *
- * \def TSTRERROR
- * \brief Unicode layer: strerror or _wcserror
- *
- * \def TUNLINK
- * \brief Unicode layer: _unlink or _wunlink
- *
- * \def TGETADDRINFO
- * \brief Unicode layer: getaddrinfo or GetAddrInfoW
- *
- * \def TADDRINFO
- * \brief Unicode layer: addrinfo or ADDRINFOW
- *
- * \def TFREEADDRINFO
- * \brief Unicode layer: freeaddrinfo or FreeAddrInfoW
- *
- * \def TASCTIME
- * \brief Unicode layer: asctime or_wasctime
- *
- * \def WVSPRINTF
- * \brief Unicode layer: vsprintf_s or vswprintf_s
- *
- * \def WTOI
- * \brief Unicode layer: atoi or _wtoi
- *
- * \def WTOL
- * \brief Unicode layer: atoi or _wtoi
- *
- * \def WSPRINTF
- * \brief Unicode layer: sprintf_s or swprintf_s
- *
- * \def stringToWString
- * \brief Unicode layer: for unicode declared as function, non-unicode empty
- *
- * \def wstringToString
- * \brief Unicode layer: for unicode declared as function, non-unicode empty
- *
- * \def STRTOKEN
- * \brief Unicode layer: "%s" or L"%s"
- *
- * \def POLL
- * \brief For windows declared as WSAPoll
- *
- * \def ARCH
- * \brief Defines the CPU architectur
- *
- * \def PLATFORM
- * \brief Defines the platform
- *
- */
+#if defined(_UNICODE)
+#define USE_WCHAR_T
+#endif
 
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -112,19 +44,13 @@
 // If you wish to build your application for a previous Windows _PLATFORM, include WinSDKVer.h and
 // set the _WIN32_WINNT macro to the _PLATFORM you wish to support before including SDKDDKVer.h.
 
-
-#define _WIN32_WINNT _WIN32_WINNT_VISTA
-//#define _WIN32_WINNT _WIN32_WINNT_WIN2K
-//#define _WIN32_WINNT 0x0600
-
-
 #include <SDKDDKVer.h>
 
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 #include <Wspiapi.h>
 
-#ifndef _UNICODE
+#ifndef USE_WCHAR_T
 #define TSTRING						string
 #define TOFSTREAM					ofstream
 #define TIFSTREAM					ifstream
@@ -143,9 +69,10 @@
 #define WTOI						atoi
 #define WTOL						atol
 #define	WSPRINTF					sprintf_s
-#define stringToWString
-#define wstringToString
 #define STRTOKEN					"%s"
+#define TSTRSTR                     strstr
+#define TSTRLEN                     strlen
+#define TSTRTOUL                    strtoul
 #else
 #define TSTRING						wstring
 #define TOFSTREAM					wofstream
@@ -166,6 +93,9 @@
 #define WTOL						_wtol
 #define	WSPRINTF					swprintf_s
 #define STRTOKEN					L"%s"
+#define TSTRSTR                     _wcsstr
+#define TSTRLEN                     _wcslen
+#define TSTRTOUL                    _wcstoul
 #endif
 
 #define	POLL						WSAPoll
@@ -173,6 +103,8 @@
 #if (_WIN32_WINNT < 0x0600)
 typedef USHORT ADDRESS_FAMILY;
 #endif
+
+// Architecture
 
 #if defined(_M_X64)
 
@@ -198,5 +130,7 @@ typedef USHORT ADDRESS_FAMILY;
 #error "Unsupported architecture"
 
 #endif
+
+// ***************** End Special windoze stuff *****************
 
 #endif // COMMONWIN32_H

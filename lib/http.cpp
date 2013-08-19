@@ -35,15 +35,50 @@
 
 #include <stdio.h>
 
+#define HTML_TNEWLINE           _T("\r\n")
+#define HTML_NEWLINE            "\r\n"
+#define HTML_HEADER_END         HTML_NEWLINE HTML_NEWLINE
+#define HTML_LAST_MODIFIED      "Last-Modified: "
+#define HTML_CONTENT_LENGTH     "Content-Length: "
+#define HTML_SIZE(t)            (countof(t) - 1)
+
+#define RECVBUFFSIZE            (1024*50)           // 50 kB
+
+#define POLLDELAY               10                  // 10 ms
+#define POLLTIMEOUT             (1000/POLLDELAY)    // 1000 ms
+
 bool getLoggingEnabled(int) { return false; }
 
 http::http()
-    : m_nResponse(0)
+    : m_nHeaderSize(0)
+    , m_pContent(NULL)
+    , m_qwContentSize(0)
+    , m_TimeStamp(-1)
+    , m_nResponse(0)
 {
 }
 
 http::~http()
 {
+    deleteContent();
+}
+
+void http::allocContent(int64_t qwSize)
+{
+    deleteContent();
+
+    if (qwSize)
+    {
+        m_qwContentSize = qwSize;
+        m_pContent = new char[qwSize];
+    }
+}
+
+void http::deleteContent()
+{
+    delete [] m_pContent;
+    m_qwContentSize = 0;
+    m_pContent = NULL;
 }
 
 void http::setProxy(const TSTRING & strProxy)
@@ -51,10 +86,10 @@ void http::setProxy(const TSTRING & strProxy)
     m_strProxyServer = strProxy;
 }
 
-int http::splitUrl(TSTRING & strUrl, TSTRING & strHost, TSTRING & strUri, int & iPort)
+int http::splitUrl(TSTRING & strUrl, TSTRING & strHost, TSTRING & strUri, int & nPort)
 {
-    size_t iSlash = 0;
-    size_t iDots = 0;
+    size_t nSlash = 0;
+    size_t nDots = 0;
 
     if (!strUrl.substr(0, 7).compare(_T("http://")))
     {
@@ -62,32 +97,32 @@ int http::splitUrl(TSTRING & strUrl, TSTRING & strHost, TSTRING & strUri, int & 
     }
 
     // get port address
-    if ((iDots = strUrl.rfind(':')) != TSTRING::npos)
+    if ((nDots = strUrl.rfind(':')) != TSTRING::npos)
     {
-        iPort = WTOI(strUrl.substr(iDots + 1).c_str());
+        nPort = WTOI(strUrl.substr(nDots + 1).c_str());
     }
     else
     {
-        iPort = 80;	// Use default
+        nPort = 80;	// Use default
     }
 
-    if ((iSlash = strUrl.find('/')) != TSTRING::npos)
+    if ((nSlash = strUrl.find('/')) != TSTRING::npos)
     {
-        if (iDots != TSTRING::npos)
+        if (nDots != TSTRING::npos)
         {
-            strHost = strUrl.substr(0, iDots);
+            strHost = strUrl.substr(0, nDots);
         }
         else
         {
-            strHost = strUrl.substr(0, iSlash);
+            strHost = strUrl.substr(0, nSlash);
         }
-        strUri = strUrl.substr(iSlash);
+        strUri = strUrl.substr(nSlash);
     }
     else
     {
-        if (iDots != TSTRING::npos)
+        if (nDots != TSTRING::npos)
         {
-            strHost = strUrl.substr(0, iDots);
+            strHost = strUrl.substr(0, nDots);
         }
         else
         {
@@ -101,19 +136,22 @@ int http::splitUrl(TSTRING & strUrl, TSTRING & strHost, TSTRING & strUri, int & 
 
 int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strData)
 {
-    SOCKET          ConnectSocket = INVALID_SOCKET;
-    INET_ADDRESS    SocketAddr;
-    TSTRING         strFullUrl = strUrl;
-    TSTRING         strHost;
-    TSTRING         strUri;
-    TSTRING         strProxyUrl = m_strProxyServer;
-    int             iPort = 80;
-    int             iResult = 0;
-    TSTRING         strSendBuf;
-    bool            bUseProxy = strProxyUrl.length() != 0;
+    SOCKET                  connectSocket = INVALID_SOCKET;
+    vector<INET_ADDRESS>    lstSocketAddr;
+    TSTRING                 strFullUrl(strUrl);
+    TSTRING                 strHost;
+    TSTRING                 strUri;
+    TSTRING                 strProxyUrl(m_strProxyServer);
+    TSTRING                 strMode;
+    int                     nPort = 80;
+    int                     nResult = 0;
+    TSTRING                 strSendBuf;
+    bool                    bUseProxy = (strProxyUrl.length() != 0) ? true : false;
+    bool                    bMultiIP = false;
 
-    m_strContent.clear();
+    m_strHeaders.clear();
     m_strErrorString.clear();
+    deleteContent();
 
     if (eMethod == GET && strData.size())
     {
@@ -124,7 +162,7 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
     if (getLoggingEnabled(1))
     {
         printf(_T("request Url: ") STRTOKEN, strFullUrl.c_str());
-        if (eMethod == POST && strData.size())
+        if ((eMethod == POST || eMethod == POST_HEADERSONLY) && strData.size())
         {
             printf(_T("request data: ") STRTOKEN, strData.c_str());
         }
@@ -132,234 +170,270 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
 
     try
     {
-        iResult = splitUrl(strFullUrl, strHost, strUri, iPort);
-        if (iResult < 0)
+        nResult = splitUrl(strFullUrl, strHost, strUri, nPort);
+        if (nResult < 0)
         {
-            throw iResult;
+            throw nResult;
         }
 
         if (strProxyUrl.length())
         {
             TSTRING strDummy;
 
-            iResult = splitUrl(strProxyUrl, strProxyUrl, strDummy, iPort);
-            if (iResult < 0)
+            nResult = splitUrl(strProxyUrl, strProxyUrl, strDummy, nPort);
+            if (nResult < 0)
             {
-                throw iResult;
+                throw nResult;
             }
         }
 
         if (bUseProxy)
         {
-            iResult = ::string2IP(strProxyUrl.c_str(), &SocketAddr);
+            nResult = ::string2IP(strProxyUrl.c_str(), lstSocketAddr);
+            strMode = "proxy";
         }
         else
         {
-            iResult = ::string2IP(strHost.c_str(), &SocketAddr);
+            nResult = ::string2IP(strHost.c_str(), lstSocketAddr);
+            strMode = "server";
         }
 
-        if (iResult != 0)
+        if (nResult != 0)
         {
-            setError(_T("getaddrinfo"), iResult);
+            setError(_T("getaddrinfo"), nResult);
             throw -1;
         }
 
-        if (SocketAddr.sa_family != AF_INET && SocketAddr.sa_family != AF_INET6)
+        bMultiIP = lstSocketAddr.size() > 1;
+
+        if (bMultiIP)
         {
-            setError(_T("getaddrinfo: Unknown family"));
-            throw -1;
+            strMode = "Trying " + strMode;
+        }
+        else
+        {
+            strMode = "Using " + strMode;
         }
 
-        switch (SocketAddr.sa_family)
+        for (std::vector<INET_ADDRESS>::iterator it = lstSocketAddr.begin() ; it != lstSocketAddr.end(); ++it)
         {
-        case AF_INET:
-        {
-            sockaddr_in  *sockaddr_ipv4 = (sockaddr_in *) &(SocketAddr.addr);
-            sockaddr_ipv4->sin_port = htons( iPort );
-            if (getLoggingEnabled(0))
+            switch ((*it).sa_family)
             {
-                if (bUseProxy)
-                {
-                    printf(_T("Proxy IPv4 address ") STRTOKEN, ::IP2String(&SocketAddr).c_str());
-                }
-                else
-                {
-                    printf(_T("Server IPv4 address ") STRTOKEN, ::IP2String(&SocketAddr).c_str());
-                }
-            }
-            break;
-        }
-        case AF_INET6:
-        {
-            sockaddr_in6 *sockaddr_ipv6 = (sockaddr_in6 *) &(SocketAddr.addr);
-            sockaddr_ipv6->sin6_port = htons( iPort );
-            if (getLoggingEnabled(0))
+            case AF_INET:
             {
-                if (bUseProxy)
+                sockaddr_in  *sockaddr_ipv4 = (sockaddr_in *) &((*it).addr);
+                sockaddr_ipv4->sin_port = htons( nPort );
+                if (getLoggingEnabled(1))
                 {
-                    printf(_T("Proxy IPv6 address ") STRTOKEN, ::IP2String(&SocketAddr).c_str());
+                    printf(STRTOKEN, (strMode + _T(" IPv4 address ") + ::IP2String(&(*it))).c_str());
                 }
-                else
-                {
-                    printf(_T("Server IPv6 address ") STRTOKEN, ::IP2String(&SocketAddr).c_str());
-                }
+                break;
             }
-            break;
-        }
+            case AF_INET6:
+            {
+                sockaddr_in6 *sockaddr_ipv6 = (sockaddr_in6 *) &((*it).addr);
+                sockaddr_ipv6->sin6_port = htons( nPort );
+                if (getLoggingEnabled(1))
+                {
+                    printf(STRTOKEN, (strMode + _T(" IPv6 address ") + ::IP2String(&(*it))).c_str());
+                }
+                break;
+            }
+            }
+
+            connectSocket = ::socket((*it).sa_family, SOCK_STREAM, IPPROTO_TCP);
+            if (connectSocket == INVALID_SOCKET)
+            {
+                setError(_T("socket"), 0);
+                throw -1;
+            }
+
+            //----------------------
+            // Connect to server.
+            nResult = ::connect(connectSocket, (sockaddr*)&(*it).addr, (int)(*it).iAddrLen);
+
+            if (nResult != SOCKET_ERROR)
+            {
+                break;
+            }
         }
 
-        ConnectSocket = ::socket(SocketAddr.sa_family, SOCK_STREAM, IPPROTO_TCP);
-        if (ConnectSocket == INVALID_SOCKET)
+        if (nResult == SOCKET_ERROR)
         {
-            setError(_T("socket"));
-            throw -1;
-        }
-
-        //----------------------
-        // Connect to server.
-        iResult = ::connect(ConnectSocket, (sockaddr*)&SocketAddr.addr, (int)SocketAddr.iAddrLen);
-
-        if ( iResult == SOCKET_ERROR)
-        {
-            setError(_T("connect"));
+            setError(_T("connect"), 0);
             throw -1;
         }
 
         switch (eMethod)
         {
         case GET:
+        case GET_HEADERSONLY:
         {
             if (strProxyUrl.length() == 0)
             {
                 strSendBuf = _T("GET ");
                 strSendBuf += strUri;
-                strSendBuf += _T(" HTTP/1.0\n");
+                strSendBuf += _T(" HTTP/1.0") HTML_TNEWLINE;
                 strSendBuf += _T("Host: ");
                 strSendBuf += strHost;
-                strSendBuf += _T("\n\n");
+                strSendBuf += HTML_TNEWLINE;
             }
             else
             {
                 strSendBuf = _T("GET http://");
                 strSendBuf += strFullUrl;
-                strSendBuf += _T(" HTTP/1.1\n\n");
+                strSendBuf += _T(" HTTP/1.1") HTML_TNEWLINE;
             }
 
-            iResult = send( ConnectSocket, strSendBuf, 0 );
-            if (iResult == SOCKET_ERROR)
+            strSendBuf += _T("Connection: close") HTML_TNEWLINE HTML_TNEWLINE;
+
+            nResult = send( connectSocket, strSendBuf, 0 );
+            if (nResult == SOCKET_ERROR)
             {
-                setError(_T("send"));
                 throw -1;
             }
 
             if (getLoggingEnabled(1))
             {
-                printf(_T("Bytes sent: %i"), iResult);
+                printf(_T("Bytes sent: %i"), nResult);
             }
         }
             break;
         case POST:
+        case POST_HEADERSONLY:
         {
             if (strProxyUrl.length() == 0)
             {
                 strSendBuf = _T("POST ");
                 strSendBuf += strUri;
-                strSendBuf += _T(" HTTP/1.1\r\n");
+                strSendBuf += _T(" HTTP/1.1") HTML_TNEWLINE;
                 strSendBuf += _T("Host: ");
                 strSendBuf += strHost;
-                strSendBuf += _T("\r\n");
+                strSendBuf += HTML_TNEWLINE;
             }
             else
             {
                 strSendBuf = _T("POST http://");
                 strSendBuf += strFullUrl;
-                strSendBuf += _T(" HTTP/1.1\r\n");
+                strSendBuf += _T(" HTTP/1.1") HTML_TNEWLINE;
             }
 
             if (strData.size())
             {
-                //	strSendBuf += _T("Referer: $referer\n");
-                strSendBuf += _T("Content-type: application/x-www-form-urlencoded\r\n");
+                strSendBuf += _T("Content-type: application/x-www-form-urlencoded") HTML_TNEWLINE;
                 strSendBuf += _T("Content-length: ") + toString(strData.size());
-                strSendBuf += _T("\r\n");
-                strSendBuf += _T("Connection: close\r\n\r\n");
+                strSendBuf += HTML_TNEWLINE;
+                strSendBuf += _T("Connection: close") HTML_TNEWLINE HTML_TNEWLINE;
                 strSendBuf += strData;
-                strSendBuf += _T("\r\n");
+                strSendBuf += HTML_TNEWLINE;
             }
             else
             {
-                strSendBuf += _T("\r\n");
+                strSendBuf += _T("Connection: close") HTML_TNEWLINE HTML_TNEWLINE;
             }
 
-            iResult = send( ConnectSocket, strSendBuf, 0 );
-            if (iResult == SOCKET_ERROR)
+            nResult = send( connectSocket, strSendBuf, 0 );
+            if (nResult == SOCKET_ERROR)
             {
-                setError(_T("send"));
                 throw -1;
             }
 
             if (getLoggingEnabled(1))
             {
-                printf(_T("Bytes sent: %i"), iResult);
+                printf(_T("Bytes sent: %i"), nResult);
             }
         }
             break;
         }
 
-        iResult = recv( ConnectSocket, m_strContent, 0 );
-        if (iResult == SOCKET_ERROR)
+        char *pBuffer = NULL;
+        nResult = recv(connectSocket, &pBuffer, 0, eMethod);
+        if (nResult == SOCKET_ERROR)
         {
+            if (pBuffer != NULL)
+            {
+                free(pBuffer);
+            }
             throw -1;
         }
+
+        if (!nResult)
+        {
+            m_strErrorString = _T("recv: No data");
+            throw -1;
+        }
+
+        if (!m_nHeaderSize)
+        {
+            m_strErrorString = _T("recv: Did not receive a content header");
+            throw -1;
+        }
+
+        {
+            int64_t qwContentSize = nResult - m_nHeaderSize;
+
+            if (qwContentSize)
+            {
+                allocContent(qwContentSize);
+                memcpy(m_pContent, pBuffer + m_nHeaderSize, qwContentSize);
+            }
+        }
+
+        ::free(pBuffer);
     }
     catch (int nResponse)
     {
         m_nResponse = nResponse;
     }
 
-    if (ConnectSocket != INVALID_SOCKET)
+    if (connectSocket != INVALID_SOCKET)
     {
-        ::closesocket(ConnectSocket);
+        ::closesocket(connectSocket);
     }
 
     if (!m_nResponse)
     {
-        TSTRING strHeaders = getHeaders();
         size_t iPos = 0;
 
-        if ((iPos = strHeaders.find(_T("HTTP/1.0"))) != TSTRING::npos)
+        if ((iPos = m_strHeaders.find("HTTP/1.0")) != TSTRING::npos)
         {
-            m_nResponse = ::WTOL(strHeaders.substr(9).c_str());
-            setError(strHeaders);
+            m_nResponse = ::atol(m_strHeaders.substr(9).c_str());
+            setError(getHeaders());
         }
-        else if ((iPos = strHeaders.find(_T("HTTP/1.1"))) != TSTRING::npos)
+        else if ((iPos = m_strHeaders.find("HTTP/1.1")) != TSTRING::npos)
         {
-            m_nResponse = ::WTOL(strHeaders.substr(9).c_str());
-            setError(strHeaders);
+            m_nResponse = ::atol(m_strHeaders.substr(9).c_str());
+            setError(getHeaders());
         }
         else
         {
-            m_nResponse = 400;
-            setError("HTTP Error 400");
+            setError(_T("HTTP ") + ::toString(m_nResponse));
         }
     }
 
     return m_nResponse;
 }
 
-int http::send(SOCKET s, const TSTRING & strBuffer, int flags) const
+int http::send(SOCKET s, const TSTRING & strBuffer, int flags)
 {
-    return ::send(s, wstringToString(strBuffer).c_str(), (int)strBuffer.length(), flags);
+    int nResult  = ::send(s, wstringToString(strBuffer).c_str(), (int)strBuffer.length(), flags);
+    if (nResult == SOCKET_ERROR)
+    {
+        setError(_T("send"), 0);
+    }
+    return nResult;
 }
 
-int http::recv(SOCKET s, TSTRING & strBuffer, int /* flags */)
+int http::recv(SOCKET s, char ** ppBuffer, int flags, METHOD eMethod)
 {
-    char recvbuf[1024*50];
-    int recvbuflen = countof(recvbuf);
-    int iResult = 0;
-    int iRetBytes = 0;
     struct pollfd ufds[1];
-    int rv;
+    int     nResult = 0;
+    int     nRetBytes = 0;
+    int     nNoDataCount = 0;
+    int64_t qwMaxSize = -1;
+    bool    bHeadersOnly = (eMethod == GET_HEADERSONLY || eMethod == POST_HEADERSONLY) ? true : false;
+
+    m_nHeaderSize = 0;
 
     memset(&ufds, 0, sizeof(ufds));
 
@@ -367,49 +441,76 @@ int http::recv(SOCKET s, TSTRING & strBuffer, int /* flags */)
     ufds[0].events = POLLIN; // check for just normal data
 
     // Receive until the peer closes the connection
-    strBuffer.clear();
     do
     {
         int n = sizeof(ufds) / sizeof(pollfd);
-        rv = ::POLL(ufds, n, 10);
+        int rv;
+
+        rv = ::POLL(ufds, n, POLLDELAY);
 
         if (rv == -1)
         {
             // error occurred in poll()
-            iRetBytes = SOCKET_ERROR;
-            setError(_T("poll has failed"));
+            nRetBytes = SOCKET_ERROR;
+            setError(_T("poll has failed"), 0);
             break;
         }
         else if (rv == 0)
         {
-            //            if (iRetBytes)
-            //            {
-            //                // Data received, ending loop
-            //                //// Timeout, leaving loop
-            //                ////printf(_T("recv has timed out"));
-            //                break;
-            //            }
+            if (++nNoDataCount > POLLTIMEOUT)
+            {
+                // Timeout, leaving loop
+                nRetBytes = SOCKET_ERROR;
+                setError(_T("recv has timed out"));
+                break;
+            }
+
+            if (qwMaxSize != -1 && nRetBytes >= qwMaxSize)
+            {
+                // If server has sent all data, close connection
+                // In case of proxy, this should be done by the proxy, but this provides
+                // an extra safety net to prevent lock-ups and time-outs.
+                break;
+            }
+
             // No data received yet, continueing
-            iResult = 1;
+            nResult = 1;
         }
         else
         {
             if (ufds[0].revents & POLLIN)
             {
-                iResult = ::recv(s, recvbuf, recvbuflen - 1, 0);
+                char recvbuf[RECVBUFFSIZE];
 
-                if ( iResult > 0 )
+                nResult = ::recv(s, recvbuf, countof(recvbuf), flags);
+
+                if ( nResult > 0 )
                 {
+                    nNoDataCount = 0;
+
                     if (getLoggingEnabled(1))
                     {
-                        printf(_T("Bytes received: %i"), iResult);
+                        printf(_T("Bytes received: %i"), nResult);
                     }
 
-                    recvbuf[iResult] = '\0';
-                    strBuffer += stringToWString(recvbuf);
-                    iRetBytes += iResult;
+                    *ppBuffer = (char*)::realloc(*ppBuffer, nRetBytes + nResult);
+                    memcpy((*ppBuffer) + nRetBytes, recvbuf, nResult);
+                    nRetBytes += nResult;
+
+                    if (!m_nHeaderSize)
+                    {
+                        qwMaxSize = extractHeaders(*ppBuffer);
+                    }
+
+                    if (bHeadersOnly && m_nHeaderSize)
+                    {
+                        // Stop at header
+                        nRetBytes = m_nHeaderSize;
+                        m_qwContentSize = (qwMaxSize == -1) ? 0 : (qwMaxSize - m_nHeaderSize);
+                        break;
+                    }
                 }
-                else if ( iResult == 0 )
+                else if ( nResult == 0 )
                 {
                     // No (more) data
                     break;
@@ -417,52 +518,77 @@ int http::recv(SOCKET s, TSTRING & strBuffer, int /* flags */)
                 else
                 {
                     // Set error
-                    iRetBytes = iResult;
-                    printf(_T("recv has failed, res %i"), iResult);
+                    nRetBytes = nResult;
+                    printf(_T("recv has failed, res %i"), nResult);
                     break;
                 }
             }
             else
             {
-                if (!iRetBytes)
+                if (!nRetBytes)
                 {
                     setError(_T("poll reported no data"));
-                    iRetBytes = SOCKET_ERROR;
-                    iResult = -1;
+                    nRetBytes = SOCKET_ERROR;
+                    nResult = -1;
                 }
                 break;
             }
         }
     }
-    while( iResult > 0 );
+    while( nResult > 0 );
 
-    return iRetBytes;
+    return nRetBytes;
 }
 
 TSTRING http::getHeaders() const
 {
-    size_t iPos = m_strContent.find(_T("\r\n\r\n"));
-    if (iPos != TSTRING::npos)
-    {
-        return m_strContent.substr(0, iPos);
-    }
-    else
-    {
-        return m_strContent;
-    }
+    return stringToWString(m_strHeaders);
+}
+
+int http::getHeaderSize() const
+{
+    return m_nHeaderSize;
 }
 
 TSTRING http::getContent() const
 {
-    size_t iPos = m_strContent.find(_T("\r\n\r\n"));
-    if (iPos != TSTRING::npos)
+    if (m_pContent == NULL || !m_qwContentSize)
     {
-        return m_strContent.substr(iPos + 4);
+        return _T("");
     }
-    else
+
+    std::string strContent;
+
+    strContent.assign(m_pContent, getContentSize());    // Convert to text
+
+    return stringToWString(strContent);
+}
+
+int64_t http::getContent(char *pContent, int64_t qwSize) const
+{
+    if (m_pContent == NULL || !m_qwContentSize)
     {
-        return m_strContent;
+        return -1;
     }
+
+    if (qwSize > m_qwContentSize)
+    {
+        qwSize = m_qwContentSize;
+    }
+
+    memcpy(pContent, m_pContent, qwSize);
+
+    return qwSize;
+}
+
+int64_t http::getContentSize() const
+{
+    return m_qwContentSize;
+}
+
+time_t http::getTimeStamp() const
+{
+    return m_TimeStamp;
 }
 
 int http::getResponse() const
@@ -504,8 +630,151 @@ void http::setError(const TSTRING & strError, int nErrorCode)
 #endif
 }
 
+void http::setError(const TSTRING & strError)
+{
+    m_strErrorString = strError;
+}
+
 TSTRING http::getErrorString() const
 {
     return m_strErrorString;
 }
 
+/*
+    RFC 1123
+
+    5. DATE AND TIME SPECIFICATION
+
+    5.1. SYNTAX
+
+
+    date-time   =  [ day "," ] date time     ; dd mm yy
+                                             ;  hh:mm:ss zzz
+
+    day         =  "Mon"  / "Tue" /  "Wed"  / "Thu"
+             /  "Fri"  / "Sat" /  "Sun"
+
+    date        =  1*2DIGIT month 2DIGIT     ; day month year
+                                             ;  e.g. 20 Jun 82
+
+    month       =  "Jan"  /  "Feb" /  "Mar"  /  "Apr"
+             /  "May"  /  "Jun" /  "Jul"  /  "Aug"
+             /  "Sep"  /  "Oct" /  "Nov"  /  "Dec"
+
+    time        =  hour zone                 ; ANSI and Military
+
+    hour        =  2DIGIT ":" 2DIGIT [":" 2DIGIT]
+                                             ; 00:00:00 - 23:59:59
+
+    zone        =  "UT"  / "GMT"                ; Universal Time
+                                             ; North American : UT
+             /  "EST" / "EDT"                ;  Eastern:  - 5/ - 4
+             /  "CST" / "CDT"                ;  Central:  - 6/ - 5
+             /  "MST" / "MDT"                ;  Mountain: - 7/ - 6
+             /  "PST" / "PDT"                ;  Pacific:  - 8/ - 7
+             /  1ALPHA                       ; Military: Z = UT;
+                                             ;  A:-1; (J not used)
+                                             ;  M:-12; N:+1; Y:+12
+             / ( ("+" / "-") 4DIGIT )        ; Local differential
+                                             ;  hours+min. (HHMM)
+*/
+
+#define ASCTIME_FORMAT  "%a %b %d %H:%M:%S %Y"
+#define RFC_850_FORMAT  "%A, %d-%b-%y %H:%M:%S %Z"
+#define RFC_1123_FORMAT "%a, %d %b %Y %H:%M:%S %Z"
+
+time_t http::parseLastModified(const string &str) const
+{
+    char *cp = NULL;
+    struct tm filetime;
+    time_t TimeStamp = -1;
+
+    memset(&filetime, 0, sizeof(filetime));
+
+    setlocale(LC_TIME, "en_US");
+
+    // Try all three forms:
+    //
+    // Sun, 06 Nov 1994 08:49:37 GMT  ; RFC 822, updated by RFC 1123
+    // Sunday, 06-Nov-94 08:49:37 GMT ; RFC 850, obsoleted by RFC 1036
+    // Sun Nov  6 08:49:37 1994       ; ANSI C's asctime() format
+
+#ifdef _WIN32
+    char *p = _strdup(str.c_str());
+#else
+    char *p = strdup(str.c_str());
+#endif
+
+    cp = strptime(p, RFC_1123_FORMAT, &filetime);
+    if (cp == NULL)
+    {
+        cp = strptime(p, RFC_850_FORMAT, &filetime);
+    }
+
+    if (cp == NULL)
+    {
+        cp = strptime(p, ASCTIME_FORMAT, &filetime);
+    }
+
+    free(p);
+
+    if (cp != NULL)
+    {
+        TimeStamp = getgmtime(&filetime);
+    }
+
+    setlocale(LC_TIME, "");
+
+    return TimeStamp;
+}
+
+int64_t http::extractHeaders(const char *pBuffer)
+{
+    const char *ptr = strstr(pBuffer, HTML_HEADER_END);
+    int64_t qwMaxSize = 0;
+
+    if (ptr != NULL)
+    {
+        string str;
+
+        m_nHeaderSize = (int)((ptr - pBuffer) + HTML_SIZE(HTML_HEADER_END)); // Cast OK, header will never be > 2GB
+
+        m_strHeaders.assign(pBuffer, m_nHeaderSize);
+
+        str = extractHeader(HTML_CONTENT_LENGTH);
+        if (str.size())
+        {
+            char * endptr = NULL;
+            qwMaxSize = strtoul(str.c_str(), &endptr, 0) + m_nHeaderSize;
+        }
+
+        str = extractHeader(HTML_LAST_MODIFIED);
+        if (str.size())
+        {
+            m_TimeStamp = parseLastModified(str);
+        }
+        else
+        {
+            m_TimeStamp = -1;
+        }
+    }
+    return qwMaxSize;
+}
+
+std::string http::extractHeader(const char *pszHeader) const
+{
+    size_t iPosStart = m_strHeaders.find(pszHeader);
+    if (iPosStart != string::npos)
+    {
+        size_t iPosEnd = m_strHeaders.find(HTML_NEWLINE, iPosStart);
+
+        iPosStart += strlen(pszHeader);
+        if (iPosEnd != string::npos)
+        {
+            iPosEnd -= iPosStart;
+        }
+
+        return m_strHeaders.substr(iPosStart, iPosEnd);
+    }
+    return "";
+}

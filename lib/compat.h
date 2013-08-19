@@ -28,46 +28,16 @@
 
 #define COMPAT_H
 
-/*!
- * \def PROTOCOL
- * \brief Defines the supported IP protocol family (families): IPv4 or IPv4/IPv6
- *
- * \def _countof
- * \brief Nice little helper to get the number of elements in an array
- *
- * \def countof
- * \brief Alias for _countof
- *
- * \def DVD_SECTOR_SIZE
- * \brief Size of a DVD sector
- *
- * \def DVD_MAX_VOB
- * \brief Maximum number of VOBs per title
- *
- * \def DVD_MAX_VOB_SIZE
- * \brief Maximum size of a single VOB (1.073.739.776 bytes == 1 GB - 2048 Bytes)
- *
- * \def O32_ORDER_STR
- * \brief Short name of machine order (BE = big endian, LE = little endian)
- *
- * \def O32_ORDER_STR_LONG
- * \brief Long name of machine order ("big endian", "little endian")
- *
- * \def native2be
- * \brief Synonym for be2native
- *
- * \def native2le
- * \brief Synonym for le2native
-*/
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 // ***************** Special windoze stuff goes here *****************
 
-#if defined(WIN32)
-#define _WIN32_WINNT    0x0600
+#if defined(WIN32) && !defined(_WIN32_WINNT)
+#define _WIN32_WINNT _WIN32_WINNT_VISTA
+//#define _WIN32_WINNT _WIN32_WINNT_WIN2K
+//#define _WIN32_WINNT 0x0600
 #endif
 
 #ifndef __CYGWIN__
@@ -179,37 +149,36 @@ typedef const INET_ADDRESS* LPCINET_ADDRESS;
 #endif
 
 #ifdef AF_INET6
-#define PROTOCOL					_T("IPv4/IPv6")
+#define PROTOCOL                        _T("IPv4/IPv6")
 #else
-#define PROTOCOL					_T("IPv4")
+#define PROTOCOL                        _T("IPv4")
 #endif
 
 #if !defined(_countof)
-#define _countof(_Array)			(sizeof(_Array) / sizeof(_Array[0]))
+#define _countof(_Array)                (sizeof(_Array) / sizeof(_Array[0]))
 #endif
 
-#define countof(x)					_countof(x)
-
-#define DVD_SECTOR_SIZE             2048
-#define DVD_MAX_VOB                 9
-#define DVD_MAX_VOB_SIZE            ((1024*1024*1024) - DVD_SECTOR_SIZE)    // = 1.073.739.776 bytes
+#define countof(x)                      _countof(x)
 
 // Big/Little Endian
 #ifdef WORDS_BIGENDIAN
-#define O32_ORDER_STR               "BE"
-#define O32_ORDER_STR_LONG          "big endian"
-#define ARCH_IS_BIG_ENDIAN          1
+#define O32_ORDER_STR                   "BE"
+#define O32_ORDER_STR_LONG              "big endian"
+#define ARCH_IS_BIG_ENDIAN              1
 #else
-#define O32_ORDER_STR               "LE"
-#define O32_ORDER_STR_LONG          "little endian"
-#define ARCH_IS_BIG_ENDIAN          0
+#define O32_ORDER_STR                   "LE"
+#define O32_ORDER_STR_LONG              "little endian"
+#define ARCH_IS_BIG_ENDIAN              0
 #endif
 
-#define native2be                   be2native
-#define native2le                   le2native
+#define native2be                       be2native
+#define native2le                       le2native
 
 #ifndef HAVE_STRPTIME
 extern "C" char * strptime (const char *buf, const char *format, struct tm *tm);
 #endif
+
+#define setInvalidParameterError(text)  setError(__PRETTY_FUNCTION__ + std::string("\nInvalid parameter: ") + std::string(text), DVDERRORCODE_INVALID_PARAMETER)
+#define setInternalError(text)          setError(__PRETTY_FUNCTION__ + std::string("\nInternal error: ") + std::string(text), DVDERRORCODE_INTERNAL_ERROR)
 
 #endif // COMPAT_H

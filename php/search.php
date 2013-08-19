@@ -85,7 +85,7 @@
 
         if (!$found)
         {
-            $Result = XMLRESULT_NOTFOUND;
+            $Result = XMLRESULT_NOT_FOUND;
             $ResponseText = "No data found for '" . $xml->Search . "'";
         }
         else

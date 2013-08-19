@@ -110,6 +110,14 @@ typedef const LPDVDBHANDLE* LPCDVDBHANDLE;
  */
 DLL_PUBLIC LPDVDETECTHANDLE     dvdOpenLib();
 
+//! Set or reset proxy server.
+/*! Sets the proxy server or resets it (to no proxy) if pszProxyName is an empty string or NULL.
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \param pszProxyName const char * Proxy server name/IP and port (e.g. "proxy.mynet:3128")
+ */
+DLL_PUBLIC void                 dvdSetProxy(LPDVDETECTHANDLE pDvDetectHandle, const char * pszProxyName);
+
 //! Parse a DVD.
 /*! Parse a DVD.
  *
@@ -460,6 +468,86 @@ DLL_PUBLIC const char *         dvdGetDirector(LPDVDETECTHANDLE pDvDetectHandle)
  */
 DLL_PUBLIC void                 dvdSetDirector(LPDVDETECTHANDLE pDvDetectHandle, const char * pszDirector);
 
+//! Get screen play writer
+/*!
+ * If DVD was successfully looked up, return screen play writer.
+ * The memory area is allocated. Remember to call dvdFree() when you are finished with it.
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \return Success: screen play writer or empty string if unknown
+ *  \return Fail: NULL
+ */
+DLL_PUBLIC const char *dvdGetScreenplay(LPDVDETECTHANDLE pDvDetectHandle);
+
+//! Set screen play writer
+/*!
+ * Sets screen play writer
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \param pszScreenplay const char * screen play writer
+ */
+DLL_PUBLIC void dvdSetScreenplay(LPDVDETECTHANDLE pDvDetectHandle, const char * pszScreenplay);
+
+//! Get producer
+/*!
+ * If DVD was successfully looked up, return producer.
+ * The memory area is allocated. Remember to call dvdFree() when you are finished with it.
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \return Success: producer or empty string if unknown
+ *  \return Fail: NULL
+ */
+DLL_PUBLIC const char *dvdGetProducer(LPDVDETECTHANDLE pDvDetectHandle);
+
+//! Set producer
+/*!
+ * Sets producer
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \param pszProducer const char * Producer
+ */
+DLL_PUBLIC void dvdSetProducer(LPDVDETECTHANDLE pDvDetectHandle, const char * pszProducer);
+
+//! Get editor
+/*!
+ * If DVD was successfully looked up, return editor.
+ * The memory area is allocated. Remember to call dvdFree() when you are finished with it.
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \return Success: editor or empty string if unknown
+ *  \return Fail: NULL
+ */
+DLL_PUBLIC const char *dvdGetEditing(LPDVDETECTHANDLE pDvDetectHandle);
+
+//! Set editor
+/*!
+ * Sets editor
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \param pszEditing const char * Editor
+ */
+DLL_PUBLIC void dvdSetEditing(LPDVDETECTHANDLE pDvDetectHandle, const char * pszEditing);
+
+//! Get cinematographer
+/*!
+ * If DVD was successfully looked up, return cinematographer.
+ * The memory area is allocated. Remember to call dvdFree() when you are finished with it.
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \return Success: cinematographer or empty string if unknown
+ *  \return Fail: NULL
+ */
+DLL_PUBLIC const char *dvdGetCinematography(LPDVDETECTHANDLE pDvDetectHandle);
+
+//! Set cinematographer
+/*!
+ * Sets cinematographer
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \param pszCinematography const char * Cinematographer
+ */
+DLL_PUBLIC void dvdSetCinematography(LPDVDETECTHANDLE pDvDetectHandle, const char * pszCinematography);
+
 //! Get country of origin
 /*!
  * If DVD was successfully looked up, return country of origin.
@@ -479,6 +567,26 @@ DLL_PUBLIC const char *         dvdGetCountry(LPDVDETECTHANDLE pDvDetectHandle);
  *  \param pszCountry  const char * country of origin
  */
 DLL_PUBLIC void                 dvdSetCountry(LPDVDETECTHANDLE pDvDetectHandle, const char * pszCountry);
+
+//! Get original language
+/*!
+ * If DVD was successfully looked up, return original language.
+ * The memory area is allocated. Remember to call dvdFree() when you are finished with it.
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \return Success: original language or empty string if unknown
+ *  \return Fail: NULL
+ */
+DLL_PUBLIC const char *         dvdGetOriginalLanguage(LPDVDETECTHANDLE pDvDetectHandle);
+
+//! Set the original language
+/*!
+ * Sets the original language
+ *
+ *  \param pDvDetectHandle LPDVDETECTHANDLE libdvdetect handle previously obtained by dvdOpenLib
+ *  \param pszOriginalLanguage const char * original language
+ */
+DLL_PUBLIC void                 dvdSetOriginalLanguage(LPDVDETECTHANDLE pDvDetectHandle, const char * pszOriginalLanguage);
 
 //! Get release date
 /*!

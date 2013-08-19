@@ -201,13 +201,18 @@ int main(int argc, char *argv[])
     {
         LPDVDBHANDLE pDvDBHandle = NULL;
 
+        if (bUseProxy)
+        {
+            printf("Using proxy server: %s\n", pszProxy);
+            dvdSetProxy(pDvDetectHandle, pszProxy);
+        }
+
         pDvDBHandle = dvdDBOpen(LIBDVDETECT_VERSION);
 
         if (pDvDBHandle != NULL)
         {
             if (bUseProxy)
             {
-                printf("Using proxy server: %s\n", pszProxy);
                 dvdDBSetProxy(pDvDBHandle, pszProxy);
             }
 

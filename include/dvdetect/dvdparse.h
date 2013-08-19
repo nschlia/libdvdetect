@@ -32,37 +32,6 @@
 #include <dvdetect/dvdtitle.h>
 #include <dvdetect/dvdpttvmg.h>
 
-//! DVD error code
-/*!
- * DVD error codes that can be used for localised messages.
- */
-typedef enum
-{
-    DVDERRORCODE_NOERROR,                       //!< Success/no error
-    DVDERRORCODE_DIROPEN,                       //!< Error opening directory
-    DVDERRORCODE_FILEOPEN,                      //!< Error opening file
-    DVDERRORCODE_FILESTAT,                      //!< Error getting file status
-    DVDERRORCODE_FILEREAD,                      //!< Error reading file
-    DVDERRORCODE_OPEN_DVD,                      //!< Error opening DVD
-    DVDERRORCODE_VMG_IFO,                       //!< Error reading video manager IFO
-    DVDERRORCODE_VTS_IFO,                       //!< Error reading video title set IFO
-    DVDERRORCODE_EMPTY_PATH,                    //!< Path empty
-    DVDERRORCODE_NOT_IMPLEMENTED,               //!< Function not implemented
-    DVDERRORCODE_NOT_INITIALISED,               //!< Class not initialised
-    DVDERRORCODE_INVALID_PARAMETER,             //!< Invalid parameter
-    DVDERRORCODE_INTERNAL_ERROR,                //!< libdvdetect internal error
-    DVDERRORCODE_HTML_ERROR,                    //!< HTML error (see text for details)
-    DVDERRORCODE_XML_ERROR,                     //!< XML error (see text for details)
-    DVDERRORCODE_XML_WRONG_MODE,                //!< Wrong XML mode
-    DVDERRORCODE_XML_UNKNOWN_MODE,              //!< Unknown XML mode
-    DVDERRORCODE_XML_INCONSISTENT_DATA,         //!< Inconsistent data in XML (see text for details)
-    DVDERRORCODE_XML_RESPONSE,                  //!< Response (error text verbatim as send from server)
-    DVDERRORCODE_XML_UNSUPPORTED_VERSION        //!< XML protocol version not supported
-
-} DVDERRORCODE, *LPDVDERRORCODE;
-
-typedef const DVDERRORCODE* LPCDVDERRORCODE;
-
 class xmldocbuilder;
 class xmldocparser;
 
@@ -100,7 +69,14 @@ public:
     /*!
      *  Construct a dvdparse element.
      */
-    explicit dvdparse();
+    explicit dvdparse(
+            void *  (*openFile)(const char *filename, const char *mode, const char *) = ::openFile,
+            size_t  (*readFile)(void* buffer, size_t size, size_t count, void* stream) = ::readFile,
+            int     (*writeFile)(const void* buffer, size_t size, size_t count, void* stream) = ::writeFile,
+            int     (*closeFile)(void *stream) = ::closeFile,
+            int     (*statFile)(const char *file, LPDVDFILESTAT pFileStat, const char *) = ::statFile,
+            int     (*fstatFile)(void* stream, LPDVDFILESTAT pFileStat) = ::fstatFile);
+
     //! Destructor.
     /*!
      *  Destruct a dvdparse element.
@@ -301,17 +277,17 @@ public:
      * set to the file date of the VIDEO_TS.IFO. This minimizes file operations (especially
      * useful if scanning files on webservers).
      *
-     *  \param bFullScan bool true = enable full scan, false = disable full scan
+     *  \param eScanMode DVDSCANMODE full scan, fast scan or auto mode
      */
-    void                setFullScan(bool bFullScan);
+    void                setScanMode(DVDSCANMODE eScanMode);
 
     //! Check if full scan mode is enabled
     /*!
      *  \return true = full scan enabled, false = full scan disabled
      */
-    bool                getFullScan() const;
+    bool                getScanMode() const;
 
-    //! Check if full DVD has been pasred ("loaded")
+    //! Check if full DVD has been parsed ("loaded")
     /*!
      *  \return true = disk loaded, false = disk not loaded
      */
@@ -378,6 +354,22 @@ public:
      */
     void                setAlbum(const std::string & strAlbum);
 
+    //! Get original language disk album name
+    /*!
+     * If DVD was successfully looked up, return the original album name
+     *
+     *  \return album or empty string if unknown
+     */
+    const std::string & getOriginalAlbum() const;
+
+    //! Set original language disk album name
+    /*!
+     * Sets the original language album name
+     *
+     *  \param strOriginalAlbum const std::string & Original language album nam
+     */
+    void                setOriginalAlbum(const std::string & strOriginalAlbum);
+
     //! Get the DVD genre
     /*!
      * If DVD was successfully looked up, return DVD genre
@@ -442,6 +434,70 @@ public:
      */
     void                setDirector(const std::string & strDirector);
 
+    //! Get storyline writer
+    /*!
+     * If DVD was successfully looked up, return storyline writer
+     *
+     *  \return Storyline writer or empty string if unknown
+     */
+    const std::string & getScreenplay() const;
+
+    //! Set the storyline writer
+    /*!
+     * Sets the storyline writer
+     *
+     *  \param strScreenplay const std::string & Storyline writer
+     */
+    void                setScreenplay(const std::string & strScreenplay);
+
+    //! Get producer
+    /*!
+     * If DVD was successfully looked up, return producer
+     *
+     *  \return Producer or empty string if unknown
+     */
+    const std::string & getProducer() const;
+
+    //! Set the producer
+    /*!
+     * Sets the producer
+     *
+     *  \param strProducer const std::string & Producer
+     */
+    void                setProducer(const std::string & strProducer);
+
+    //! Get editor
+    /*!
+     * If DVD was successfully looked up, return editor
+     *
+     *  \return Editor or empty string if unknown
+     */
+    const std::string & getEditing() const;
+
+    //! Set the editor
+    /*!
+     * Sets the editor
+     *
+     *  \param strEditing const std::string & Editor
+     */
+    void                setEditing(const std::string & strEditing);
+
+    //! Get cinematographer
+    /*!
+     * If DVD was successfully looked up, return cinematographer
+     *
+     *  \return Cinematographer empty string if unknown
+     */
+    const std::string & getCinematography() const;
+
+    //! Set the cinematographer
+    /*!
+     * Sets the cinematographer
+     *
+     *  \param strCinematography const std::string & Cinematographer
+     */
+    void                setCinematography(const std::string & strCinematography);
+
     //! Get country of origin
     /*!
      * If DVD was successfully looked up, return country of origin
@@ -454,9 +510,25 @@ public:
     /*!
      * Sets the country of origin
      *
-     *  \param strCountry const std::string & country of origin
+     *  \param strCountry const std::string & Country of origin
      */
     void                setCountry(const std::string & strCountry);
+
+    //! Get original language
+    /*!
+     * If DVD was successfully looked up, return original language
+     *
+     *  \return original language or empty string if unknown
+     */
+    const std::string & getOriginalLanguage() const;
+
+    //! Set the original language
+    /*!
+     * Sets the original language
+     *
+     *  \param strOriginalLanguage const std::string & Original language
+     */
+    void                setOriginalLanguage(const std::string & strOriginalLanguage);
 
     //! Get release date
     /*!
@@ -586,7 +658,7 @@ public:
      *
      *  \return Protocol version or 0 if unknown
      */
-    int getProtocolVersion() const;
+    int                 getProtocolVersion() const;
 
     //! Get library version
     /*!
@@ -660,6 +732,22 @@ public:
      */
     void                update(const dvdparse *dvdParse);
 
+    //! Set the proxy name
+    /*!
+     * Set the proxy name (and optionally port), e.g. proxy:3128.
+     *
+     *  \param strProxy const std::string & Proxy name and port
+     */
+    void                setProxy(const std::string & strProxy);
+
+    //! Get the proxy name
+    /*!
+     * Get the proxy name.
+     *
+     *  \return Returns the proxy name
+     */
+    std::string         getProxy() const;
+
     dvdparse& operator= (dvdparse const & source);
 
 protected:
@@ -668,8 +756,8 @@ protected:
     void                getVmgPtt(const uint8_t* pData);
     uint16_t            getVmgMain(const uint8_t *pData);
     void                getVmgAttributes(const uint8_t *pData);
-    void                getVmgIfo();
-    void                getVmgMenuVob();
+    int                 getVmgIfo();
+    int                 getVmgMenuVob();
     void                getVmgIfo(time_t ftime, uint64_t qwSizeOfVMGI);
     void                getVmgMenuVob(time_t ftime, uint32_t dwMenuVobSize);
     uint16_t            parseVideoManager();
@@ -679,9 +767,9 @@ protected:
     void                addCell(const uint8_t* pData, dvdprogram * dvdProgram, uint16_t wCellNo, uint16_t wPGCCellPlaybackOffset, uint32_t dwOffsetVTS_PGC, uint16_t wCellPositionOffset);
     void                addPrograms(const uint8_t* pData, dvdpgc * dvdPgc, uint16_t wTitleSetNo, uint16_t wProgramChainNo);
     void                getVtsAttributes(const uint8_t* pData, dvdtitle *dvdTitle);
-    void                getVtsIfo(dvdtitle * dvdTitle, uint16_t wTitleSetNo);
-    void                getVtsMenuVob(dvdtitle * dvdTitle, uint16_t wTitleSetNo);
-    void                getVtsVob(dvdtitle * dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo);
+    int                 getVtsIfo(dvdtitle * dvdTitle, uint16_t wTitleSetNo);
+    int                 getVtsMenuVob(dvdtitle * dvdTitle, uint16_t wTitleSetNo);
+    int                 getVtsVob(dvdtitle * dvdTitle, uint16_t wVobNo, uint16_t wTitleSetNo);
     void                getVtsIfo(dvdtitle * dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI, uint16_t wTitleSetNo);
     void                getVtsMenuVob(dvdtitle * dvdTitle, time_t ftime, uint32_t dwMenuVobSize, uint16_t wTitleSetNo);
     void                getVtsVob(dvdtitle * dvdTitle, time_t ftime, uint32_t dwSize, uint16_t wVobNo, uint16_t wTitleSetNo);
@@ -725,6 +813,8 @@ protected:
     void 				setLibraryName(const std::string & strLibraryName);
     void 				setClientName(const std::string & strClientName);
 
+    bool                getFullScan() const;
+
 protected:
     std::string         m_strPath;					//!< Path to DVD (including trailing separator)
     DVDVMGM             m_DVDVMGM;					//!< DVDVMGM structure (DVD part of title)
@@ -733,7 +823,7 @@ protected:
     dvdfilelst          m_lstDvdFile;				//!< list of DVD files in this video manager
     std::string         m_strErrorString;			//!< Last error as clear text (English)
     DVDERRORCODE        m_eErrorCode;               //!< Error code
-    bool                m_bFullScan;				//!< If true, perform full scan
+    DVDSCANMODE         m_eScanMode;				//!< Scan mode: full/fast/auto scan
     int                 m_nVirtTitleCount;          //!< Number of virtual titles
     bool                m_bIsLoaded;                //!< true if DVD successfully loaded
 
@@ -741,11 +831,17 @@ protected:
     std::string         m_strHash;                  //!< md5 hash
     std::string         m_strAlbumArtist;           //!< Album artist
     std::string         m_strAlbum;                 //!< Album name
+    std::string         m_strOriginalAlbum;         //!< Original language title/album name
     std::string         m_strGenre;                 //!< DVD genre
     std::string         m_strCast;                  //!< Cast details
     std::string         m_strCrew;                  //!< Crew details
     std::string         m_strDirector;              //!< Director
+    std::string         m_strScreenplay;            //!< Storyline writer
+    std::string         m_strProducer;              //!< Produced by
+    std::string         m_strEditing;               //!< Editing by
+    std::string         m_strCinematography;        //!< Cinematography/camera by
     std::string         m_strCountry;               //!< Country of origin
+    std::string         m_strOriginalLanguage;      //!< Original Language
     std::string         m_strReleaseDate;           //!< Release date
     std::string         m_strSpecialFeatures;       //!< Special feature list
     std::string         m_strEAN_UPC;               //!< DVD EAN/UPC
@@ -758,10 +854,19 @@ protected:
     std::string         m_strDateCreated;           //!< Date of data set creation
     std::string         m_strDateLastChanged;       //!< Data data set was last changed
     std::string         m_strKeywords;              //!< Keywords
-    int                 m_nProtocolVersion;              //!< For received queries: XML version
+    int                 m_nProtocolVersion;         //!< For received queries: protocol version
     std::string         m_strLibraryVersion;        //!< For received queries: remote library version
     std::string         m_strLibraryName;           //!< For received queries: remote library name
     std::string         m_strClientName;            //!< For received queries: remote client
+    std::string         m_strProxy;                 //!< Proxy server address/port
+
+    // I/O functions
+    void *              (*m_pOpenFile)(const char *filename, const char *mode, const char *proxy);
+    size_t              (*m_pReadFile)(void* buffer, size_t size, size_t count, void* stream);
+    int                 (*m_pWriteFile)(const void* buffer, size_t size, size_t count, void* stream);
+    int                 (*m_pCloseFile)(void *stream);
+    int                 (*m_pStatFile)(const char *file, LPDVDFILESTAT pFileStat, const char *proxy);
+    int                 (*m_pFstatFile)(void* stream, LPDVDFILESTAT pFileStat);
 };
 
 typedef vector_ptr<dvdparse> dvdparselst;           //!< shortcut for a list of dvdfiles

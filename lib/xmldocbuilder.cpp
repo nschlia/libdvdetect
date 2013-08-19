@@ -51,7 +51,6 @@ void xmldocbuilder::addRootAttributes(TiXmlElement* pRoot, XMLMODE eXmlMode) con
 
 void xmldocbuilder::addComment(TiXmlElement* pOwner, const char * pszComment) const
 {
-    // Suppress comments in any mode other than XMLMODE_EXPORT or add anyway if forced with XMLMODE_INVALID
     if (!getCondensedMode())
     {
         TiXmlComment* pComment = new TiXmlComment();
@@ -105,12 +104,18 @@ void xmldocbuilder::addDvdAttributes(TiXmlElement* pDVD, const dvdparse *pDvdPar
         if (!getCondensedMode())
         {
             setValue(pDVD, "Album", pDvdParse->getAlbum());
+            setValue(pDVD, "OriginalAlbum", pDvdParse->getOriginalAlbum());
             setValue(pDVD, "AlbumArtist", pDvdParse->getAlbumArtist());
             setValue(pDVD, "Genre", pDvdParse->getGenre());
             setValue(pDVD, "Cast", pDvdParse->getCast());
             setValue(pDVD, "Crew", pDvdParse->getCrew());
             setValue(pDVD, "Director", pDvdParse->getDirector());
+            setValue(pDVD, "Screenplay", pDvdParse->getScreenplay());
+            setValue(pDVD, "Producer", pDvdParse->getProducer());
+            setValue(pDVD, "Editing", pDvdParse->getEditing());
+            setValue(pDVD, "Cinematography", pDvdParse->getCinematography());
             setValue(pDVD, "Country", pDvdParse->getCountry());
+            setValue(pDVD, "OriginalLanguage", pDvdParse->getOriginalLanguage());
             setValue(pDVD, "ReleaseDate", pDvdParse->getReleaseDate());
             setValue(pDVD, "SpecialFeatures", pDvdParse->getSpecialFeatures());
             setValue(pDVD, "EAN_UPC", pDvdParse->getEAN_UPC());
@@ -121,12 +126,18 @@ void xmldocbuilder::addDvdAttributes(TiXmlElement* pDVD, const dvdparse *pDvdPar
         else
         {
             safeSetValue(pDVD, "Album", pDvdParse->getAlbum());
+            safeSetValue(pDVD, "OriginalAlbum", pDvdParse->getOriginalAlbum());
             safeSetValue(pDVD, "AlbumArtist", pDvdParse->getAlbumArtist());
             safeSetValue(pDVD, "Genre", pDvdParse->getGenre());
             safeSetValue(pDVD, "Cast", pDvdParse->getCast());
             safeSetValue(pDVD, "Crew", pDvdParse->getCrew());
             safeSetValue(pDVD, "Director", pDvdParse->getDirector());
+            safeSetValue(pDVD, "Screenplay", pDvdParse->getScreenplay());
+            safeSetValue(pDVD, "Producer", pDvdParse->getProducer());
+            safeSetValue(pDVD, "Editing", pDvdParse->getEditing());
+            safeSetValue(pDVD, "Cinematography", pDvdParse->getCinematography());
             safeSetValue(pDVD, "Country", pDvdParse->getCountry());
+            safeSetValue(pDVD, "OriginalLanguage", pDvdParse->getOriginalLanguage());
             safeSetValue(pDVD, "ReleaseDate", pDvdParse->getReleaseDate());
             safeSetValue(pDVD, "SpecialFeatures", pDvdParse->getSpecialFeatures());
             safeSetValue(pDVD, "EAN_UPC", pDvdParse->getEAN_UPC());
@@ -138,12 +149,14 @@ void xmldocbuilder::addDvdAttributes(TiXmlElement* pDVD, const dvdparse *pDvdPar
 
     if (!getCondensedMode())
     {
-        setValue(pDVD, "Submitter", (eXmlMode != XMLMODE_QUERY) ? DEFSUBMITTER : pDvdParse->getSubmitter());
+        //setValue(pDVD, "Submitter", (eXmlMode != XMLMODE_QUERY) ? DEFSUBMITTER : pDvdParse->getSubmitter());
+        setValue(pDVD, "Submitter", pDvdParse->getSubmitter());
         setValue(pDVD, "Client", m_strClientName);
     }
     else
     {
-        safeSetValue(pDVD, "Submitter", (eXmlMode != XMLMODE_QUERY) ? DEFSUBMITTER : pDvdParse->getSubmitter());
+        //safeSetValue(pDVD, "Submitter", (eXmlMode != XMLMODE_QUERY) ? DEFSUBMITTER : pDvdParse->getSubmitter());
+        safeSetValue(pDVD, "Submitter", pDvdParse->getSubmitter());
         safeSetValue(pDVD, "Client", m_strClientName);
     }
 }
