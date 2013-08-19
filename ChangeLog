@@ -94,7 +94,7 @@ should be gracefully rejected, but do not rely on that...
   * Added missing dvdGetFileName function
   * Optimised error handling (quite a few problems got by unreported)
 
-2013-08-XX nschlia V0.50
+2013-09-19 nschlia V0.50
 
 Living in the past: All releases in this document were dated back to 2012, but I guess the year already is 2013. 
 So the dates were corrected.
@@ -122,8 +122,3 @@ TODO:
 
   * If a submitter re-submits the same DVD, the database gets updated instead of creating a new revision.
     This avoids creating several revisions with minor changes.
-
-2013-XX-XX nschlia V0.50
-
-PLANNED FOR NEXT RELEASE:
-
