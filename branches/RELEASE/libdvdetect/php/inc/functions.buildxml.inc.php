@@ -51,7 +51,7 @@ define("XMLMODE_SUBMIT_RESPONSE",           6);
 define("XMLMODE_EXPORT",                    7);
 
 define("XMLRESULT_SUCCESS",                 0);
-define("XMLRESULT_NOTFOUND",                1);
+define("XMLRESULT_NOT_FOUND",                1);
 define("XMLRESULT_NOT_IMPLEMENTED",         2);
 define("XMLRESULT_SQL_ERROR",               3);
 define("XMLRESULT_DUPLICATE_SUBMISSION",    4);
@@ -159,7 +159,7 @@ function safeSetAttribute($Tag, $field, $value)
 {
     if (isset($value))
     {
-        $Tag->setAttribute($field, $value);
+        $Tag->setAttribute($field, str_replace("\r\n", "\n", $value));
     }
 }
 
@@ -167,9 +167,8 @@ function safeSetText($domtree, $Tag, $field, $value)
 {
     if (isset($value))
     {
-        //$Tag->appendChild($domtree->createElement($field, $value));
         $name = $Tag->appendChild($domtree->createElement($field));
-        $name->appendChild($domtree->createCDATASection($value));
+        $name->appendChild($domtree->createCDATASection(str_replace("\r\n", "\n", $value)));
     }
 }
 
@@ -438,6 +437,12 @@ function buildResults($domtree, $mysqli, $xmlRoot, $Hash, $rsDVDVMGM, $ProtocolV
         $NumberOfVolumes    = $Cols[31];
         $VolumeNumber       = $Cols[32];
         $SideID             = $Cols[33];
+        $OriginalAlbum      = $Cols[34];
+        $Screenplay         = $Cols[35];
+        $Producer           = $Cols[36];
+        $Editing            = $Cols[37];
+        $Cinematography     = $Cols[38];
+        $OriginalLanguage   = $Cols[39];
 
         $dvdTag = $domtree->createElement("DVD");
 
@@ -446,12 +451,18 @@ function buildResults($domtree, $mysqli, $xmlRoot, $Hash, $rsDVDVMGM, $ProtocolV
         safeSetAttribute($dvdTag, "Revision", $Revision);
         safeSetText($domtree, $dvdTag, "Album", $Album);
         safeSetText($domtree, $dvdTag, "AlbumArtist", $AlbumArtist);
+        safeSetText($domtree, $dvdTag, "OriginalAlbum", $OriginalAlbum);
         safeSetText($domtree, $dvdTag, "DateCreated", $RowCreationDate);
         safeSetText($domtree, $dvdTag, "Genre", $Genre);
         safeSetText($domtree, $dvdTag, "Cast", $Cast);
         safeSetText($domtree, $dvdTag, "Crew", $Crew);
         safeSetText($domtree, $dvdTag, "Director", $Director);
+        safeSetText($domtree, $dvdTag, "Screenplay", $Screenplay);
+        safeSetText($domtree, $dvdTag, "Producer", $Producer);
+        safeSetText($domtree, $dvdTag, "Editing", $Editing);
+        safeSetText($domtree, $dvdTag, "Cinematography", $Cinematography);
         safeSetText($domtree, $dvdTag, "Country", $Country);
+        safeSetText($domtree, $dvdTag, "OriginalLanguage", $OriginalLanguage);
         safeSetText($domtree, $dvdTag, "ReleaseDate", $ReleaseDate);
         safeSetText($domtree, $dvdTag, "DateLastChanged", $RowLastChanged);
         safeSetText($domtree, $dvdTag, "SpecialFeatures", $SpecialFeatures);

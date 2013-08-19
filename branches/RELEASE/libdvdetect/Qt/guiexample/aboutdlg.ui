@@ -16,6 +16,9 @@
   <property name="windowTitle">
    <string>About libDVDetect Explorer Example App</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedKingdom"/>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTextEdit" name="textEditAbout">

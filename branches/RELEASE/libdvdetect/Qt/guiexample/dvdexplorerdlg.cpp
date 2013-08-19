@@ -31,6 +31,7 @@
 #include "editdetailsdlg.h"
 #include "explorerutils.h"
 #include "editoptionsdlg.h"
+#include "openfromwebdlg.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -345,6 +346,8 @@ int dvdexplorerdlg::parseDVD(const QString & strPath)
     showStreams(NULL);
     showFiles((dvdparse*)NULL);
 
+    loadSettings(NULL);
+
     res = m_DVD.parse(strPath.toStdString());
 
     updateDialog();
@@ -363,13 +366,20 @@ int dvdexplorerdlg::queryDVD()
     dvdparselst lstDvdParse;
     int res = 0;
 
-    loadSettings(dvdDatabase);
+    loadSettings(&dvdDatabase);
 
     ui->statusBar->showMessage(tr("Querying DVD..."));
 
     res = dvdDatabase.query(&lstDvdParse, &m_DVD);
 
-    if (res != 0)
+    DVDERRORCODE eErrorCode = dvdDatabase.getErrorCode();
+
+    if (eErrorCode == DVDERRORCODE_NOT_FOUND)
+    {
+        ui->statusBar->showMessage(tr("DVD not found"));
+        QMessageBox::information(this, tr("Info"), tr("DVD not found in database"));
+    }
+    else if (eErrorCode != DVDERRORCODE_SUCCESS)
     {
         ui->statusBar->showMessage(tr("DVD query error"));
         QMessageBox::critical(this, tr("DVD query error"), dvdDatabase.getErrorString().c_str());
@@ -380,11 +390,6 @@ int dvdexplorerdlg::queryDVD()
         ui->checkBoxPhysicalView->setChecked(false);
         updateDialog();
         ui->statusBar->showMessage(tr("DVD found"));
-    }
-    else
-    {
-        ui->statusBar->showMessage(tr("DVD not found"));
-        QMessageBox::information(this, tr("Info"), tr("DVD not found in database"));
     }
 
     return res;
@@ -400,7 +405,7 @@ int dvdexplorerdlg::findDVD()
         dvddatabase dvdDatabase(PROGRAM_NAME);
         dvdparselst lstDvdParse;
 
-        loadSettings(dvdDatabase);
+        loadSettings(&dvdDatabase);
 
         ui->statusBar->showMessage(tr("Searching DVD..."));
 
@@ -477,7 +482,7 @@ int dvdexplorerdlg::submitDVD()
         return -1;
     }
 
-    loadSettings(dvdDatabase);
+    loadSettings(&dvdDatabase);
     ui->statusBar->showMessage(tr("Submitting DVD..."));
 
     updateData();
@@ -1588,18 +1593,19 @@ void dvdexplorerdlg::on_checkBoxPhysicalView_clicked()
 void dvdexplorerdlg::on_actionOpen_triggered()
 {
 
-    //    QString strDir("D:/mmedia/#DVD/Natfödd");
-    //    QString strDir("/files/mp3base2/DVD/Musik/Finntroll/Natfödd/DVD1/");
-    QString strDir("/windows/C/temp/Metal - A Headbanger's Journey/DVD1/");
-    //    QString strDir("/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS");
-    //    QString strDir("/files/mp3base2/DVD/Musik/Metallica/Live Shit Binge & Purge DVD 1 - San Diego/DVD1/VIDEO_TS/");
-    //    QString strDir("/files/mp3base2/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/");
-    //    QString strDir("D:/temp/DVD/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS");
-    //    QString strDir("T:/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS");
-    //    QString strDir("T:/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS");
-    //    QString strDir("/files/mp3base2/DVD/Serien/King of Queens/Season 5 3");
-    //    QString strDir("D:/mmedia/#DVD");
-    //    QString strDir;
+    QString strDir;
+    //    strDir = "D:/mmedia/#DVD/Natfödd";
+    //    strDir = "/files/mp3base2/DVD/Musik/Finntroll/Natfödd/DVD1/";
+    strDir = "/windows/C/temp/Metal - A Headbanger's Journey/DVD1/";
+    //    strDir = "/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS";
+    //    strDir = "/files/mp3base2/DVD/Musik/Metallica/Live Shit Binge & Purge DVD 1 - San Diego/DVD1/VIDEO_TS/";
+    //    strDir = "/files/mp3base2/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/";
+    //    strDir = "D:/temp/DVD/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS";
+    //    strDir = "T:/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS";
+    //    strDir = "T:/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS";
+    //    strDir = "/files/mp3base2/DVD/Serien/King of Queens/Season 5 3";
+    //    strDir = "D:/mmedia/#DVD";
+    //    strDir = "/home/norbert/Dokumente/Test/";
 
     strDir = QFileDialog::getExistingDirectory(this, tr("Open DVD drive or directory with DVD files"),
                                                strDir,
@@ -1610,8 +1616,31 @@ void dvdexplorerdlg::on_actionOpen_triggered()
         return;
     }
 
+    ui->statusBar->showMessage(tr("Opening ") + strDir);
+
     parseDVD(strDir);
     queryDVD();
+}
+
+void dvdexplorerdlg::on_actionOpen_from_Web_triggered()
+{
+    QString strDir;
+    openfromwebdlg openFromWebDlg(this);
+
+    if (openFromWebDlg.exec() == QDialog::Accepted)
+    {
+        strDir = openFromWebDlg.getWebUrl();
+
+        if (strDir.isEmpty())
+        {
+            return;
+        }
+
+        ui->statusBar->showMessage(tr("Opening ") + strDir);
+
+        parseDVD(strDir);
+        queryDVD();
+    }
 }
 
 void dvdexplorerdlg::on_actionExport_XML_triggered()
@@ -1692,13 +1721,18 @@ void dvdexplorerdlg::handleContextMenuEditDetails()
     editDetails();
 }
 
-void dvdexplorerdlg::loadSettings(dvddatabase & dvdDatabase)
+void dvdexplorerdlg::loadSettings(dvddatabase *pDvdDatabase)
 {
     QSettings settings("guiexample.conf");
     settings.beginGroup("libdvdetect");
     m_DVD.setSubmitter(settings.value("submitter").toString().toStdString());
-    dvdDatabase.setServerUrl(settings.value("serverurl", dvdDatabase.getServerUrl().c_str()).toString().toStdString());
-    dvdDatabase.setProxy(settings.value("proxyserver").toString().toStdString());
+    m_DVD.setScanMode((DVDSCANMODE)settings.value("scanmode", DVDSCANMODE_AUTO).toInt());
+    m_DVD.setProxy(settings.value("proxyserver").toString().toStdString());
+    if (pDvdDatabase != NULL)
+    {
+        pDvdDatabase->setServerUrl(settings.value("serverurl", pDvdDatabase->getServerUrl().c_str()).toString().toStdString());
+        pDvdDatabase->setProxy(settings.value("proxyserver").toString().toStdString());
+    }
     settings.endGroup();
 }
 
@@ -1706,3 +1740,4 @@ bool dvdexplorerdlg::isPhysicalView() const
 {
     return ui->checkBoxPhysicalView->isChecked();
 }
+

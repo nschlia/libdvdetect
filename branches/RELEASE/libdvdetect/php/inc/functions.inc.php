@@ -36,7 +36,7 @@ if (!defined('PHP_VERSION_ID'))
     define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
 }
 
-define("QUERY_SET", "idDVDVMGM, Album, AlbumArtist, Revision, RowCreationDate, Genre, Cast, Crew, Director, Country, ReleaseDate, SpecialFeatures, EAN_UPC, Storyline, Submitter, SubmitterIP, Client, Remarks, RowLastChanged, Keywords, Hash, RegionProhibited1, RegionProhibited2, RegionProhibited3, RegionProhibited4, RegionProhibited5, RegionProhibited6, RegionProhibited7, RegionProhibited8, VersionNumberMajor, VersionNumberMinor, NumberOfVolumes, VolumeNumber, SideID");
+define("QUERY_SET", "`idDVDVMGM`, `Album`, `AlbumArtist`, `Revision`, `RowCreationDate`, `Genre`, `Cast`, `Crew`, `Director`, `Country`, `ReleaseDate`, `SpecialFeatures`, `EAN_UPC`, `Storyline`, `Submitter`, `SubmitterIP`, `Client`, `Remarks`, `RowLastChanged`, `Keywords`, `Hash`, `RegionProhibited1`, `RegionProhibited2`, `RegionProhibited3`, `RegionProhibited4`, `RegionProhibited5`, `RegionProhibited6`, `RegionProhibited7`, `RegionProhibited8`, `VersionNumberMajor`, `VersionNumberMinor`, `NumberOfVolumes`, `VolumeNumber`, `SideID`, `OriginalAlbum`, `Screenplay`, `Producer`, `Editing`, `Cinematography`, `OriginalLanguage`");
 
 function connect_server()
 {

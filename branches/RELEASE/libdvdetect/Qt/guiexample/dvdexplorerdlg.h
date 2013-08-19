@@ -118,7 +118,7 @@ protected:
     int                 exportXml();
     int                 importXml();
 
-    void                loadSettings(dvddatabase & dvdDatabase);
+    void                loadSettings(dvddatabase * pDvdDatabase);
     void                updateData();
 
     bool                isPhysicalView() const;
@@ -128,6 +128,7 @@ private slots:
     void                on_actionExport_XML_triggered();
     void                on_actionImport_XML_triggered();
     void                on_actionOptions_triggered();
+    void                on_actionOpen_from_Web_triggered();
     void                on_actionExit_triggered();
     void                on_actionQuery_DVD_triggered();
     void                on_actionFind_DVD_triggered();

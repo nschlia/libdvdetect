@@ -31,7 +31,7 @@
 #include "localutils.h"
 
 xmldoc::xmldoc(const std::string &strClientName)
-    : m_eErrorCode(DVDERRORCODE_NOERROR)
+    : m_eErrorCode(DVDERRORCODE_SUCCESS)
     , m_strClientName(strClientName)
 {
 }
@@ -147,27 +147,35 @@ int xmldoc::queryText(TiXmlElement* pElement, const std::string& strNode, std::s
     return 0;
 }
 
-int xmldoc::getResponse(TiXmlHandle hRoot)
+bool xmldoc::getXmlResponse(TiXmlHandle hRoot)
 {
     TiXmlElement* pResponse = hRoot.FirstChild("response").Element();
-    int nResult = 0;
+    XMLRESULT eXmlResult = XMLRESULT_SUCCESS;
 
     if (pResponse != NULL)
     {
+        int nResult = 0;
+        pResponse->QueryIntAttribute("Result", &nResult);
+        eXmlResult = (XMLRESULT)nResult;
+
         TiXmlElement* pResponseText = pResponse->FirstChildElement("ResponseText");
+        const char *pszResponseText = NULL;
         if (pResponseText != NULL)
         {
-            const char *pszResponseText = pResponseText->GetText();
+            pszResponseText = pResponseText->GetText();
             if (pszResponseText)
             {
-                setError(pszResponseText, DVDERRORCODE_XML_RESPONSE);
+                setError(pszResponseText, eXmlResult);
             }
         }
 
-        pResponse->QueryIntAttribute("Result", &nResult);
+        if (pszResponseText == NULL)
+        {
+            setError("Error from libdvdetect server.", eXmlResult);
+        }
     }
 
-    return nResult;
+    return (eXmlResult == XMLRESULT_SUCCESS);
 }
 
 std::string xmldoc::getErrorString() const
@@ -696,30 +704,7 @@ void xmldoc::fromString(time_t * pUnixTime, const std::string & strDate) const
 
     strptime(strDate.c_str(), DVD_DATEFORMAT, &time);
 
-#if _WIN32
-    *pUnixTime = _mkgmtime(&time);
-#else
-    // Convert to GMT
-    char *tz;
-    tz = getenv("TZ");
-    if (tz)
-    {
-        tz = strdup(tz);
-    }
-    setenv("TZ", "", 1);
-    tzset();
-    *pUnixTime = mktime(&time);
-    if (tz)
-    {
-        setenv("TZ", tz, 1);
-        free(tz);
-    }
-    else
-    {
-        unsetenv("TZ");
-    }
-    tzset();
-#endif
+    *pUnixTime = getgmtime(&time);
 }
 
 void xmldoc::setError(const std::string & strErrorString, DVDERRORCODE eErrorCode)
@@ -727,4 +712,35 @@ void xmldoc::setError(const std::string & strErrorString, DVDERRORCODE eErrorCod
     m_strErrorString    = strErrorString;
     m_eErrorCode        = eErrorCode;
 }
+
+void xmldoc::setError(const std::string & strErrorString, XMLRESULT eXmlResult)
+{
+    m_strErrorString    = strErrorString;
+
+    switch (eXmlResult)
+    {
+    case XMLRESULT_SUCCESS:
+        m_eErrorCode = DVDERRORCODE_SUCCESS;
+        break;
+    case XMLRESULT_NOT_FOUND:
+        m_eErrorCode = DVDERRORCODE_NOT_FOUND;
+        break;
+    case XMLRESULT_NOT_IMPLEMENTED:
+        m_eErrorCode = DVDERRORCODE_NOT_IMPLEMENTED;
+        break;
+    case XMLRESULT_SQL_ERROR:
+        m_eErrorCode = DVDERRORCODE_SQL_ERROR;
+        break;
+    case XMLRESULT_DUPLICATE_SUBMISSION:
+        m_eErrorCode = DVDERRORCODE_DUPICLATE_SUBMISSION;
+        break;
+    case XMLRESULT_XML_ERROR:
+        m_eErrorCode = DVDERRORCODE_XML_ERROR;
+        break;
+    case XMLRESULT_UNSUPPORTED_VERSION:
+        m_eErrorCode = DVDERRORCODE_UNSUPPORTED_VERSION;
+        break;
+    }
+}
+
 

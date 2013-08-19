@@ -93,6 +93,25 @@ DLL_PUBLIC LPDVDETECTHANDLE dvdOpenLib()
     return pDvDetectHandle;
 }
 
+DLL_PUBLIC void dvdSetProxy(LPDVDETECTHANDLE pDvDetectHandle, const char * pszProxyName)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    if (pszProxyName == NULL)
+    {
+        pDvdParse->setProxy("");
+    }
+    else
+    {
+        pDvdParse->setProxy(pszProxyName);
+    }
+}
+
 DLL_PUBLIC int dvdParse(LPDVDETECTHANDLE pDvDetectHandle, const char *pszPath)
 {
     dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
@@ -643,6 +662,102 @@ DLL_PUBLIC void dvdSetDirector(LPDVDETECTHANDLE pDvDetectHandle, const char * ps
     pDvdParse->setDirector(pszDirector);
 }
 
+DLL_PUBLIC const char *dvdGetScreenplay(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getScreenplay().c_str());
+}
+
+DLL_PUBLIC void dvdSetScreenplay(LPDVDETECTHANDLE pDvDetectHandle, const char * pszScreenplay)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setScreenplay(pszScreenplay);
+}
+
+DLL_PUBLIC const char *dvdGetProducer(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getProducer().c_str());
+}
+
+DLL_PUBLIC void dvdSetProducer(LPDVDETECTHANDLE pDvDetectHandle, const char * pszProducer)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setProducer(pszProducer);
+}
+
+DLL_PUBLIC const char *dvdGetEditing(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getEditing().c_str());
+}
+
+DLL_PUBLIC void dvdSetEditing(LPDVDETECTHANDLE pDvDetectHandle, const char * pszEditing)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setEditing(pszEditing);
+}
+
+DLL_PUBLIC const char *dvdGetCinematography(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getCinematography().c_str());
+}
+
+DLL_PUBLIC void dvdSetCinematography(LPDVDETECTHANDLE pDvDetectHandle, const char * pszCinematography)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setCinematography(pszCinematography);
+}
+
 DLL_PUBLIC const char *dvdGetCountry(LPDVDETECTHANDLE pDvDetectHandle)
 {
     dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
@@ -665,6 +780,30 @@ DLL_PUBLIC void dvdSetCountry(LPDVDETECTHANDLE pDvDetectHandle, const char * psz
     }
 
     pDvdParse->setCountry(pszCountry);
+}
+
+DLL_PUBLIC const char *dvdGetOriginalLanguage(LPDVDETECTHANDLE pDvDetectHandle)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return NULL;
+    }
+
+    return strdup(pDvdParse->getOriginalLanguage().c_str());
+}
+
+DLL_PUBLIC void dvdSetOriginalLanguage(LPDVDETECTHANDLE pDvDetectHandle, const char * pszOriginalLanguage)
+{
+    dvdparse *pDvdParse = getSafeDvdParse(pDvDetectHandle);
+
+    if (pDvdParse == NULL)
+    {
+        return;
+    }
+
+    pDvdParse->setOriginalLanguage(pszOriginalLanguage);
 }
 
 DLL_PUBLIC const char *dvdGetReleaseDate(LPDVDETECTHANDLE pDvDetectHandle)

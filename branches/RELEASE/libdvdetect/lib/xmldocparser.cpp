@@ -56,12 +56,18 @@ void xmldocparser::getDvdAttributes(TiXmlElement* pDVD, dvdparse *pDvdParse) con
     pDvdParse->setRevision(nRevision);
 
     queryText(pDVD, "Album", &pDvdParse->m_strAlbum);
+    queryText(pDVD, "OriginalAlbum", &pDvdParse->m_strOriginalAlbum);
     queryText(pDVD, "AlbumArtist", &pDvdParse->m_strAlbumArtist);
     queryText(pDVD, "Genre", &pDvdParse->m_strGenre);
     queryText(pDVD, "Cast", &pDvdParse->m_strCast);
     queryText(pDVD, "Crew", &pDvdParse->m_strCrew);
     queryText(pDVD, "Director", &pDvdParse->m_strDirector);
+    queryText(pDVD, "Screenplay", &pDvdParse->m_strScreenplay);
+    queryText(pDVD, "Producer", &pDvdParse->m_strProducer);
+    queryText(pDVD, "Editing", &pDvdParse->m_strEditing);
+    queryText(pDVD, "Cinematography", &pDvdParse->m_strCinematography);
     queryText(pDVD, "Country", &pDvdParse->m_strCountry);
+    queryText(pDVD, "OriginalLanguage", &pDvdParse->m_strOriginalLanguage);
     queryText(pDVD, "ReleaseDate", &pDvdParse->m_strReleaseDate);
     queryText(pDVD, "SpecialFeatures", &pDvdParse->m_strSpecialFeatures);
     queryText(pDVD, "EAN_UPC", &pDvdParse->m_strEAN_UPC);
@@ -229,7 +235,7 @@ int xmldocparser::parseAudioStreams(TiXmlElement* pTitle, dvdtitle *pDvdTitle)
 
                 pAudioStream->QueryValueAttribute("Number", &wNumber);
 
-                if (wNumber > 0 && wNumber < DVDVTS_MAXAUDIOSTREAM)
+                if (wNumber > 0 && wNumber <= DVDVTS_MAXAUDIOSTREAM)
                 {
                     pDvdTitle->m_DVDVTS.m_wAudioStreamCountVTS++;
                     getAudioStreamAttributes(pAudioStream, &pDvdTitle->m_DVDVTS.m_AudioStreamVTS[wNumber - 1]);
@@ -306,7 +312,7 @@ int xmldocparser::parseAudioStreamExs(TiXmlElement* pDVD, dvdtitle *pDvdTitle)
 
                 pAudioStreamEx->QueryValueAttribute("Number", &wNumber);
 
-                if (wNumber > 0 && wNumber < DVDVTS_MAXAUDIOSTREAM)
+                if (wNumber > 0 && wNumber <= DVDVTS_MAXAUDIOSTREAM)
                 {
                     getAudioStreamExAttributes(pAudioStreamEx, &pDvdTitle->m_DVDVTS.m_AudioStreamExVTS[wNumber - 1]);
                 }
@@ -396,7 +402,7 @@ int xmldocparser::parseSubpicStreams(TiXmlElement* pTitle, dvdtitle *pDvdTitle)
 
                 pSubpicStream->QueryValueAttribute("Number", &wNumber);
 
-                if (wNumber > 0 && wNumber < DVDVTS_MAXSUBPICSTREAM)
+                if (wNumber > 0 && wNumber <= DVDVTS_MAXSUBPICSTREAM)
                 {
                     pDvdTitle->m_DVDVTS.m_wSubpicStreamCountVTS++;
                     getSubpicStreamAttributes(pSubpicStream, &pDvdTitle->m_DVDVTS.m_SubpicStreamVTS[wNumber - 1]);
@@ -728,10 +734,9 @@ int xmldocparser::parseXml(const std::string & strXML, XMLMODE & eXmlMode, dvdpa
         // save this for later
         hRoot  =  TiXmlHandle(pRoot);
 
-        res = getResponse(hRoot);
-        if (res)
+        if (!getXmlResponse(hRoot))
         {
-            throw res;
+            throw -1;
         }
 
         for (TiXmlElement* pDVD = hRoot.FirstChild("DVD").Element(); pDVD != NULL; pDVD = pDVD->NextSiblingElement("DVD"))
@@ -842,7 +847,10 @@ int xmldocparser::parseXmlResponse(const std::string & strXML, XMLMODE & eXmlMod
         pRoot->QueryIntAttribute("XmlMode", &nXmlMode);
         eXmlMode = (XMLMODE)nXmlMode;
 
-        res = getResponse(TiXmlHandle(pRoot));
+        if (!getXmlResponse(TiXmlHandle(pRoot)))
+        {
+            throw -1;
+        }
     }
     catch (int _res)
     {

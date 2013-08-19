@@ -35,10 +35,22 @@
 
 #define SERVER_URL      "http://db.dvdetect.de/"
 
-dvddatabase::dvddatabase(const std::string &strClientName) :
-    m_eErrorCode(DVDERRORCODE_NOERROR),
+dvddatabase::dvddatabase(const std::string &strClientName,
+                         void *  (*openFile)(const char *, const char *, const char *),
+                         size_t  (*readFile)(void*, size_t, size_t, void*),
+                         int     (*writeFile)(const void*, size_t, size_t, void*),
+                         int     (*closeFile)(void *),
+                         int     (*statFile)(const char *, LPDVDFILESTAT, const char *),
+                         int     (*fstatFile)(void*, LPDVDFILESTAT)) :
+    m_eErrorCode(DVDERRORCODE_SUCCESS),
     m_strServerUrl(SERVER_URL),
-    m_strClientName(strClientName)
+    m_strClientName(strClientName),
+    m_pOpenFile(openFile),
+    m_pReadFile(readFile),
+    m_pWriteFile(writeFile),
+    m_pCloseFile(closeFile),
+    m_pStatFile(statFile),
+    m_pFstatFile(fstatFile)
 {
 }
 
@@ -80,11 +92,11 @@ int dvddatabase::query(dvdparselst *pLstDvdParse, const dvdparse * pDvdParse)
     if (!res)
     {
 #ifdef DEBUG
-        FILE *fpo = fopen("query.out.xml", "wt");
+        void *fpo = m_pOpenFile("query.out.xml", "wt", m_strProxy.c_str());
         if (fpo != NULL)
         {
-            fprintf(fpo, "%s", strXML.c_str());
-            fclose(fpo);
+            m_pWriteFile(strXML.c_str(), 1, strXML.size(), fpo);
+            m_pCloseFile(fpo);
         }
 #endif
 
@@ -100,11 +112,11 @@ int dvddatabase::query(dvdparselst *pLstDvdParse, const dvdparse * pDvdParse)
         if (res == 200)
         {
 #ifdef DEBUG
-            FILE *fpo = fopen("query.xml", "wt");
+            void *fpo = m_pOpenFile("query.xml", "wt", m_strProxy.c_str());
             if (fpo != NULL)
             {
-                fprintf(fpo, "%s", httpServer.getContent().c_str());
-                fclose(fpo);
+                m_pWriteFile(httpServer.getContent().c_str(), 1, httpServer.getContent().size(), fpo);
+                m_pCloseFile(fpo);
             }
 #endif
             res = 0;
@@ -144,11 +156,11 @@ int dvddatabase::search(dvdparselst *pLstDvdParse, const std::string & strSearch
     if (!res)
     {
 #ifdef DEBUG
-        FILE *fpo = fopen("search.out.xml", "wt");
+        void *fpo = m_pOpenFile("search.out.xml", "wt", m_strProxy.c_str());
         if (fpo != NULL)
         {
-            fprintf(fpo, "%s", strXML.c_str());
-            fclose(fpo);
+            m_pWriteFile(strXML.c_str(), 1, strXML.size(), fpo);
+            m_pCloseFile(fpo);
         }
 #endif
         http httpServer;
@@ -163,11 +175,11 @@ int dvddatabase::search(dvdparselst *pLstDvdParse, const std::string & strSearch
         if (res == 200)
         {
 #ifdef DEBUG
-            FILE *fpo = fopen("search.xml", "wt");
+            void *fpo = m_pOpenFile("search.xml", "wt", m_strProxy.c_str());
             if (fpo != NULL)
             {
-                fprintf(fpo, "%s", httpServer.getContent().c_str());
-                fclose(fpo);
+                m_pWriteFile(httpServer.getContent().c_str(), 1, httpServer.getContent().size(), fpo);
+                m_pCloseFile(fpo);
             }
 #endif
             res = 0;
@@ -227,11 +239,11 @@ int dvddatabase::submit(const dvdparselst *pLstDvdParse)
 
 
 #ifdef DEBUG
-        FILE *fpo = fopen("submit.out.xml", "wt");
+        void *fpo = m_pOpenFile("submit.out.xml", "wt", m_strProxy.c_str());
         if (fpo != NULL)
         {
-            fprintf(fpo, "%s\n", strXML.c_str());
-            fclose(fpo);
+            m_pWriteFile(strXML.c_str(), 1, strXML.size(), fpo);
+            m_pCloseFile(fpo);
         }
 #endif
 
@@ -240,11 +252,11 @@ int dvddatabase::submit(const dvdparselst *pLstDvdParse)
         if (res == 200)
         {
 #ifdef DEBUG
-            fpo = fopen("submit.xml", "wt");
+            fpo = m_pOpenFile("submit.xml", "wt", m_strProxy.c_str());
             if (fpo != NULL)
             {
-                fprintf(fpo, "%s", httpServer.getContent().c_str());
-                fclose(fpo);
+                m_pWriteFile(httpServer.getContent().c_str(), 1, httpServer.getContent().size(), fpo);
+                m_pCloseFile(fpo);
             }
 #endif
             res = 0;
@@ -270,12 +282,10 @@ int dvddatabase::submit(const dvdparselst *pLstDvdParse)
 
 int dvddatabase::read(dvdparselst *pLstDvdParse, const std::string & strInFile)
 {
-    string strShortFilePath(getWin32ShortFilePath(strInFile));
     int res = 0;
+    DVDFILESTAT filestat;
 
-    struct stat buf;
-
-    std::FILE *fpi = std::fopen(strShortFilePath.c_str(), "rb");
+    void *fpi = m_pOpenFile(strInFile.c_str(), "rb", m_strProxy.c_str());
     if (fpi == NULL)
     {
         std::string strError = "Error opening file: " + strInFile + "\n";
@@ -283,7 +293,7 @@ int dvddatabase::read(dvdparselst *pLstDvdParse, const std::string & strInFile)
         setError(strError, DVDERRORCODE_FILEOPEN);
         res = -1;
     }
-    else if (stat(strShortFilePath.c_str(), &buf) == -1) // fstat(fileno(fpi), &buf) == -1)
+    else if (m_pStatFile(strInFile.c_str(), &filestat, m_strProxy.c_str()) == -1)
     {
         std::string strError = "Cannot stat file: " + strInFile + "\n";
         strError += strerror(errno);
@@ -292,11 +302,11 @@ int dvddatabase::read(dvdparselst *pLstDvdParse, const std::string & strInFile)
     }
     else
     {
-        char *pszData = new char [buf.st_size];
+        char *pszData = new char [filestat.m_qwFileSize];
         if (pszData != NULL)
         {
-            memset(pszData, 0, buf.st_size);
-            if (std::fread(pszData, 1, buf.st_size, fpi) != (size_t)buf.st_size)
+            memset(pszData, 0, filestat.m_qwFileSize);
+            if (m_pReadFile(pszData, 1, filestat.m_qwFileSize, fpi) != (size_t)filestat.m_qwFileSize)
             {
                 std::string strError = "Error reading file: " + strInFile + "\n";
                 strError += strerror(errno);
@@ -325,7 +335,7 @@ int dvddatabase::read(dvdparselst *pLstDvdParse, const std::string & strInFile)
 
     if (fpi != NULL)
     {
-        std::fclose(fpi);
+        m_pCloseFile(fpi);
     }
 
     return res;
@@ -352,8 +362,7 @@ int dvddatabase::write(const dvdparselst *pLstDvdParse, const std::string & strO
 
     if (!res)
     {
-        std::FILE *fpo = NULL;
-        fpo = std::fopen(getWin32ShortFilePath(strOutFile).c_str(), "wb");
+        void *fpo = m_pOpenFile(strOutFile.c_str(), "wb", m_strProxy.c_str());
         if (fpo == NULL)
         {
             std::string strError = "Error opening file: " + strOutFile + "\n";
@@ -363,8 +372,8 @@ int dvddatabase::write(const dvdparselst *pLstDvdParse, const std::string & strO
         }
         else
         {
-            std::fwrite(strXML.c_str(), 1, strXML.size(), fpo);
-            std::fclose(fpo);
+            m_pWriteFile(strXML.c_str(), 1, strXML.size(), fpo);
+            m_pCloseFile(fpo);
         }
     }
 
@@ -406,6 +415,11 @@ const std::string & dvddatabase::getClientName() const
 void dvddatabase::setProxy(const std::string & strProxy)
 {
     m_strProxy = strProxy;
+}
+
+string dvddatabase::getProxy() const
+{
+    return m_strProxy;
 }
 
 const std::string & dvddatabase::getServerUrl() const

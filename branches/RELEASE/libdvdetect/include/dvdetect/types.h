@@ -68,6 +68,68 @@
 
 // -------------------------------------------------------------------------------------------------------
 
+#define DVD_SECTOR_SIZE      	2048
+#define DVD_MAX_VOB            	9
+#define DVD_MAX_VOB_SIZE     	((1024*1024*1024) - DVD_SECTOR_SIZE)    // = 1.073.739.776 bytes
+
+/*! If the submitter name is set to this value, it will never be written
+ * into the database. In fact it will be treated like NULL. This can be
+ * used to mark it in xml to be changed.
+ */
+#define DEFSUBMITTER         	"***ChangeMe!***"
+
+// -------------------------------------------------------------------------------------------------------
+
+//! DVD error code
+/*!
+ * DVD error codes that can be used for localised messages.
+ */
+typedef enum
+{
+    DVDERRORCODE_SUCCESS,                       //!< Success/no error
+    DVDERRORCODE_DIROPEN,                       //!< Error opening directory
+    DVDERRORCODE_FILEOPEN,                      //!< Error opening file
+    DVDERRORCODE_FILESTAT,                      //!< Error getting file status
+    DVDERRORCODE_FILEREAD,                      //!< Error reading file
+    DVDERRORCODE_OPEN_DVD,                      //!< Error opening DVD
+    DVDERRORCODE_VMG_IFO,                       //!< Error reading video manager IFO
+    DVDERRORCODE_VTS_IFO,                       //!< Error reading video title set IFO
+    DVDERRORCODE_EMPTY_PATH,                    //!< Path empty
+    DVDERRORCODE_NOT_IMPLEMENTED,               //!< Function not implemented
+    DVDERRORCODE_NOT_INITIALISED,               //!< Class not initialised
+    DVDERRORCODE_INVALID_PARAMETER,             //!< Invalid parameter
+    DVDERRORCODE_INTERNAL_ERROR,                //!< libdvdetect internal error
+    DVDERRORCODE_HTML_ERROR,                    //!< HTML error (see text for details)
+    DVDERRORCODE_XML_ERROR,                     //!< XML error (see text for details)
+    DVDERRORCODE_XML_WRONG_MODE,                //!< Wrong XML mode
+    DVDERRORCODE_XML_UNKNOWN_MODE,              //!< Unknown XML mode
+    DVDERRORCODE_XML_INCONSISTENT_DATA,         //!< Inconsistent data in XML (see text for details)
+    DVDERRORCODE_XML_RESPONSE,                  //!< Response (error text verbatim as send from server)
+    DVDERRORCODE_XML_UNSUPPORTED_VERSION,       //!< XML protocol version not supported
+    DVDERRORCODE_NOT_FOUND,                     //!< DVD not found
+    DVDERRORCODE_SQL_ERROR,                     //!< SQL error
+    DVDERRORCODE_DUPICLATE_SUBMISSION,          //!< Duplicate submission
+    DVDERRORCODE_UNSUPPORTED_VERSION            //!< Unsupported protocol version
+
+} DVDERRORCODE, *LPDVDERRORCODE;
+
+typedef const DVDERRORCODE* LPCDVDERRORCODE;
+
+// -------------------------------------------------------------------------------------------------------
+
+typedef enum
+{
+    DVDSCANMODE_INVALID,                        //!< Invalid mode
+    DVDSCANMODE_FULL,                           //!< Perform full scan
+    DVDSCANMODE_FAST,                           //!< Perform fast scan
+    DVDSCANMODE_AUTO                            //!< Automatically use best mode
+
+} DVDSCANMODE, *LPDVDSCANMODE;
+
+typedef const DVDSCANMODE* LPCDVDSCANMODE;
+
+// -------------------------------------------------------------------------------------------------------
+
 //! Video attributes
 /*!
  * Coding mode: MPEG1 or MPEG2
@@ -156,7 +218,7 @@ typedef struct
 
 } DVDVIDEOSTREAM, *LPDVDVIDEOSTREAM;
 
-typedef const DVDVIDEOSTREAM* LPCDVDVIDEOSTREAM; 
+typedef const DVDVIDEOSTREAM* LPCDVDVIDEOSTREAM;
 
 // -------------------------------------------------------------------------------------------------------
 
@@ -663,6 +725,53 @@ typedef struct
 } DVDFILE, *LPDVDFILE;
 
 typedef const DVDFILE* LPCDVDFILE;
+
+// -------------------------------------------------------------------------------------------------------
+
+//! File status
+/*!
+ * File status information
+ */
+typedef struct
+{
+    uint64_t    m_qwFileSize;           //!< total size, in bytes
+    time_t      m_FileTime;             //!< time of last modification
+    bool        m_bIsDirectory;         //!< is a directory
+
+} DVDFILESTAT, *LPDVDFILESTAT;
+
+typedef const DVDFILESTAT* LPCDVDFILESTAT;
+
+// -------------------------------------------------------------------------------------------------------
+
+typedef enum
+{
+    XMLMODE_INVALID,                    //!< Invalid query
+    XMLMODE_QUERY,                      //!< Query DVD
+    XMLMODE_QUERY_RESPONSE,             //!< Response
+    XMLMODE_SEARCH,                     //!< Search DVD
+    XMLMODE_SEARCH_RESPONSE,            //!< Response
+    XMLMODE_SUBMIT,                     //!< Submit DVD
+    XMLMODE_SUBMIT_RESPONSE,            //!< Response
+    XMLMODE_EXPORT                      //!< Export DVD
+
+} XMLMODE, *LPXMLMODE;
+
+typedef const XMLMODE* LPCXMLMODE;      //!< constant version
+
+typedef enum
+{
+    XMLRESULT_SUCCESS,                  //!< Success
+    XMLRESULT_NOT_FOUND,                 //!< Query not successful
+    XMLRESULT_NOT_IMPLEMENTED,          //!< Not implemented
+    XMLRESULT_SQL_ERROR,                //!< SQL error, description see error string
+    XMLRESULT_DUPLICATE_SUBMISSION,     //!< DBD already in database
+    XMLRESULT_XML_ERROR,                //!< XML error, description see error string
+    XMLRESULT_UNSUPPORTED_VERSION       //!< Unsupported XML version
+
+} XMLRESULT, *LPXMLRESULT;
+
+typedef const XMLRESULT* LPCXMLRESULT;  //!< constant version
 
 // -------------------------------------------------------------------------------------------------------
 

@@ -139,7 +139,7 @@ static void usage()
     cout << "Usage:" << endl << endl;
     cout << pszProgramName << " [-x] -d PATH-TO-DVD   list DVD structure" << endl;
     cout << pszProgramName << " -x proxy:port         enable proxy" << endl;
-    cout << pszProgramName << " -o filename.xml       export structur to xml" << endl;
+    cout << pszProgramName << " -o filename.xml       export structure to xml" << endl;
     cout << pszProgramName << " -h                    show help" << endl;
     cout << endl;
 
@@ -272,6 +272,13 @@ int main(int argc, char *argv[])
     }
 
     dvdparse DVD;
+
+    if (bUseProxy)
+    {
+        cout << "Using proxy server: " << strProxy << endl;
+        DVD.setProxy(strProxy);
+    }
+
     res = DVD.parse(strPath);
 
     if (res == 0)
@@ -283,7 +290,6 @@ int main(int argc, char *argv[])
 
         if (bUseProxy)
         {
-            cout << "Using proxy server: " << strProxy << endl;
             dvdDatabase.setProxy(strProxy);
         }
 

@@ -36,12 +36,17 @@ editoptionsdlg::editoptionsdlg(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->comboBoxScanMode->addItem(tr("Full Scan"), DVDSCANMODE_FULL);
+    ui->comboBoxScanMode->addItem(tr("Fast Scan"), DVDSCANMODE_FAST);
+    ui->comboBoxScanMode->addItem(tr("Automatic Scan Mode"), DVDSCANMODE_AUTO);
+
     QSettings settings("guiexample.conf");
 
     settings.beginGroup("libdvdetect");
 
     dvddatabase dvdDatabase(PROGRAM_NAME);
 
+    ui->comboBoxScanMode->setCurrentIndex(ui->comboBoxScanMode->findData(settings.value("scanmode", DVDSCANMODE_AUTO)));
     ui->lineEditDVDetectSubmitter->setText(settings.value("submitter", DEFSUBMITTER).toString());
     ui->lineEditDVDetectServerName->setText(settings.value("serverurl", dvdDatabase.getServerUrl().c_str()).toString());
     ui->lineEditDVDetectProxyServer->setText(settings.value("proxyserver").toString());
@@ -60,6 +65,7 @@ void editoptionsdlg::on_buttonBox_accepted()
 
     settings.beginGroup("libdvdetect");
 
+    settings.setValue("scanmode", ui->comboBoxScanMode->itemData(ui->comboBoxScanMode->currentIndex()));
     settings.setValue("submitter", ui->lineEditDVDetectSubmitter->text());
     settings.setValue("serverurl", ui->lineEditDVDetectServerName->text());
     settings.setValue("proxyserver", ui->lineEditDVDetectProxyServer->text());

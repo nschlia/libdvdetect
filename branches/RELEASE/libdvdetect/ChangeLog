@@ -1,8 +1,8 @@
-2012-05-02 nschlia V0.10
+2013-05-02 nschlia V0.10
 
   * Created
 
-2012-06-09 nschlia V0.20
+2013-06-09 nschlia V0.20
 
   * Bugfix: Removed VS2010 solution from distribution (not ready for release yet.
       BTW it is perfectly OK to use the regular gcc compiled dll with VS projects anyways).
@@ -19,7 +19,7 @@
   * Bugfix: File sizes corrected (should use unit size instead of cell size)
   * Bugfix: "Full scan" (AKA really check files on disk) was not completely implemented...
 
-2012-06-15 nschlia V0.21
+2013-06-15 nschlia V0.21
 
   * Bugfix: fix crash when more virtual titles exist than defined by video manager (DVD authoring flaw)
       Happened e.g. with "King of Queens" Season 5 Disk 3 (seven virtual titles in VMG, but eight on disk)
@@ -29,7 +29,7 @@
   * Changed Qt example dialog name from expressionless "MainWindow" to better matching "dvdexplorerdlg"
   * Bugfix: Title menu VOBs were duplicate in full scan
   
-2012-06-29 nschlia V0.30
+2013-06-29 nschlia V0.30
 
   * Bugfix: sealed memory leak in getString function
   * Bugfix: closed memory leak in Qt example
@@ -48,7 +48,7 @@
   * Implemented DVD data editing inside GUI example
   * Added cygwin support
 
-2012-08-03 nschlia V0.40
+2013-08-03 nschlia V0.40
 
 TOTALLY REVAMPED XML FORMAT!
 
@@ -94,10 +94,36 @@ should be gracefully rejected, but do not rely on that...
   * Added missing dvdGetFileName function
   * Optimised error handling (quite a few problems got by unreported)
 
-2012-08-XX nschlia V0.50
+2013-08-XX nschlia V0.50
 
-PLANNED FOR NEXT RELEASE:
+Living in the past: All releases in this document were dated back to 2012, but I guess the year already is 2013. 
+So the dates were corrected.
+
+  * Added missing fields that proved to be useful: `OriginalAlbum`, `Screenplay`, `Producer`, `Editing`, 
+    `Cinematography`, `OriginalLanguage`
+  * Changed `Cast` field type from varchar(120) to text (needs more space)
+  * Bugfix: `OriginalAlbum` database field changed from char(120) to varchar(120)
+  * Qt Example: Edit dialog's QTreeView was missing "Line Wrap" attribute (e.g. cast list needs that)
+  * Qt Example: Edit dialog's submitter name cannot be edited, set to read-only
+  * Bugfix: Submitter was always overwritten with default submitter "***ChangeMe!***"
+  * Added option to do full scan automatically (can be never, always or auto). Auto means full scan will
+    not be done on web sources to speed up the process.
+  * Qt Example: Added option to select scan mode (see options dialog).
+  * Bugfix: Full scan could not be deselected
+  * Bugfix: File time/size for BUP files were empty when not full in scan
+  * Bugfix: IPv6 was not properly handled. According to RFC, the client should fall back to IPv4 if IPv6
+    was available, but failed. This will now be done: Try IPv6 first, resort to IPv4 if it fails.
+  * Bugfix: Only 7 audio/subpicture streams possible (instead of 8), it was possible to add such DVDs to the 
+    database but queries failed with an error.
+  * Added new error code for DVD not found (see DVDERRORCODE enum). Allows to distinguish between real errors
+    and simply no DVD found.
+
+TODO:
 
   * If a submitter re-submits the same DVD, the database gets updated instead of creating a new revision.
     This avoids creating several revisions with minor changes.
+
+2013-XX-XX nschlia V0.50
+
+PLANNED FOR NEXT RELEASE:
 

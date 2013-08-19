@@ -66,6 +66,11 @@ void editdetailsdlg::setParser(dvdparse *pDVD)
     model->appendRow(aitems);
 
     aitems.clear();
+    aitems.append(getItem(tr("Original Album:")));
+    aitems.append(getItemFromStdString(m_pDVD->getOriginalAlbum(), true));
+    model->appendRow(aitems);
+
+    aitems.clear();
     aitems.append(getItem(tr("Keywords:")));
     aitems.append(getItemFromStdString(m_pDVD->getKeywords(), true));
     model->appendRow(aitems);
@@ -86,8 +91,33 @@ void editdetailsdlg::setParser(dvdparse *pDVD)
     model->appendRow(aitems);
 
     aitems.clear();
+    aitems.append(getItem(tr("Screenplay:")));
+    aitems.append(getItemFromStdString(m_pDVD->getScreenplay(), true));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Producer:")));
+    aitems.append(getItemFromStdString(m_pDVD->getProducer(), true));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Editor:")));
+    aitems.append(getItemFromStdString(m_pDVD->getEditing(), true));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Cinematographer:")));
+    aitems.append(getItemFromStdString(m_pDVD->getCinematography(), true));
+    model->appendRow(aitems);
+
+    aitems.clear();
     aitems.append(getItem(tr("Country:")));
     aitems.append(getItemFromStdString(m_pDVD->getCountry(), true));
+    model->appendRow(aitems);
+
+    aitems.clear();
+    aitems.append(getItem(tr("Original Language:")));
+    aitems.append(getItemFromStdString(m_pDVD->getOriginalLanguage(), true));
     model->appendRow(aitems);
 
     aitems.clear();
@@ -117,7 +147,7 @@ void editdetailsdlg::setParser(dvdparse *pDVD)
 
     aitems.clear();
     aitems.append(getItem(tr("Submitter:")));
-    aitems.append(getItemFromStdString(m_pDVD->getSubmitter(), true));
+    aitems.append(getItemFromStdString(m_pDVD->getSubmitter()));
     model->appendRow(aitems);
 
     aitems.clear();
@@ -187,15 +217,21 @@ void editdetailsdlg::on_buttonBox_accepted()
         return;
     }
 
-    m_pDVD->setKeywords(pModel->item(1, 1)->text().toStdString());
-    m_pDVD->setCast(pModel->item(2, 1)->text().toStdString());
-    m_pDVD->setCrew(pModel->item(3, 1)->text().toStdString());
-    m_pDVD->setDirector(pModel->item(4, 1)->text().toStdString());
-    m_pDVD->setCountry(pModel->item(5, 1)->text().toStdString());
-    m_pDVD->setReleaseDate(pModel->item(6, 1)->text().toStdString());
-    m_pDVD->setSpecialFeatures(pModel->item(7, 1)->text().toStdString());
-    m_pDVD->setEAN_UPC(pModel->item(8, 1)->text().toStdString());
-    m_pDVD->setStoryline(pModel->item(9, 1)->text().toStdString());
-    m_pDVD->setRemarks(pModel->item(10, 1)->text().toStdString());
-    m_pDVD->setSubmitter(pModel->item(11, 1)->text().toStdString());
+    m_pDVD->setOriginalAlbum(pModel->item(1, 1)->text().toStdString());
+    m_pDVD->setKeywords(pModel->item(2, 1)->text().toStdString());
+    m_pDVD->setCast(pModel->item(3, 1)->text().toStdString());
+    m_pDVD->setCrew(pModel->item(4, 1)->text().toStdString());
+    m_pDVD->setDirector(pModel->item(5, 1)->text().toStdString());
+    m_pDVD->setScreenplay(pModel->item(6, 1)->text().toStdString());
+    m_pDVD->setProducer(pModel->item(7, 1)->text().toStdString());
+    m_pDVD->setEditing(pModel->item(8, 1)->text().toStdString());
+    m_pDVD->setCinematography(pModel->item(9, 1)->text().toStdString());
+    m_pDVD->setCountry(pModel->item(10, 1)->text().toStdString());
+    m_pDVD->setOriginalLanguage(pModel->item(11, 1)->text().toStdString());
+    m_pDVD->setReleaseDate(pModel->item(12, 1)->text().toStdString());
+    m_pDVD->setSpecialFeatures(pModel->item(13, 1)->text().toStdString());
+    m_pDVD->setEAN_UPC(pModel->item(14, 1)->text().toStdString());
+    m_pDVD->setStoryline(pModel->item(15, 1)->text().toStdString());
+    m_pDVD->setRemarks(pModel->item(16, 1)->text().toStdString());
+    m_pDVD->setSubmitter(pModel->item(17, 1)->text().toStdString());
 }

@@ -35,7 +35,8 @@ SOURCES += main.cpp \
     ../../lib/localutils.cpp \
     ../../lib/xmldoc.cpp \
     ../../lib/xmldocbuilder.cpp \
-    ../../lib/xmldocparser.cpp
+    ../../lib/xmldocparser.cpp \
+    openfromwebdlg.cpp
 
 win32:SOURCES += \
     ../../win/tinyxml/tinystr.cpp \
@@ -89,7 +90,8 @@ HEADERS  += \
     ../../lib/commonwin32.h \
     ../../lib/common.h \
     ../../lib/md5/md5.h \
-    ../../include/dvdetect/vector_ptr.h
+    ../../include/dvdetect/vector_ptr.h \
+    openfromwebdlg.h
 
 win32:HEADERS  += \
     ../../win/tinyxml/tinystr.h \
@@ -115,7 +117,8 @@ FORMS    += \
     searchtextdlg.ui \
     aboutdlg.ui \
     editdetailsdlg.ui \
-    editoptionsdlg.ui
+    editoptionsdlg.ui \
+    openfromwebdlg.ui
 
 # SPÄTER WEG!
 DEFINES += BUILDING_STATIC
@@ -141,4 +144,5 @@ OTHER_FILES += \
     ../../COPYING \
     ../../INSTALL \
     ../../AUTHORS \
-    ../../ChangeLog
+    ../../ChangeLog \
+    ../../sql/dbdvdetect.mysql.data.sql

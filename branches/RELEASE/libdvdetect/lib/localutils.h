@@ -52,14 +52,28 @@ vector<TSTRING> &	split(const TSTRING & s, TCHAR delim, vector<TSTRING> & elems)
      */
 vector<TSTRING>		split(const TSTRING & s, TCHAR delim);
 
+//! Convert an IP address from string form to INET_ADDRESS.
+/*!
+ * Convert an IP address from string form to INET_ADDRESS. Returns the first address
+ * of type sa_family.
+ *
+ * \param strIP const TSTRING & IP address string
+ * \param pSocketAddr INET_ADDRESS * IP address in binary format
+ * \param sa_family ADDRESS_FAMILY
+ * \return Success: 0
+ * \return Fail: nonzero error code, see man getaddrinfo()
+ */
+int					string2IP(const TSTRING & strIP, INET_ADDRESS *pSocketAddr, ADDRESS_FAMILY sa_family);
+
 //! Convert an IP address from string form to INET_ADDRESS
 /*!
      * \param strIP const TSTRING & IP address string
-     * \param pSocketAddr INET_ADDRESS * IP address in binary format
+     * \param lstSocketAddr vector<INET_ADDRESS> & List of IP addresses in binary format (IPV6 first)
      * \return Success: 0
      * \return Fail: nonzero error code, see man getaddrinfo()
      */
-int					string2IP(const TSTRING & strIP, INET_ADDRESS *pSocketAddr);
+int					string2IP(const TSTRING & strIP, vector<INET_ADDRESS> & lstSocketAddr);
+
 
 //! Convert binary IP address to string form
 /*!
@@ -77,7 +91,7 @@ TSTRING				IP2String(const INET_ADDRESS *pSocketAddr);
      */
 TSTRING				getAppDir();
 
-#ifdef _UNICODE
+#ifdef USE_WCHAR_T
 // Prototype for conversion functions
 
 //! Convert standard string to wide string
@@ -93,6 +107,9 @@ std::wstring		stringToWString(const std::string& mbs);
      * \return Standard string
      */
 std::string			wstringToString(const std::wstring& wcs);
+#else
+#define             stringToWString(c)  c
+#define             wstringToString(c)  c
 #endif
 
 //! Pause execution
@@ -179,19 +196,6 @@ uint64_t            BCDtime(const uint8_t *ptr);
      * \return Frame rate (25 or 30)
      */
 uint16_t            frameRate(const uint8_t* ptr);
-
-#ifdef _WIN32
-//! Windows: Windoze does not support utf-8 file names. Using the short file path trick to open them anyway.
-//! other: dos nothing
-/*!
-     * \param strFilePath const string &
-     * \return Success: Short file path
-     * \return Fail: Empty string. Call GetLastError() for details.
-     */
-std::string         getWin32ShortFilePath(const string & strFilePath);
-#else
-#define             getWin32ShortFilePath
-#endif
 
 //! Get string
 /*!
@@ -280,6 +284,30 @@ template <size_t sizeout> void safecpy(char (&szDataOut)[sizeout], const char* p
     szDataOut[sizeout - 1] = '\0';
 }
 
+#ifdef _WIN32
+// Windoze "extrawurst": special treatment for Utf-16 functions
+template <size_t sizeout> bool utf8ToUtf16(wchar_t (&szDataOut)[sizeout], const char* pszDataIn)
+{
+    int result = ::MultiByteToWideChar(
+                CP_UTF8,                        // convert from UTF-8
+                MB_ERR_INVALID_CHARS,           // error on invalid chars
+                pszDataIn,                      // source UTF-8 string
+                -1,                             // automatic length
+                szDataOut,                      // destination buffer
+                sizeout                         // size of destination buffer, in wchar_ts
+                );
+
+    if (!result)
+    {
+        szDataOut[0] = '\0';
+        return false;
+    }
+
+    return true;
+}
+
+#endif
+
 //! Remove the filename from a path
 /*!
      * \param strPath std::string & Path
@@ -308,9 +336,9 @@ std::string         getDvdFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo =
  * \param i T Value to convert
  * \return String representation
  */
-template<class T> std::string toString(T i)
+template<class T> TSTRING toString(T i)
 {
-    std::stringstream ss;
+    TSTRINGSTREAM ss;
     ss << i;
     return ss.str();
 }
@@ -378,5 +406,24 @@ int unsetenv(const char *name);
  */
 char *getenv(const char *name);
 #endif
+
+//! Check if path points to a web source
+/*!
+ * Check if path points to a web source (e.g. starts with http)
+ *
+ * \param strPath const std::string & File path to check
+ * \return true if web based, false if local
+ */
+bool isUrl(const std::string & strPath);
+
+//! Get the GMT from tm struct
+/*!
+ * Get the current GMT from tm struct. This seems to be easy, but appears a bit tricky
+ * in detail when realised.
+ *
+ * \param time struct tm *
+ * \return Unix time stamp
+ */
+time_t getgmtime(struct tm *time);
 
 #endif // LOCALUTILS_H

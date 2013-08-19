@@ -166,7 +166,7 @@ protected:
     }
     int                     queryText(TiXmlElement* pElement, const std::string& strNode, std::string * pstrValue) const;
 
-    int                 	getResponse(TiXmlHandle hRoot);
+    bool                    getXmlResponse(TiXmlHandle hRoot);
 
     // Video
     std::string         	valueToString(DVDVIDEOCODINGMODE eDvdVideoCodingMode) const;
@@ -222,6 +222,7 @@ protected:
     void                    fromString(time_t *pUnixTime, const std::string & strDate) const;
 
     void                    setError(const std::string & strErrorString, DVDERRORCODE eErrorCode);
+    void                    setError(const std::string & strErrorString, XMLRESULT eXmlResult);
 
 protected:
     std::string         	m_strErrorString;			//!< Last error as clear text (English)

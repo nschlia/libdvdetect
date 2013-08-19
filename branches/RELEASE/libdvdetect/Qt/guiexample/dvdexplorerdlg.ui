@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>libDVDetect Explorer</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedKingdom"/>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -176,7 +179,7 @@
      <x>0</x>
      <y>0</y>
      <width>990</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -184,6 +187,7 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
+    <addaction name="actionOpen_from_Web"/>
     <addaction name="actionExport_XML"/>
     <addaction name="actionImport_XML"/>
     <addaction name="separator"/>
@@ -322,6 +326,14 @@
    </property>
    <property name="shortcut">
     <string>Alt+I</string>
+   </property>
+  </action>
+  <action name="actionOpen_from_Web">
+   <property name="text">
+    <string>Open from &amp;Web</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
    </property>
   </action>
  </widget>

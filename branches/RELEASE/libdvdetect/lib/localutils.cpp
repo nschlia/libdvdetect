@@ -54,13 +54,42 @@ vector<TSTRING> split(const TSTRING & s, TCHAR delim)
     return split(s, delim, elems);
 }
 
-int string2IP(const TSTRING & strIP, INET_ADDRESS *pSocketAddr)
+int	string2IP(const TSTRING & strIP, INET_ADDRESS *pSocketAddr, ADDRESS_FAMILY sa_family)
+{
+    vector<INET_ADDRESS> lstSocketAddr;
+    int res = string2IP(strIP, lstSocketAddr);
+    if (res)
+    {
+        return res;
+    }
+
+    res = -1;
+
+    memset(pSocketAddr, 0, sizeof(INET_ADDRESS));
+
+    for (std::vector<INET_ADDRESS>::iterator it = lstSocketAddr.begin() ; it != lstSocketAddr.end(); ++it)
+    {
+        if ((*it).sa_family != sa_family)
+        {
+            continue;
+        }
+
+        memcpy(pSocketAddr, &(*it), sizeof(INET_ADDRESS));
+
+        res = 0;
+
+        break;
+    }
+
+    return res;
+}
+
+int string2IP(const TSTRING & strIP, vector<INET_ADDRESS> & lstSocketAddr)
 {
     TADDRINFO *pResult = NULL;
     TADDRINFO hints;
     int iResult = 0;
 
-    memset(pSocketAddr, 0, sizeof(INET_ADDRESS));
     memset(&hints, 0, sizeof(hints));
 
     //hints.ai_flags = AI_NUMERICHOST;
@@ -76,9 +105,43 @@ int string2IP(const TSTRING & strIP, INET_ADDRESS *pSocketAddr)
 
     if (iResult == 0 && pResult != NULL)
     {
-        pSocketAddr->iAddrLen = pResult->ai_addrlen;
-        memcpy(&pSocketAddr->addr, pResult->ai_addr, pSocketAddr->iAddrLen);
-        pSocketAddr->sa_family = pResult->ai_addr->sa_family;
+        // Collect IPv6 addresses
+        for (TADDRINFO *p = pResult; p != NULL; p = p->ai_next)
+        {
+            if (p->ai_addr->sa_family != AF_INET6)
+            {
+                continue;
+            }
+
+            INET_ADDRESS socketAddr;
+
+            memset(&socketAddr, 0, sizeof(INET_ADDRESS));
+
+            socketAddr.iAddrLen = p->ai_addrlen;
+            memcpy(&socketAddr.addr, p->ai_addr, socketAddr.iAddrLen);
+            socketAddr.sa_family = p->ai_addr->sa_family;
+
+            lstSocketAddr.push_back(socketAddr);
+        }
+
+        // Collect IPv4 addresses
+        for (TADDRINFO *p = pResult; p != NULL; p = p->ai_next)
+        {
+            if (p->ai_addr->sa_family != AF_INET)
+            {
+                continue;
+            }
+
+            INET_ADDRESS socketAddr;
+
+            memset(&socketAddr, 0, sizeof(INET_ADDRESS));
+
+            socketAddr.iAddrLen = p->ai_addrlen;
+            memcpy(&socketAddr.addr, p->ai_addr, socketAddr.iAddrLen);
+            socketAddr.sa_family = p->ai_addr->sa_family;
+
+            lstSocketAddr.push_back(socketAddr);
+        }
     }
 
     if (pResult != NULL)
@@ -150,7 +213,7 @@ TSTRING	getAppDir()
 #endif
 }
 
-#ifdef _UNICODE
+#ifdef USE_WCHAR_T
 
 std::wstring stringToWString(const std::string& mbs)
 {
@@ -321,7 +384,7 @@ std::string uriEncode(const std::string & sSrc)
     return sResult;
 }
 
-#ifdef _UNICODE
+#ifdef USE_WCHAR_T
 
 TSTRING	uriDecode(const TSTRING & sSrc)
 {
@@ -451,75 +514,6 @@ uint16_t frameRate(const uint8_t * ptr)
     return wFrameRate;
 }
 
-#ifdef _WIN32
-// Windoze does not support utf-8 file names. Using the short file path trick to open them anyway.
-
-std::string getWin32ShortFilePath(const string& strFilePath)
-{
-    wchar_t szLongName[MAX_PATH];
-    wchar_t szShortName[MAX_PATH];
-    char szShortName2[MAX_PATH];
-
-    int result1 = ::MultiByteToWideChar(
-                CP_UTF8,                        // convert from UTF-8
-                MB_ERR_INVALID_CHARS,           // error on invalid chars
-                strFilePath.c_str(),            // source UTF-8 string
-                -1,                             // automatic length
-                szLongName,                     // destination buffer
-                MAX_PATH                        // size of destination buffer, in wchar_ts
-                );
-
-    if (!result1)
-    {
-        return "";
-    }
-
-    DWORD result2 = ::GetShortPathNameW(
-                szLongName,
-                szShortName,
-                MAX_PATH
-                );
-
-    //DWORD dwError =  GetLastError();
-
-    if (!result2)
-    {
-        // Try to use real name, normally this happens only if file was not found
-        return strFilePath;
-    }
-
-    //
-    // WC_ERR_INVALID_CHARS flag is set to fail if invalid input character
-    // is encountered.
-    // This flag is supported on Windows Vista and later.
-    // Don't use it on Windows XP and previous.
-    //
-
-#if (WINVER >= 0x0600)
-    DWORD dwConversionFlags = WC_ERR_INVALID_CHARS;
-#else
-    DWORD dwConversionFlags = 0;
-#endif
-
-    int result3 = ::WideCharToMultiByte(
-                CP_UTF8,                    // convert to UTF-8
-                dwConversionFlags,          // specify conversion behavior
-                szShortName,                // source UTF-16 string
-                -1,                         // automatic length
-                szShortName2,               // destination buffer
-                MAX_PATH,                   // destination buffer size, in bytes
-                NULL, NULL                  // unused
-                );
-
-    if (!result3)
-    {
-        return "";
-    }
-
-    return szShortName2;
-}
-#endif
-
 void removeFileSpec(std::string & strPath)
 {
     std::size_t found = std::string::npos;
@@ -619,3 +613,38 @@ char *getenv(const char *name)      // Like the original: uses static buffer, no
 }
 #endif
 
+bool isUrl(const string & strPath)
+{
+    return (strPath.substr(0, sizeof("http://") - 1) == "http://");
+}
+
+time_t getgmtime(struct tm *time)
+{
+    time_t unixtime = 0;
+
+#if _WIN32
+    unixtime = _mkgmtime(time);
+#else
+    // Convert to GMT - looks a bit strange but this is the portable way
+    char *tz;
+    tz = getenv("TZ");
+    if (tz)
+    {
+        tz = strdup(tz);
+    }
+    setenv("TZ", "", 1);
+    tzset();
+    unixtime = mktime(time);
+    if (tz)
+    {
+        setenv("TZ", tz, 1);
+        free(tz);
+    }
+    else
+    {
+        unsetenv("TZ");
+    }
+    tzset();
+#endif
+    return unixtime;
+}
