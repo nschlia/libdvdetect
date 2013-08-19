@@ -1594,18 +1594,6 @@ void dvdexplorerdlg::on_actionOpen_triggered()
 {
 
     QString strDir;
-    //    strDir = "D:/mmedia/#DVD/Natfödd";
-    //    strDir = "/files/mp3base2/DVD/Musik/Finntroll/Natfödd/DVD1/";
-    strDir = "/windows/C/temp/Metal - A Headbanger's Journey/DVD1/";
-    //    strDir = "/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS";
-    //    strDir = "/files/mp3base2/DVD/Musik/Metallica/Live Shit Binge & Purge DVD 1 - San Diego/DVD1/VIDEO_TS/";
-    //    strDir = "/files/mp3base2/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS/";
-    //    strDir = "D:/temp/DVD/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS";
-    //    strDir = "T:/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1/VIDEO_TS";
-    //    strDir = "T:/DVD/Musik/Metallica/S+M DVD 1/DVD1/VIDEO_TS";
-    //    strDir = "/files/mp3base2/DVD/Serien/King of Queens/Season 5 3";
-    //    strDir = "D:/mmedia/#DVD";
-    //    strDir = "/home/norbert/Dokumente/Test/";
 
     strDir = QFileDialog::getExistingDirectory(this, tr("Open DVD drive or directory with DVD files"),
                                                strDir,
