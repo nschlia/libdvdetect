@@ -45,6 +45,12 @@ EXTRA_DIST = \
 	Qt/guiexample/editoptionsdlg.cpp \
 	Qt/guiexample/editoptionsdlg.h \
 	Qt/guiexample/editoptionsdlg.ui \
+	Qt/guiexample/openfromwebdlg.cpp \
+	Qt/guiexample/openfromwebdlg.h \
+	Qt/guiexample/openfromwebdlg.ui \
+	Qt/guiexample/openfromwebdlg.cpp \
+	Qt/guiexample/openfromwebdlg.h \
+	Qt/guiexample/openfromwebdlg.ui	\
 	Qt/guiexample/explorerutils.cpp \
 	Qt/guiexample/explorerutils.h \
 	sql/dbdvdetect.mysql.sql \
