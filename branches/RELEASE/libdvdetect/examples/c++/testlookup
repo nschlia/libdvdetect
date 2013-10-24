@@ -10,6 +10,7 @@ echo "Use \"-x proxy:port\" set proxy"
 if [ "$MACHINE" == "schleppeimer" ]
 then
   DIRECTORY="/windows/C/temp/Metal - A Headbanger's Journey/DVD1/"
+  DIRECTORY="/files/mp3base2/DVD/Musik/Summer Breeze/Summer Breeze 2012/VIDEO_TS/"
 elif [ "$MACHINE" == "develop" ] 
 then
   DIRECTORY="/windows/C/temp/Metal - A Headbanger's Journey/DVD1/"
