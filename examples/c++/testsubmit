@@ -11,7 +11,7 @@ for parm in $@
 do
   if [ "$parm" == "-i" ]
   then
-    IMPORT="-i mydvd.xml"
+    IMPORT="-i Schlachthof.xml"
   fi
   if [ "$PROXY" == "-x" ]
   then

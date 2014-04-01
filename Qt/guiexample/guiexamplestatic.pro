@@ -4,6 +4,27 @@
 #
 #-------------------------------------------------
 
+# Target: 32 or 64 bit (Windoze default is 32 bit; *nix default is 64 bit)
+!32bit:!64bit {
+    win32 {
+        message( "Setting default output to 32bit" )
+        CONFIG += "32bit"
+    }
+    else {
+        message( "Setting default output to 64bit" )
+        CONFIG += "64bit"
+    }
+}
+
+32bit {
+    MODE = 32-bit
+    BITCOUNT=32
+}
+64bit {
+    MODE = 64-bit
+    BITCOUNT=64
+}
+
 QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -18,6 +39,8 @@ SOURCES += main.cpp \
     explorerutils.cpp \
     editdetailsdlg.cpp \ 
     editoptionsdlg.cpp \
+    openfromwebdlg.cpp \
+    dvdlanguage.cpp \
     ../../lib/dvdcell.cpp \
     ../../lib/dvddatabase.cpp \
     ../../lib/dvdetectbase.cpp \
@@ -35,8 +58,7 @@ SOURCES += main.cpp \
     ../../lib/localutils.cpp \
     ../../lib/xmldoc.cpp \
     ../../lib/xmldocbuilder.cpp \
-    ../../lib/xmldocparser.cpp \
-    openfromwebdlg.cpp
+    ../../lib/xmldocparser.cpp
 
 win32:SOURCES += \
     ../../win/tinyxml/tinystr.cpp \
@@ -50,7 +72,10 @@ INCLUDEPATH += \
     ../.. \
     ../../lib \
     ../../include \
-    ../../include/dvdetect
+    ../../include/dvdetect \
+    ../../$${MODE}/ \
+    ../../$${MODE}/include \
+    ../../$${MODE}/include/dvdetect
 win32:INCLUDEPATH += \
     ../../win/tinyxml/ \
 
@@ -79,6 +104,8 @@ HEADERS  += \
     explorerutils.h \
     editdetailsdlg.h \
     editoptionsdlg.h \
+    openfromwebdlg.h \
+    dvdlanguage.h \
     ../../lib/xmldoc.h \
     ../../lib/xmldocbuilder.h \
     ../../lib/xmldocparser.h \
@@ -91,7 +118,6 @@ HEADERS  += \
     ../../lib/common.h \
     ../../lib/md5/md5.h \
     ../../include/dvdetect/vector_ptr.h \
-    openfromwebdlg.h
 
 win32:HEADERS  += \
     ../../win/tinyxml/tinystr.h \

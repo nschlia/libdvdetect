@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PATH=$PATH:/C/Qt/Qt5.0.1/Tools/mingw64/bin
+PATH=$PATH:/C/Qt/Qt5.0.1/Tools/MinGW/bin
 
 #autoscan
 #cp configure.scan configure.ac
@@ -21,7 +21,6 @@ echo automake
 automake --add-missing -a --foreign
 
 echo Doing configure
-./configure
+./configure --host=i686-pc-linux-gnu --host=i686-linux-gnu "CFLAGS=-m32" "CXXFLAGS=-m32" "LDFLAGS=-m32"
 
 make -s clean all
-

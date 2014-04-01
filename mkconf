@@ -1,6 +1,8 @@
 #!/bin/bash
 
-PATH=$PATH:/C/Qt/Qt5.0.1/Tools/MinGW/bin
+#PATH=$PATH:/C/Qt/Qt5.0.1/Tools/MinGW/bin
+#PATH=$PATH:/C/Qt/Qt5.0.1/Tools/mingw64/bin
+PATH=$PATH:/C/QtSDK/mingw/bin
 
 #autoscan
 #cp configure.scan configure.ac
@@ -23,4 +25,4 @@ automake --add-missing -a --foreign
 echo Doing configure
 ./configure
 
-make -s clean all
+# http://lists.gnu.org/archive/html/automake/2008-09/msg00075.html

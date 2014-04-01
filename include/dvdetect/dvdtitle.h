@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ public:
      *  \return Success: Pointer to dvdpgc class
      *  \return Fail: NULL if wProgramChainNo out of bounds.
      */
-    dvdpgc *getDvdPgc(uint16_t wProgramChainNo) const;
+    dvdpgc *            getDvdPgc(uint16_t wProgramChainNo) const;
 
     //! Get the number of program chains (PGC) in this title set.
     /*!

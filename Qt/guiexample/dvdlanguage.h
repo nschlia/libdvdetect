@@ -17,35 +17,47 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file aboutdlg.h
+/** \file 
  *
- *  \brief Qt GUI about dialog code
+ *  \brief 
  */
 
 #pragma once
 
-#ifndef ABOUTDLG_H
-#define ABOUTDLG_H
+#ifndef DVDLANGUAGE_H
+#define DVDLANGUAGE_H
 
-#include <QDialog>
+#include <QObject>
 
-namespace Ui {
-class aboutdlg;
-}
+#define DVDLANGUAGECOUNT    184
 
-class aboutdlg : public QDialog
+class dvdlanguage : public QObject
 {
     Q_OBJECT
-    
+    Q_CLASSINFO("author", "Norbert Schlia")
+    Q_CLASSINFO("url", "http://www.dvdetect.de/")
+    Q_CLASSINFO("project", "DVD Lookup Library")
+
+    typedef struct
+    {
+        const char *    m_pszISO639Code;
+        const char *    m_pszLanguageName;
+    } LANGUAGETABLE;
+
 public:
-    explicit aboutdlg(QWidget *parent = 0);
-    ~aboutdlg();
+    explicit dvdlanguage(QObject *parent = 0);
+
+    static QString  convertISOtoLanguage(const char *pszISO639Code);
+    static int      getLanguageCount();
+    static QString  getLanguage(int n);
+    static QString  getISO639Code(int n);
+
+signals:
     
-private slots:
-    void on_pushButtonOK_clicked();
+public slots:
 
 private:
-    Ui::aboutdlg *ui;
+    static const LANGUAGETABLE m_LanguageTable[DVDLANGUAGECOUNT];
 };
 
-#endif // ABOUTDLG_H
+#endif // DVDLANGUAGE_H

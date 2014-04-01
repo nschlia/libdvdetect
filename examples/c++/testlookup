@@ -9,7 +9,9 @@ echo "Use \"-x proxy:port\" set proxy"
 
 if [ "$MACHINE" == "schleppeimer" ]
 then
-  DIRECTORY="/windows/C/temp/Metal - A Headbanger's Journey/DVD1/"
+  #DIRECTORY="/windows/C/temp/Metal - A Headbanger's Journey/DVD1/"
+  #DIRECTORY="/files/mp3base2/DVD/Musik/Summer Breeze/Summer Breeze 2012/VIDEO_TS/"
+  DIRECTORY="/files/mp3base2/DVD/Musik/Subway to Sally/Schlachthof (Bastard Tour)/DVD1/VIDEO_TS/"
   DIRECTORY="/files/mp3base2/DVD/Musik/Summer Breeze/Summer Breeze 2012/VIDEO_TS/"
 elif [ "$MACHINE" == "develop" ] 
 then
@@ -22,9 +24,9 @@ then
   else
   	DIRECTORY="/D/mmedia/#DVD/Arch Enemy"
   fi
-elif [ "$MACHINE" == "samba" ]
+elif [ "$MACHINE" == "schlurfi" ]
 then
-  DIRECTORY="/files/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1"
+  DIRECTORY="/mnt/mp3base2/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1"
 elif [ "$MACHINE" == "mailout" ]
 then
   DIRECTORY="/home/o/oblivion-admin.de/public_html/mp3mania/mp3base/DVD/Musik/Arch Enemy/Tyrants of the Rising Sun - Live in Japan/DVD1"
@@ -49,5 +51,5 @@ do
   fi
 done
 
-./dvdlookupcxx -d "$DIRECTORY" $EXPORT $PROXY
+ ./dvdlookupcxx -d "$DIRECTORY" $EXPORT $PROXY
 

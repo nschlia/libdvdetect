@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo Making 32 bit...
+
+[ -d 32-bit ] || mkdir 32-bit && cd 32-bit
+../configure 
+make -s all
+make -s dist
+make -s doxygen
+cd ..

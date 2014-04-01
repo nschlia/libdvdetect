@@ -1,17 +1,23 @@
 #!/bin/bash
 
+ORGPATH=$PATH 
+
+#PATH=$ORGPATH:/C/QtSDK/mingw/bin
+PATH=$ORGPATH:/C/Qt/Qt5.0.1/Tools/MinGW/bin
+
 echo Making 32 bit...
 
 [ -d 32-bit ] || mkdir 32-bit && cd 32-bit
-../configure --build=i686-pc-linux-gnu \
-	--prefix=/arch/x86-linux/gnu \
-	CC="gcc -m32 -march=i586" \
-	CXX="g++ -m32 -march=i586" \
-	LDFLAGS="-m32" 
-make -s all
+../configure
+make -s  all
 make -s dist
 make -s doxygen
 cd ..
+
+if [ -d /C/Qt/Qt5.0.1/Tools/mingw64/bin ];
+then
+
+PATH=$ORGPATH:/C/Qt/Qt5.0.1/Tools/mingw64/bin
 
 echo Making 64 bit...
 
@@ -20,3 +26,6 @@ echo Making 64 bit...
 make -s  all
 make -s dist
 cd ..
+
+fi
+

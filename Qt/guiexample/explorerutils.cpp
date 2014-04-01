@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,20 +28,31 @@
 
 QStandardItem * getItem(const QString & text, bool bEditable /*= false*/)
 {
-    QStandardItem *item = new QStandardItem(text);
+    QStandardItem *pItem = new QStandardItem(text);
     if (!bEditable)
     {
-        item->setEditable(false);
+        pItem->setEditable(false);
     }
-    return item;
+    return pItem;
+}
+
+QStandardItem * getItemAndValue(const QString & text, const QVariant & value, bool bEditable /*= false*/)
+{
+    QStandardItem *pItem = new QStandardItem(text);
+    pItem->setData(value);
+    if (!bEditable)
+    {
+        pItem->setEditable(false);
+    }
+    return pItem;
 }
 
 QStandardItem * getItemFromStdString(const std::string & text, bool bEditable /*= false*/)
 {
-    QStandardItem *item = new QStandardItem(text.c_str());
+    QStandardItem *pItem = new QStandardItem(text.c_str());
     if (!bEditable)
     {
-        item->setEditable(false);
+        pItem->setEditable(false);
     }
-    return item;
+    return pItem;
 }
