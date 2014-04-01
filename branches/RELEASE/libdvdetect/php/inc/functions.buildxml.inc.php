@@ -2,7 +2,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ if (!defined('PHP_VERSION_ID'))
 }
 
 // Defines
-define("LIBDVDETECT_COPYRIGHT",             "Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>");
+define("LIBDVDETECT_COPYRIGHT",             "Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>");
 define("LIBDVDETECT_XML_COMMENT",           "Created with libdvdetect DVD analyser and lookup library");
 
 define("DEFSUBMITTER",                      "***ChangeMe!***");     // Don't change this here, meant to be in XML exports :)

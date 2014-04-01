@@ -1,41 +1,95 @@
-2013-05-02 nschlia V0.10
+2013-09-XX nschlia V0.60
 
-  * Created
+  * Changed order in ChangeLog to have the latest release on top.
+  * Reformatted ChangeLog to look better when viewed online in SourceForge.
 
-2013-06-09 nschlia V0.20
+TODO:
 
-  * Bugfix: Removed VS2010 solution from distribution (not ready for release yet.
-      BTW it is perfectly OK to use the regular gcc compiled dll with VS projects anyways).
-  * Added support for PTT (Video Manager Title Map) which represents the Title/Chapter structure
-      intended by the author
-  * Added physical/virtual view check box to Qt example.
-  * Library internal code: Changed several pointers to const where they should be
-  * Library internal code: Changed several declarations to their typedef
-  * Same for examples
-  * Tested parser with some 500 DVDs (without obvious errors and no crashes :)
-  * Bugfix: Last chapter/program had no cells for multiangle program chains
-  * Bugfix: DVDPTT program chain number field was duplicate
-  * Bugfix: File size/playtime are added several times for multi angle DVDs
-  * Bugfix: File sizes corrected (should use unit size instead of cell size)
-  * Bugfix: "Full scan" (AKA really check files on disk) was not completely implemented...
+  * If a submitter re-submits the same DVD, the database gets updated instead of creating 
+    a new revision. This avoids creating several revisions with minor changes.
 
-2013-06-15 nschlia V0.21
+2013-09-19 nschlia V0.50
 
-  * Bugfix: fix crash when more virtual titles exist than defined by video manager (DVD authoring flaw)
-      Happened e.g. with "King of Queens" Season 5 Disk 3 (seven virtual titles in VMG, but eight on disk)
-  * Added command line options to examples (-d PATH, -p Physical View, -h Help)
-  * Examples now also support physical/virtual view
-  * Bugfix: Missing error messages added if target directory not acessible or empty 
-  * Changed Qt example dialog name from expressionless "MainWindow" to better matching "dvdexplorerdlg"
-  * Bugfix: Title menu VOBs were duplicate in full scan
+Living in the past: All releases in this document were dated back to 2012, but I guess the 
+year already is 2013. So the dates were corrected.
+
+  * Added missing fields that proved to be useful: `OriginalAlbum`, `Screenplay`,
+    `Producer`, `Editing`, `Cinematography`, `OriginalLanguage`
+  * Changed `Cast` field type from varchar(120) to text (needs more space)
+  * Bugfix: `OriginalAlbum` database field changed from char(120) to varchar(120)
+  * Qt Example: Edit dialog's QTreeView was missing "Line Wrap" attribute (e.g. cast list
+    needs that)
+  * Qt Example: Edit dialog's submitter name cannot be edited, set to read-only
+  * Bugfix: Submitter was always overwritten with default submitter "***ChangeMe!***"
+  * Added option to do full scan automatically (can be never, always or auto). Auto means
+    full scan will not be done on web sources to speed up the process.
+  * Qt Example: Added option to select scan mode (see options dialog).
+  * Bugfix: Full scan could not be deselected
+  * Bugfix: File time/size for BUP files were empty when not full in scan
+  * Bugfix: IPv6 was not properly handled. According to RFC, the client should fall back to
+    IPv4 if IPv6 was available, but failed. This will now be done: Try IPv6 first, resort
+    to IPv4 if it fails.
+  * Bugfix: Only 7 audio/subpicture streams possible (instead of 8), it was possible to
+    add such DVDs to the database but queries failed with an error.
+  * Added new error code for DVD not found (see DVDERRORCODE enum). Allows to distinguish
+    between real errors and simply no DVD found.
+
+2013-08-03 nschlia V0.40
+
+TOTALLY REVAMPED XML FORMAT!
+
+Older clients will no longer work. This is the desired behaviour, as we now start with the
+real protocol that should be in use from now on. Therefore, from this moment on, client
+0.40+ is required. Old clients should be gracefully rejected, but do not rely on that...
   
+  * Big concept change: Now the whole DVD structure gets store in DB, not only a small
+    part of it. See NEWS for details why.
+  * Bugfix: STL classes had crashes under linux. Completely revamped vector classes.
+  * Bugfix: The server sent out data in "chunked transfer encoding" with which the http
+    classes did not get by - changed PHP code so that the Content-Size header gets sent
+    (as the xml document size is known in advance anyways and can be sent).
+  * Added options dialog to guiexample. Database server name, submitter and proxy name can
+    now be set.
+  * Bugfix: Fixed troubles with utf-8 conversions GUI example
+  * Bugfix: SQL error messages were sometimes empty.
+  * Proxy can now be set
+  * GUI example dialog now supports auto resize
+  * Bugfix: Fixed crash after dvdGetErrorMessage() call when trying to dvdFree() the memory
+    (memory was not allocated on heap).
+  * Added guiexamplestatic project to Qt example - compiles complete app including the
+    library. No separate compile required.
+  * renamed many variables for a more common name scheme
+  * removed count variables that also had an accessor (e.g. getTitleCount and
+    m_wNumberOfTitles). These were not always in sync, causing a lot of grief...
+  * Updated the doxygen comments, found a lot of typos, wrong explanations, missing
+    descriptions and more. Fixed, added, whatever.
+  * Examples: Revamped error handling and display
+  * Examples: Added submit example
+  * Added read/write of DVD from/to xml
+  * Qt Example: Added menu entry to read/write DVD from/to xml
+  * Renamed "emailaddress" field to "submitter". Put anything there, a synonym, a real name.
+    But to counteract spam, never an email adress.
+  * Conditionally removed md5 code: If openssl/md5.h exists, the crypto library will be used.
+    Otherwise our own code is linked.
+  * PHP part checks protocol version now and rejects access when not supported
+  * Added version number to Qt Example caption
+  * md5 code will only be used if no library available on system. On *nix, libcrypto will be
+    used. Install openssl for support.
+  * Qt Example: will now automatically query after a DVD was scanned. Saves some extra clicks.
+  * Tested library support for: Windoze, Suse 11.3, Suse 12.2, Debian Squeeze, Cygwin
+  * Added PHP code to doxygen, but this part has still to be documented (most doxygen headers
+    are missing).
+  * Added missing dvdGetFileName function
+  * Optimised error handling (quite a few problems got by unreported)
+
 2013-06-29 nschlia V0.30
 
   * Bugfix: sealed memory leak in getString function
   * Bugfix: closed memory leak in Qt example
-  * Syntax: changed some "delete" to "delete []" (although this is a formal change only without effect,
-      because the array is of type char and not an array of classes.)
-  * Bugfix: library version number stayed at 0.10.0 (was accidentally hardcoded in makefile.am).
+  * Syntax: changed some "delete" to "delete []" (although this is a formal change only
+    without effect, because the array is of type char and not an array of classes.)
+  * Bugfix: library version number stayed at 0.10.0 (was accidentally hardcoded in
+    makefile.am).
   * Added about dialog
   * Added cygwin support
   * Bugfix: http problems were not properly reported (empty error message)
@@ -48,77 +102,35 @@
   * Implemented DVD data editing inside GUI example
   * Added cygwin support
 
-2013-08-03 nschlia V0.40
+2013-06-15 nschlia V0.21
 
-TOTALLY REVAMPED XML FORMAT!
-
-Older clients will no longer work. This is the desired behaviour, as we now start with the real protocol
-that should be in use from now on. Therefore, from this moment on, client 0.40+ is required. Old clients
-should be gracefully rejected, but do not rely on that...
+  * Bugfix: fix crash when more virtual titles exist than defined by video manager (DVD
+    authoring flaw) Happened e.g. with "King of Queens" Season 5 Disk 3 (seven virtual
+    titles in VMG, but eight on disk)
+  * Added command line options to examples (-d PATH, -p Physical View, -h Help)
+  * Examples now also support physical/virtual view
+  * Bugfix: Missing error messages added if target directory not acessible or empty 
+  * Changed Qt example dialog name from expressionless "MainWindow" to better matching
+    "dvdexplorerdlg"
+  * Bugfix: Title menu VOBs were duplicate in full scan
   
-  * Big concept change: Now the whole DVD structure gets store in DB, not only a small part of it.
-    See NEWS for details why.
-  * Bugfix: STL classes had crashes under linux. Completely revamped vector classes.
-  * Bugfix: The server sent out data in "chunked transfer encoding" with which the http classes did not
-    get by - changed PHP code so that the Content-Size header gets sent (as the xml document size is
-    known in advance anyways and can be sent).
-  * Added options dialog to guiexample. Database server name, submitter and proxy name can now be set.
-  * Bugfix: Fixed troubles with utf-8 conversions GUI example
-  * Bugfix: SQL error messages were sometimes empty.
-  * Proxy can now be set
-  * GUI example dialog now supports auto resize
-  * Bugfix: Fixed crash after dvdGetErrorMessage() call when trying to dvdFree() the memory (memory
-    was not allocated on heap).
-  * Added guiexamplestatic project to Qt example - compiles complete app including the library. No
-    separate compile required.
-  * renamed many variables for a more common name scheme
-  * removed count variables that also had an accessor (e.g. getTitleCount and m_wNumberOfTitles). These
-    were not always in sync, causing a lot of grief...
-  * Updated the doxygen comments, found a lot of typos, wrong explanations, missing descriptions and more.
-    Fixed, added, whatever.
-  * Examples: Revamped error handling and display
-  * Examples: Added submit example
-  * Added read/write of DVD from/to xml
-  * Qt Example: Added menu entry to read/write DVD from/to xml
-  * Renamed "emailaddress" field to "submitter". Put anything there, a synonym, a real name. But to counteract
-    spam, never an email adress.
-  * Conditionally removed md5 code: If openssl/md5.h exists, the crypto library will be used. Otherwise our own 
-    code is linked.
-  * PHP part checks protocol version now and rejects access when not supported
-  * Added version number to Qt Example caption
-  * md5 code will only be used if no library available on system. On *nix, libcrypto will be used. Install openssl for
-    support.
-  * Qt Example: will now automatically query after a DVD was scanned. Saves some extra clicks.
-  * Tested library support for: Windoze, Suse 11.3, Suse 12.2, Debian Squeeze, Cygwin
-  * Added PHP code to doxygen, but this part has still to be documented (most doxygen headers are missing).
-  * Added missing dvdGetFileName function
-  * Optimised error handling (quite a few problems got by unreported)
+2013-06-09 nschlia V0.20
 
-2013-09-19 nschlia V0.50
+  * Bugfix: Removed VS2010 solution from distribution (not ready for release yet.
+    BTW it is perfectly OK to use the regular gcc compiled dll with VS projects anyways).
+  * Added support for PTT (Video Manager Title Map) which represents the Title/Chapter
+    structure intended by the author
+  * Added physical/virtual view check box to Qt example.
+  * Library internal code: Changed several pointers to const where they should be
+  * Library internal code: Changed several declarations to their typedef
+  * Same for examples
+  * Tested parser with some 500 DVDs (without obvious errors and no crashes :)
+  * Bugfix: Last chapter/program had no cells for multiangle program chains
+  * Bugfix: DVDPTT program chain number field was duplicate
+  * Bugfix: File size/playtime are added several times for multi angle DVDs
+  * Bugfix: File sizes corrected (should use unit size instead of cell size)
+  * Bugfix: "Full scan" (AKA really check files on disk) was not completely implemented...
 
-Living in the past: All releases in this document were dated back to 2012, but I guess the year already is 2013. 
-So the dates were corrected.
+2013-05-02 nschlia V0.10
 
-  * Added missing fields that proved to be useful: `OriginalAlbum`, `Screenplay`, `Producer`, `Editing`, 
-    `Cinematography`, `OriginalLanguage`
-  * Changed `Cast` field type from varchar(120) to text (needs more space)
-  * Bugfix: `OriginalAlbum` database field changed from char(120) to varchar(120)
-  * Qt Example: Edit dialog's QTreeView was missing "Line Wrap" attribute (e.g. cast list needs that)
-  * Qt Example: Edit dialog's submitter name cannot be edited, set to read-only
-  * Bugfix: Submitter was always overwritten with default submitter "***ChangeMe!***"
-  * Added option to do full scan automatically (can be never, always or auto). Auto means full scan will
-    not be done on web sources to speed up the process.
-  * Qt Example: Added option to select scan mode (see options dialog).
-  * Bugfix: Full scan could not be deselected
-  * Bugfix: File time/size for BUP files were empty when not full in scan
-  * Bugfix: IPv6 was not properly handled. According to RFC, the client should fall back to IPv4 if IPv6
-    was available, but failed. This will now be done: Try IPv6 first, resort to IPv4 if it fails.
-  * Bugfix: Only 7 audio/subpicture streams possible (instead of 8), it was possible to add such DVDs to the 
-    database but queries failed with an error.
-  * Added new error code for DVD not found (see DVDERRORCODE enum). Allows to distinguish between real errors
-    and simply no DVD found.
-
-TODO:
-
-  * If a submitter re-submits the same DVD, the database gets updated instead of creating a new revision.
-    This avoids creating several revisions with minor changes.
+  * Created

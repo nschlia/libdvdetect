@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 /*!
  * Video Manager IFO file header
  */
-typedef struct
+typedef struct _tagVMG_IFO
 {
 /*@{*/
     uint8_t     m_header[12];                                       //!< Offset 0x000 Size 12		"DVDVIDEO-VMG"
@@ -93,7 +93,7 @@ typedef const VMG_IFO* LPCVMG_IFO;							//! Constant pointer
 /*!
  * Video Manager Part-Of-Title Search
  */
-typedef struct
+typedef struct _tagVMG_PTT_SRPT_HEADER
 {
 #pragma pack(1)
     /*@{*/
@@ -109,7 +109,7 @@ typedef const VMG_PTT_SRPT_HEADER* LPCVMG_PTT_SRPT_HEADER;  //! Constant pointer
 /*!
  * Title descriptions following for each title
  */
-typedef struct
+typedef struct _tagVMG_PTT_SRPT
 {
 #pragma pack(1)
     /*@{*/

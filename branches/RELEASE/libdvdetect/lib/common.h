@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 // ***************** Special *nix stuff goes here *****************
 
 #ifndef ___WSA_SOCKET_TYPES_H
-typedef int	SOCKET;
+typedef u_int	SOCKET;
 #endif
 
 #ifndef INVALID_SOCKET

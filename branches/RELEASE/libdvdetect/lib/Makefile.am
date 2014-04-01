@@ -32,7 +32,7 @@ if HAVE_WIN32
 # Some extra stuff required for Windows
 LDFLAGS += -lws2_32 --enable-auto-import -fno-keep-inline-dllexport -mthreads
 DEFS += -DDLL_EXPORT
-INCLUDES += -I../win/tinyxml/
+INCLUDES += -I${top_srcdir}/win/tinyxml/
 else
 # Under *nix, tinyxml should be part of the distribution, so simply link
 LDFLAGS += -ltinyxml
@@ -77,10 +77,10 @@ endif
 # Windows has no tinyxml, so use our code.
 if HAVE_WIN32
 nodist_libdvdetect_la_SOURCES = \
-	../win/tinyxml/tinystr.cpp \
-	../win/tinyxml/tinyxml.cpp \
-	../win/tinyxml/tinyxmlerror.cpp \
-	../win/tinyxml/tinyxmlparser.cpp
+	${top_srcdir}/win/tinyxml/tinystr.cpp \
+	${top_srcdir}/win/tinyxml/tinyxml.cpp \
+	${top_srcdir}/win/tinyxml/tinyxmlerror.cpp \
+	${top_srcdir}/win/tinyxml/tinyxmlparser.cpp
 endif
 
 libdvdetect_la_LDFLAGS = -no-undefined -version-info $(libdvdetect_la_CURRENT):$(libdvdetect_la_REVISION):$(libdvdetect_la_AGE)

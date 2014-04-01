@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ extern "C" {
 /*!
  * A libdvdetect API handle...
  */
-typedef struct
+typedef struct _tagDVDETECTHANDLE
 {
     void*   m_pClassDvdParse;                       //!< Class "handle", internal value, do not manipulate
 
@@ -92,7 +92,7 @@ typedef const DVDETECTHANDLE* LPCDVDETECTHANDLE;
 /*!
  * A libdvdetect database handle...
  */
-typedef struct
+typedef struct _tagDVDBHANDLE
 {
     void*   m_pClassDvdDatabase;                    //!< Class "handle", internal value, do not manipulate
     void*   m_pClassDvdParseLst;                    //!< Class "handle", internal value, do not manipulate
@@ -100,7 +100,6 @@ typedef struct
 } DVDBHANDLE, *LPDVDBHANDLE;
 
 typedef const LPDVDBHANDLE* LPCDVDBHANDLE;
-
 
 //! Open library and get an dvdetect API handle.
 /*! Open library and get an dvdetect API handle.

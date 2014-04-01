@@ -48,9 +48,6 @@ EXTRA_DIST = \
 	Qt/guiexample/openfromwebdlg.cpp \
 	Qt/guiexample/openfromwebdlg.h \
 	Qt/guiexample/openfromwebdlg.ui \
-	Qt/guiexample/openfromwebdlg.cpp \
-	Qt/guiexample/openfromwebdlg.h \
-	Qt/guiexample/openfromwebdlg.ui	\
 	Qt/guiexample/explorerutils.cpp \
 	Qt/guiexample/explorerutils.h \
 	sql/dbdvdetect.mysql.sql \
@@ -75,5 +72,9 @@ EXTRA_DIST = \
 #	VS2010/version.h
 
 #: Make documentation via Doxygen http://www.stack.nl/~dimitri/doxygen/
+# ${top_srcdir}
+# ${srcdir}	
 doxygen:
-	-( cd ${top_srcdir}/doc && /bin/sh ${srcdir}/build )
+	-( cd ${top_srcdir}/doc && /bin/sh build )
+	
+	

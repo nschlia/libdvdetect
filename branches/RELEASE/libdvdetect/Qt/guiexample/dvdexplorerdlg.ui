@@ -29,7 +29,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="QTreeView" name="treeViewDVD">
+         <widget class="QTreeView" name="treeViewDvd">
           <property name="contextMenuPolicy">
            <enum>Qt::CustomContextMenu</enum>
           </property>
@@ -48,6 +48,12 @@
           <property name="animated">
            <bool>true</bool>
           </property>
+          <attribute name="headerVisible">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="headerStretchLastSection">
+           <bool>true</bool>
+          </attribute>
          </widget>
         </item>
        </layout>
@@ -60,7 +66,7 @@
         <item row="0" column="0">
          <widget class="QTreeView" name="treeViewDetails">
           <property name="statusTip">
-           <string>Show details about select title, chapter, cell etc.</string>
+           <string>Show details about selected title, chapter, cell etc.</string>
           </property>
           <property name="editTriggers">
            <set>QAbstractItemView::NoEditTriggers</set>
@@ -179,7 +185,7 @@
      <x>0</x>
      <y>0</y>
      <width>990</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -187,9 +193,9 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
-    <addaction name="actionOpen_from_Web"/>
-    <addaction name="actionExport_XML"/>
-    <addaction name="actionImport_XML"/>
+    <addaction name="actionOpenFromWeb"/>
+    <addaction name="actionExportXml"/>
+    <addaction name="actionImportXml"/>
     <addaction name="separator"/>
     <addaction name="actionOptions"/>
     <addaction name="separator"/>
@@ -199,11 +205,11 @@
     <property name="title">
      <string>Database</string>
     </property>
-    <addaction name="actionQuery_DVD"/>
-    <addaction name="actionFind_DVD"/>
-    <addaction name="actionSubmit_DVD"/>
+    <addaction name="actionQueryDvd"/>
+    <addaction name="actionFindDvd"/>
+    <addaction name="actionSubmitDvd"/>
     <addaction name="separator"/>
-    <addaction name="action_Edit_View_Details"/>
+    <addaction name="actionEditDetails"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -246,7 +252,7 @@
     <string>Ctrl+X</string>
    </property>
   </action>
-  <action name="actionQuery_DVD">
+  <action name="actionQueryDvd">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -260,7 +266,7 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionFind_DVD">
+  <action name="actionFindDvd">
    <property name="enabled">
     <bool>true</bool>
    </property>
@@ -274,7 +280,7 @@
     <string>Ctrl+F</string>
    </property>
   </action>
-  <action name="actionSubmit_DVD">
+  <action name="actionSubmitDvd">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -296,7 +302,7 @@
     <string>About this application.</string>
    </property>
   </action>
-  <action name="action_Edit_View_Details">
+  <action name="actionEditDetails">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -312,7 +318,7 @@
     <string>Options</string>
    </property>
   </action>
-  <action name="actionExport_XML">
+  <action name="actionExportXml">
    <property name="text">
     <string>Export XML</string>
    </property>
@@ -320,7 +326,7 @@
     <string>Alt+E</string>
    </property>
   </action>
-  <action name="actionImport_XML">
+  <action name="actionImportXml">
    <property name="text">
     <string>Import XML</string>
    </property>
@@ -328,7 +334,7 @@
     <string>Alt+I</string>
    </property>
   </action>
-  <action name="actionOpen_from_Web">
+  <action name="actionOpenFromWeb">
    <property name="text">
     <string>Open from &amp;Web</string>
    </property>
@@ -339,7 +345,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
-  <tabstop>treeViewDVD</tabstop>
+  <tabstop>treeViewDvd</tabstop>
   <tabstop>treeViewDetails</tabstop>
   <tabstop>treeViewStreams</tabstop>
   <tabstop>treeViewFiles</tabstop>
