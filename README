@@ -74,3 +74,6 @@ KNOWN PROBLEMS
 Recently it turned out that configure does not work on Debian. This, and
 several other problems are currently being reworked. Please stay tuned.
 
+RELEASE VERSION
+
+This is libdvdetect-library-0.50.0 release

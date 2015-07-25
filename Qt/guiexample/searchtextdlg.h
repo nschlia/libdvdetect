@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -40,13 +40,10 @@ class searchtextdlg;
 class searchtextdlg : public QDialog
 {
     Q_OBJECT
-    Q_CLASSINFO("author", "Norbert Schlia")
-    Q_CLASSINFO("url", "http://www.dvdetect.de/")
-    Q_CLASSINFO("project", "DVD Lookup Library")
     
 public:
     explicit searchtextdlg(QWidget *parent = 0);
-    virtual ~searchtextdlg();
+    ~searchtextdlg();
     
     QString     getSearch() const;
 

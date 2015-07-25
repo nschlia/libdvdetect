@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 /*!
  * Video Title Set IFO file header
  */
-typedef struct _tagVTS_IFO
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -101,7 +101,7 @@ typedef const VTS_IFO* LPCVTS_IFO;
  *      :
  *      VTS_PGC
  */
-typedef struct _tagVTS_PGCI_UT_HEADER
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -117,7 +117,7 @@ typedef const VTS_PGCI_UT_HEADER* LPCVTS_PGCI_UT_HEADER;
 /*!
  *
  */
-typedef struct _tagVTS_PGCI_UT
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -135,7 +135,7 @@ typedef const VTS_PGCI_UT* LPCVTS_PGCI_UT;
 /*!
  * PGC header
  */
-typedef struct _tagVTS_PGCHEADER
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -166,7 +166,7 @@ typedef const VTS_PGCHEADER* LPCVTS_PGCHEADER;
  * The VTS_PTT_SRPT contains pointers to the tables for each title,
  * and is indexed by VTS_TTN (title number within VTS)
  */
-typedef struct _tagVTS_PTT_SRPT_HEADER
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -182,7 +182,7 @@ typedef const VTS_PTT_SRPT_HEADER* LPCVTS_PTT_SRPT_HEADER;
 /*!
  *
  */
-typedef struct _tagVTS_PTT_SRPT
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -197,7 +197,7 @@ typedef const VTS_PTT_SRPT* LPCVTS_PTT_SRPT;
  * The VTS_PTT contains pointers to the Program Chain (PGCN) and Program (PGN)
  * for each Part-of-Title (PTT or Chapter), and is indexed by TT_PTTN (PTT number within title)
  */
-typedef struct _tagVTS_PTT
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -212,7 +212,7 @@ typedef const VTS_PTT* LPCVTS_PTT;
 /*!
  * program map entry (one per program, pad to word boundary with zero)
  */
-typedef struct _tagVTS_PROGRAMMAP
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -226,7 +226,7 @@ typedef const VTS_PROGRAMMAP* LPCVTS_PROGRAMMAP;
 /*!
  * program map entry (one per program, pad to word boundary with zero)
  */
-typedef struct _tagVTS_CELLPOS
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -242,7 +242,7 @@ typedef const VTS_CELLPOS* LPCVTS_CELLPOS;
 /*!
  * cell playback information table
  */
-typedef struct _tagVTS_PGC
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -268,7 +268,7 @@ typedef const VTS_PGC* LPCVTS_PGC;
  *
  * This table contains pointers to all the cells in the menu or title set.
  */
-typedef struct _tagVTS_C_ADT_HEADER
+typedef struct
 {
 #pragma pack(1)
 /*@{*/
@@ -284,7 +284,7 @@ typedef const VTS_C_ADT_HEADER* LPCVTS_C_ADT_HEADER;
 /*!
  *
  */
-typedef struct _tagVTS_C_ADT
+typedef struct
 {
 #pragma pack(1)
 /*@{*/

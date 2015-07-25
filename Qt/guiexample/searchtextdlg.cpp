@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,17 +26,12 @@
 #include "ui_searchtextdlg.h"
 
 #include <QSettings>
-#include <QPushButton>
 
 searchtextdlg::searchtextdlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::searchtextdlg)
 {
     ui->setupUi(this);
-
-    // Localisation
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setText(tr("OK"));
-    ui->buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
 
     QSettings settings("guiexample.conf");
 

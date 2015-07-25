@@ -25,7 +25,7 @@ dnl ---------------------------------------------
 #    If the interface is the same as the previous version, change to current:revision+1:age
 
 #AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
-AC_INIT(libdvdetect library, 0.60.0, bugs@dvdetect.de,,http://www.dvdetect.de)
+AC_INIT(libdvdetect library, 0.50.0, bugs@dvdetect.de,,http://www.dvdetect.de)
 
 AC_SUBST(LIBDVDETECT_VERSION_MAJOR, `echo $PACKAGE_VERSION | sed 's/\(.*\)\..*\..*/\1/g'`)
 AC_SUBST(LIBDVDETECT_VERSION_MINOR, `echo $PACKAGE_VERSION | sed 's/.*\.\(.*\)\..*/\1/g'`)

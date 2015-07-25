@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -70,11 +70,11 @@ public:
      *  Construct a dvdparse element.
      */
     explicit dvdparse(
-            void *  (*openFile)(const char *filename, const char *mode, const char *proxy) = ::openFile,
+            void *  (*openFile)(const char *filename, const char *mode, const char *) = ::openFile,
             size_t  (*readFile)(void* buffer, size_t size, size_t count, void* stream) = ::readFile,
             int     (*writeFile)(const void* buffer, size_t size, size_t count, void* stream) = ::writeFile,
             int     (*closeFile)(void *stream) = ::closeFile,
-            int     (*statFile)(const char *file, LPDVDFILESTAT pFileStat, const char *proxy) = ::statFile,
+            int     (*statFile)(const char *file, LPDVDFILESTAT pFileStat, const char *) = ::statFile,
             int     (*fstatFile)(void* stream, LPDVDFILESTAT pFileStat) = ::fstatFile);
 
     //! Destructor.

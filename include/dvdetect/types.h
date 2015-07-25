@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@
 #endif // MAX_PATH
 
 #ifndef LIBDVDETECT_COPYRIGHT
-#define LIBDVDETECT_COPYRIGHT "Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>"
+#define LIBDVDETECT_COPYRIGHT "Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>"
 #endif // LIBDVDETECT_COPYRIGHT
 
 #ifndef LIBDVDETECT_XML_COMMENT
@@ -188,7 +188,7 @@ typedef const DVDVIDEOASPECT* LPCDVDVIDEOASPECT;
  * <td>352x240</td>352x288<td></td>
  * </tr></table>
  */
-typedef struct _tagDVDVIDEORESOLUTION
+typedef struct
 {
     uint16_t            m_wX;                                           //!< Resolution (width)
     uint16_t            m_wY;                                           //!< Resolution (height)
@@ -201,7 +201,7 @@ typedef const DVDVIDEORESOLUTION* LPCDVDVIDEORESOLUTION;
 /*!
  * Decoded video attributes
  */
-typedef struct _tagDVDVIDEOSTREAM
+typedef struct
 {
     uint16_t            m_wID;                                          //!< Video stream ID, fixed to 0xE0
     DVDVIDEOCODINGMODE  m_eCodingMode;                                  //!< Video coding mode (MPEG-1 or MPEG-2)
@@ -319,7 +319,7 @@ typedef const DVDAKARAOKEMODE* LPCDVDAKARAOKEMODE;
 /*!
  * Decoded audio attributes (Menus/Video Titles)
  */
-typedef struct _tagDVDAUDIOSTREAM
+typedef struct
 {
     /*@{*/
     //! Audio Stream Id
@@ -351,7 +351,7 @@ typedef const DVDAUDIOSTREAM* LPCDVDAUDIOSTREAM;
 /*!
  * Decoded audio attributes (Video Titles only)
  */
-typedef struct _tagDVDAUDIOSTREAMEX
+typedef struct
 {
     //!< If true, language code present
     /*!
@@ -419,7 +419,7 @@ typedef const DVDSUBPICCODEEXT* LPCDVDSUBPICCODEEXT;
 /*!
  * Decoded subpicture attributes
  */
-typedef struct _tagDVDSUBPICSTREAM
+typedef struct
 {
     uint16_t                    m_wID;                                  //!< Subpicture steam ID, 0x20 + (Stream # - 1)
     uint16_t                    m_wCodingMode;                          //!< Subtitle coding mode
@@ -456,7 +456,7 @@ typedef const DVDSUBPICSTREAM* LPCDVDSUBPICSTREAM;
 /*!
  * Video Manager Header Data
  */
-typedef struct _tagDVDVMGM
+typedef struct
 {
     uint16_t                    m_wVersionNumberMajor;                      //!< Major version number
     uint16_t                    m_wVersionNumberMinor;                      //!< Minor version number
@@ -482,7 +482,7 @@ typedef const DVDVMGM* LPCDVDVMGM;
 /*!
  * Video Title Set Header Data
  */
-typedef struct _tagDVDVTS
+typedef struct
 {
     uint16_t                    m_wTitleSetNo;                              //!< Title number
     uint16_t                    m_wVersionNumberMajor;                      //!< Major version number
@@ -512,7 +512,7 @@ typedef const DVDVTS* LPCDVDVTS;
 /*!
  * A DVD Program Chain (PGC)
  */
-typedef struct _tagDVDPGC
+typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< PGC number
@@ -545,7 +545,7 @@ typedef const DVDPGC* LPCDVDPGC;
 /*!
  * A DVD Part of Title (PTT) in VMG
  */
-typedef struct _tagDVDPTTVMG
+typedef struct
 {
     uint16_t    m_wPlaybackType;                                            //!< Playback type
     uint16_t    m_wNumberOfVideoAngles;                                     //!< Number of video angles (1...9)
@@ -566,7 +566,7 @@ typedef const DVDPTTVMG* LPCDVDPTTVMG;
  * contains one title with two program chains that have one program each, it
  * could have one virtual title with two chapters.
  */
-typedef struct _tagDVDPTTVTS
+typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< (Real) Program Chain (PGCN)
@@ -585,7 +585,7 @@ typedef const DVDPTTVTS* LPCDVDPTTVTS;
 /*!
  * DVD Program Data
  */
-typedef struct _tagDVDPROGRAM
+typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< Owner program chain (PGC) number
@@ -631,7 +631,7 @@ typedef const BLOCKTYPE* LPCBLOCKTYPE;
 /*!
  * DVD Cell
  */
-typedef struct _tagDVDCELL
+typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< Owner PGC number
@@ -670,7 +670,7 @@ typedef const DVDCELL* LPCDVDCELL;
 /*!
  * DVD Unit
  */
-typedef struct _tagDVDUNIT
+typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< Owner PGC number
@@ -713,7 +713,7 @@ typedef const DVDFILETYPE* LPCDVDFILETYPE;
 /*!
  * DVD file
  */
-typedef struct _tagDVDFILE
+typedef struct
 {
     uint16_t    m_wTitleSetNo;                                              //!< Number of owner title set (0...99)
 
@@ -732,7 +732,7 @@ typedef const DVDFILE* LPCDVDFILE;
 /*!
  * File status information
  */
-typedef struct _tagDVDFILESTAT
+typedef struct
 {
     uint64_t    m_qwFileSize;           //!< total size, in bytes
     time_t      m_FileTime;             //!< time of last modification

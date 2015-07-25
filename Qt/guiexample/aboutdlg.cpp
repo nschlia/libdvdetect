@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ aboutdlg::aboutdlg(QWidget *parent) :
                                    "Qt GUI Example for <b>%0</b> Qt %1<br /><br />"
                                    "This program demonstrates how to send query, search requests and submit data to the dvdetect server.<br />"
                                    "<br />"
-                                   "Copyright (C) 2013-2014 Norbert Schlia<br />"
+                                   "Copyright (C) 2013 Norbert Schlia<br />"
                                    "<a href=\"nschlia@dvdetect.de\">nschlia@dvdetect.de</a><br />"
                                    "<a href=\"http://www.dvdetect.de/\">http://www.dvdetect.de/</a><br />"
                                    "<br />"

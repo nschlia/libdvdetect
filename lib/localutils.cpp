@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -615,8 +615,7 @@ char *getenv(const char *name)      // Like the original: uses static buffer, no
 
 bool isUrl(const string & strPath)
 {
-    return (strPath.substr(0, sizeof("http://") - 1) == "http://" ||
-            strPath.substr(0, sizeof("https://") - 1) == "https://");
+    return (strPath.substr(0, sizeof("http://") - 1) == "http://");
 }
 
 time_t getgmtime(struct tm *time)

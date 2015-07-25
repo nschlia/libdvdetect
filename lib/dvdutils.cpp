@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ DLL_PUBLIC void dvdGetFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo, uint
     *(pszFileName + (maxlen - 1)) = '\0';
 }
 
-typedef struct _tagDVDFILEHANDLE
+typedef struct
 {
     std::string m_strFileName;
     FILE*       m_pFile;
@@ -135,11 +135,12 @@ DLL_PUBLIC void * openFile(const char *filename, const char *mode, const char *p
 #else
         pHandle->m_pFile = fopen(filename, mode);
 #endif
-
-        pHandle->m_pHttpServer = NULL;
-        pHandle->m_bWebFile = false;
-
-        if (pHandle->m_pFile == NULL)
+        if (pHandle->m_pFile != NULL)
+        {
+            pHandle->m_pHttpServer = NULL;
+            pHandle->m_bWebFile = false;
+        }
+        else
         {
             closeFile(pHandle);
             pHandle = NULL;
@@ -219,7 +220,7 @@ DLL_PUBLIC int closeFile(void *stream)
 
     int res =  0;
 
-    if (!pHandle->m_bWebFile && pHandle->m_pFile != NULL)
+    if (!pHandle->m_bWebFile)
     {
         res =  fclose(pHandle->m_pFile);
     }

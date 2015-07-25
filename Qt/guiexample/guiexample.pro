@@ -4,27 +4,6 @@
 #
 #-------------------------------------------------
 
-# Target: 32 or 64 bit (Windoze default is 32 bit; *nix default is 64 bit)
-!32bit:!64bit {
-    win32 {
-        message( "Setting default output to 32bit" )
-        CONFIG += "32bit"
-    }
-    else {
-        message( "Setting default output to 64bit" )
-        CONFIG += "64bit"
-    }
-}
-
-32bit {
-    MODE = 32-bit
-    BITCOUNT=32
-}
-64bit {
-    MODE = 64-bit
-    BITCOUNT=64
-}
-
 QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -38,18 +17,13 @@ SOURCES += main.cpp \
     searchtextdlg.cpp \ 
     explorerutils.cpp \
     editdetailsdlg.cpp \
-    editoptionsdlg.cpp \
-    openfromwebdlg.cpp \
-    dvdlanguage.cpp
+    editoptionsdlg.cpp
     
 INCLUDEPATH += \
     ../.. \
     ../../lib \
     ../../include \
-    ../../include/dvdetect \
-    ../../$${MODE}/ \
-    ../../$${MODE}/include \
-    ../../$${MODE}/include/dvdetect
+    ../../include/dvdetect
 
 HEADERS  += \
     aboutdlg.h \
@@ -75,9 +49,7 @@ HEADERS  += \
     ../../include/dvdetect/version.h \
     explorerutils.h \
     editdetailsdlg.h \
-    editoptionsdlg.h \
-    openfromwebdlg.h \
-    dvdlanguage.h
+    editoptionsdlg.h
 
 DEFINES += HAVE_CONFIG_H
 win32:DEFINES -= UNICODE
@@ -91,15 +63,14 @@ DEFINES += NDEBUG
 
 win32:LIBS += -lws2_32
 
-LIBS += -L"$$PWD/../../$${MODE}/lib/.libs/" -ldvdetect
+LIBS += -L"$$PWD/../../lib/.libs/" -ldvdetect
 
 FORMS    += \
     dvdexplorerdlg.ui \
     searchtextdlg.ui \
     aboutdlg.ui \
     editdetailsdlg.ui \
-    editoptionsdlg.ui \
-    openfromwebdlg.ui
+    editoptionsdlg.ui
 
 # SPÄTER WEG!
 DEFINES += BUILDING_STATIC

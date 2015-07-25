@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013-2014 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -126,7 +126,7 @@ typedef int bool;
 /*!
  * Useful to unify ip4 and ip6 stuff
  */
-typedef struct _tagINET_ADDRESS
+typedef struct
 {
     size_t              iAddrLen;
     ADDRESS_FAMILY      sa_family;
@@ -180,12 +180,5 @@ extern "C" char * strptime (const char *buf, const char *format, struct tm *tm);
 
 #define setInvalidParameterError(text)  setError(__PRETTY_FUNCTION__ + std::string("\nInvalid parameter: ") + std::string(text), DVDERRORCODE_INVALID_PARAMETER)
 #define setInternalError(text)          setError(__PRETTY_FUNCTION__ + std::string("\nInternal error: ") + std::string(text), DVDERRORCODE_INTERNAL_ERROR)
-
-#ifndef BOOL
-#define BOOL int
-
-#define TRUE (-1)
-#define FALSE (0)
-#endif
 
 #endif // COMPAT_H

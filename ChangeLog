@@ -1,13 +1,3 @@
-2013-09-XX nschlia V0.60
-
-  * Changed order in ChangeLog to have the latest release on top.
-  * Reformatted ChangeLog to look better when viewed online in SourceForge.
-
-TODO:
-
-  * If a submitter re-submits the same DVD, the database gets updated instead of creating 
-    a new revision. This avoids creating several revisions with minor changes.
-
 2013-09-19 nschlia V0.50
 
 Living in the past: All releases in this document were dated back to 2012, but I guess the 
