@@ -104,6 +104,13 @@ There is a MinGW toolchain available for windows:
 
 GNU MSYS/MinGW can be downloaded from http://www.mingw.org/wiki/MSYS.
 
+There is an excellent guide how to install Minimum GNU for Windows (MinGW)
+that can be found here:
+http://blog.florianwolters.de/educational/2013/11/21/Installing-MinGW/
+
+If you follow these instructions and add MinGW to your path, you can simply
+start a bash shell (type bash on a command prompt) and run configure+make.
+
 It provides all necessary tools, including a shell prompt that can be used
 to execute ./configure. This will build a "real" windows DLL that can be
 used by any program code that supports using DLLs.
@@ -117,6 +124,14 @@ libwinpthread-1.dll	for threading
 
 Because the C API is a wrapper around the C++ library, the c++ dll is
 required in any case.
+
+The basic set of MinGW tools required is:
+
+* Package mingw-developer-toolkit; Class bin
+* Package mingw32-base; Class bin
+* Package mingw32-gcc-g++; Class bin
+* Package mingw32-gcc-g++; Class dev
+* Package msys-base; Class bin
 
 Compilers and Options
 =====================
