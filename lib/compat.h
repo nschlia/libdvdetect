@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -126,7 +126,7 @@ typedef int bool;
 /*!
  * Useful to unify ip4 and ip6 stuff
  */
-typedef struct
+typedef struct _tagINET_ADDRESS
 {
     size_t              iAddrLen;
     ADDRESS_FAMILY      sa_family;
@@ -180,5 +180,16 @@ extern "C" char * strptime (const char *buf, const char *format, struct tm *tm);
 
 #define setInvalidParameterError(text)  setError(__PRETTY_FUNCTION__ + std::string("\nInvalid parameter: ") + std::string(text), DVDERRORCODE_INVALID_PARAMETER)
 #define setInternalError(text)          setError(__PRETTY_FUNCTION__ + std::string("\nInternal error: ") + std::string(text), DVDERRORCODE_INTERNAL_ERROR)
+
+#ifndef BOOL
+#define BOOL int
+
+#ifndef TRUE
+#define TRUE (-1)
+#endif
+#ifndef FALSE
+#define FALSE (0)
+#endif
+#endif
 
 #endif // COMPAT_H

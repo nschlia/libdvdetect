@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -615,7 +615,8 @@ char *getenv(const char *name)      // Like the original: uses static buffer, no
 
 bool isUrl(const string & strPath)
 {
-    return (strPath.substr(0, sizeof("http://") - 1) == "http://");
+    return (strPath.substr(0, sizeof("http://") - 1) == "http://" ||
+            strPath.substr(0, sizeof("https://") - 1) == "https://");
 }
 
 time_t getgmtime(struct tm *time)
@@ -623,7 +624,8 @@ time_t getgmtime(struct tm *time)
     time_t unixtime = 0;
 
 #if _WIN32
-    unixtime = _mkgmtime(time);
+    //unixtime = _mkgmtime(time);
+    unixtime = mktime(time);
 #else
     // Convert to GMT - looks a bit strange but this is the portable way
     char *tz;

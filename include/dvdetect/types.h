@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -46,7 +46,7 @@
 #endif // MAX_PATH
 
 #ifndef LIBDVDETECT_COPYRIGHT
-#define LIBDVDETECT_COPYRIGHT "Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>"
+#define LIBDVDETECT_COPYRIGHT "Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>"
 #endif // LIBDVDETECT_COPYRIGHT
 
 #ifndef LIBDVDETECT_XML_COMMENT
@@ -188,7 +188,7 @@ typedef const DVDVIDEOASPECT* LPCDVDVIDEOASPECT;
  * <td>352x240</td>352x288<td></td>
  * </tr></table>
  */
-typedef struct
+typedef struct _tagDVDVIDEORESOLUTION
 {
     uint16_t            m_wX;                                           //!< Resolution (width)
     uint16_t            m_wY;                                           //!< Resolution (height)
@@ -201,7 +201,7 @@ typedef const DVDVIDEORESOLUTION* LPCDVDVIDEORESOLUTION;
 /*!
  * Decoded video attributes
  */
-typedef struct
+typedef struct _tagDVDVIDEOSTREAM
 {
     uint16_t            m_wID;                                          //!< Video stream ID, fixed to 0xE0
     DVDVIDEOCODINGMODE  m_eCodingMode;                                  //!< Video coding mode (MPEG-1 or MPEG-2)
@@ -226,7 +226,7 @@ typedef const DVDVIDEOSTREAM* LPCDVDVIDEOSTREAM;
 /*!
  * Coding mode
  */
-typedef enum
+typedef enum _enumDVDAUDIOCODINGMODE
 {
     DVDAUDIOCODINGMODE_INVALID,                                         //!< invalid
     DVDAUDIOCODINGMODE_AC3,                                             //!< 0 AC3
@@ -243,7 +243,7 @@ typedef const DVDAUDIOCODINGMODE* LPCDVDAUDIOCODINGMODE;
 /*!
  * Application mode
  */
-typedef enum
+typedef enum _enumDVDAUDIOAPPLICATIONMODE
 {
     DVDAUDIOAPPLICATIONMODE_INVALID,                                    //!< invalid
     DVDAUDIOAPPLICATIONMODE_UNSPECIFIED,                                //!< 0 = unspecified
@@ -258,7 +258,7 @@ typedef const DVDAUDIOAPPLICATIONMODE* LPCDVDAUDIOAPPLICATIONMODE;
 /*!
  * Quantization/DRC
  */
-typedef enum
+typedef enum _enumDVDAUDIOQUANTISATION
 {
     DVDAUDIOQUANTISATION_INVALID,                                       //!< invalid
     DVDAUDIOQUANTISATION_16BPS,                                         //!< 0 = 16 bits per sample
@@ -270,7 +270,7 @@ typedef enum
 
 typedef const DVDAUDIOQUANTISATION* LPCDVDAUDIOQUANTISATION;
 
-typedef enum
+typedef enum _enumDVDAUDIOCODEEXT
 {
     DVDAUDIOCODEEXT_INVALID,                                            //!< invalid
     DVDAUDIOCODEEXT_UNSPECIFIED,                                        //!< 0 = unspecified
@@ -287,7 +287,7 @@ typedef const DVDAUDIOCODEEXT* LPCDVDAUDIOCODEEXT;
 /*!
  * Channel assignments (karaoke mode)
  */
-typedef enum
+typedef enum _enumDVDAUDIOCHANNELASSIGNMENT
 {
     DVDAUDIOCHANNELASSIGNMENT_INVALID,                                  //!< invalid
     DVDAUDIOCHANNELASSIGNMENT_2_0,                                      //!< 2 = 2/0 L,R
@@ -305,7 +305,7 @@ typedef const DVDAUDIOCHANNELASSIGNMENT* LPCDVDAUDIOCHANNELASSIGNMENT;
 /*!
  * Karaoke mode: solo, duet
  */
-typedef enum
+typedef enum _enumDVDAKARAOKEMODE
 {
     DVDKARAOKEMODE_INVALID,                                             //!< invalid
     DVDKARAOKEMODE_SOLO,                                                //!< solo
@@ -319,7 +319,7 @@ typedef const DVDAKARAOKEMODE* LPCDVDAKARAOKEMODE;
 /*!
  * Decoded audio attributes (Menus/Video Titles)
  */
-typedef struct
+typedef struct _tagDVDAUDIOSTREAM
 {
     /*@{*/
     //! Audio Stream Id
@@ -351,7 +351,7 @@ typedef const DVDAUDIOSTREAM* LPCDVDAUDIOSTREAM;
 /*!
  * Decoded audio attributes (Video Titles only)
  */
-typedef struct
+typedef struct _tagDVDAUDIOSTREAMEX
 {
     //!< If true, language code present
     /*!
@@ -419,7 +419,7 @@ typedef const DVDSUBPICCODEEXT* LPCDVDSUBPICCODEEXT;
 /*!
  * Decoded subpicture attributes
  */
-typedef struct
+typedef struct _tagDVDSUBPICSTREAM
 {
     uint16_t                    m_wID;                                  //!< Subpicture steam ID, 0x20 + (Stream # - 1)
     uint16_t                    m_wCodingMode;                          //!< Subtitle coding mode
@@ -456,7 +456,7 @@ typedef const DVDSUBPICSTREAM* LPCDVDSUBPICSTREAM;
 /*!
  * Video Manager Header Data
  */
-typedef struct
+typedef struct _tagDVDVMGM
 {
     uint16_t                    m_wVersionNumberMajor;                      //!< Major version number
     uint16_t                    m_wVersionNumberMinor;                      //!< Minor version number
@@ -482,7 +482,7 @@ typedef const DVDVMGM* LPCDVDVMGM;
 /*!
  * Video Title Set Header Data
  */
-typedef struct
+typedef struct _tagDVDVTS
 {
     uint16_t                    m_wTitleSetNo;                              //!< Title number
     uint16_t                    m_wVersionNumberMajor;                      //!< Major version number
@@ -512,7 +512,7 @@ typedef const DVDVTS* LPCDVDVTS;
 /*!
  * A DVD Program Chain (PGC)
  */
-typedef struct
+typedef struct _tagDVDPGC
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< PGC number
@@ -545,7 +545,7 @@ typedef const DVDPGC* LPCDVDPGC;
 /*!
  * A DVD Part of Title (PTT) in VMG
  */
-typedef struct
+typedef struct _tagDVDPTTVMG
 {
     uint16_t    m_wPlaybackType;                                            //!< Playback type
     uint16_t    m_wNumberOfVideoAngles;                                     //!< Number of video angles (1...9)
@@ -553,6 +553,8 @@ typedef struct
     uint8_t     m_byParentalMgmMaskVTS;                                     //!< Parental management mask for VTS
     uint16_t    m_wVideoTitleSetNo;                                         //!< Video title set having this video title
     uint16_t    m_wTitleNo;                                                 //!< Title number within its video title set (VTS)
+
+    uint16_t    m_wRealTitleNo;                                             //!<
 
 } DVDPTTVMG, *LPDVDPTTVMG;
 
@@ -566,7 +568,7 @@ typedef const DVDPTTVMG* LPCDVDPTTVMG;
  * contains one title with two program chains that have one program each, it
  * could have one virtual title with two chapters.
  */
-typedef struct
+typedef struct _tagDVDPTTVTS
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< (Real) Program Chain (PGCN)
@@ -585,7 +587,7 @@ typedef const DVDPTTVTS* LPCDVDPTTVTS;
 /*!
  * DVD Program Data
  */
-typedef struct
+typedef struct _tagDVDPROGRAM
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< Owner program chain (PGC) number
@@ -631,7 +633,7 @@ typedef const BLOCKTYPE* LPCBLOCKTYPE;
 /*!
  * DVD Cell
  */
-typedef struct
+typedef struct _tagDVDCELL
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< Owner PGC number
@@ -670,7 +672,7 @@ typedef const DVDCELL* LPCDVDCELL;
 /*!
  * DVD Unit
  */
-typedef struct
+typedef struct _tagDVDUNIT
 {
     uint16_t    m_wTitleSetNo;                                              //!< Owner title number
     uint16_t    m_wProgramChainNo;                                          //!< Owner PGC number
@@ -713,7 +715,7 @@ typedef const DVDFILETYPE* LPCDVDFILETYPE;
 /*!
  * DVD file
  */
-typedef struct
+typedef struct _tagDVDFILE
 {
     uint16_t    m_wTitleSetNo;                                              //!< Number of owner title set (0...99)
 
@@ -732,7 +734,7 @@ typedef const DVDFILE* LPCDVDFILE;
 /*!
  * File status information
  */
-typedef struct
+typedef struct _tagDVDFILESTAT
 {
     uint64_t    m_qwFileSize;           //!< total size, in bytes
     time_t      m_FileTime;             //!< time of last modification
@@ -744,7 +746,7 @@ typedef const DVDFILESTAT* LPCDVDFILESTAT;
 
 // -------------------------------------------------------------------------------------------------------
 
-typedef enum
+typedef enum _enumXMLMODE
 {
     XMLMODE_INVALID,                    //!< Invalid query
     XMLMODE_QUERY,                      //!< Query DVD
@@ -759,7 +761,7 @@ typedef enum
 
 typedef const XMLMODE* LPCXMLMODE;      //!< constant version
 
-typedef enum
+typedef enum _enumXMLRESULT
 {
     XMLRESULT_SUCCESS,                  //!< Success
     XMLRESULT_NOT_FOUND,                 //!< Query not successful

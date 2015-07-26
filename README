@@ -33,6 +33,8 @@ Tested environments:
 * Suse 12.2
 * Suse 11.4
 * Debian (Debian 2.6.32-48squeeze1)
+* Debian (Raspbian 4.9.2-10) ARM
+* Debian (Debian 4.8.4-1)
 * Windows 7 (using GNU MSYS)
 * Windows Cygwin
 
@@ -68,8 +70,3 @@ homepage:
 
 Or they can be send directly to me:
     Norbert Schlia <mailto:nschlia@dvdetect.de>
-    
-KNOWN PROBLEMS
-
-Recently it turned out that configure does not work on Debian. This, and
-several other problems are currently being reworked. Please stay tuned.

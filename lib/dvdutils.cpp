@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -98,7 +98,7 @@ DLL_PUBLIC void dvdGetFileName(DVDFILETYPE eFileType, uint16_t wTitleSetNo, uint
     *(pszFileName + (maxlen - 1)) = '\0';
 }
 
-typedef struct
+typedef struct _tagDVDFILEHANDLE
 {
     std::string m_strFileName;
     FILE*       m_pFile;
@@ -135,12 +135,11 @@ DLL_PUBLIC void * openFile(const char *filename, const char *mode, const char *p
 #else
         pHandle->m_pFile = fopen(filename, mode);
 #endif
-        if (pHandle->m_pFile != NULL)
-        {
-            pHandle->m_pHttpServer = NULL;
-            pHandle->m_bWebFile = false;
-        }
-        else
+
+        pHandle->m_pHttpServer = NULL;
+        pHandle->m_bWebFile = false;
+
+        if (pHandle->m_pFile == NULL)
         {
             closeFile(pHandle);
             pHandle = NULL;
@@ -220,7 +219,7 @@ DLL_PUBLIC int closeFile(void *stream)
 
     int res =  0;
 
-    if (!pHandle->m_bWebFile)
+    if (!pHandle->m_bWebFile && pHandle->m_pFile != NULL)
     {
         res =  fclose(pHandle->m_pFile);
     }

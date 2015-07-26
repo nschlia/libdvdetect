@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -32,6 +32,7 @@
 #include "explorerutils.h"
 #include "editoptionsdlg.h"
 #include "openfromwebdlg.h"
+#include "dvdlanguage.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -92,6 +93,10 @@ dvdexplorerdlg::dvdexplorerdlg(QWidget *parent) :
     clearDetails();
 
     updateDialog();
+
+    ui->treeViewStreams->setStyleSheet("QTreeView::item:selected { background-color:blue; color:white; }");
+    ui->treeViewDvd->setStyleSheet("QTreeView::item:selected { background-color:blue; color:white; }");
+    ui->treeViewDvd->setSelectionBehavior (QAbstractItemView::SelectRows);
 }
 
 dvdexplorerdlg::~dvdexplorerdlg()
@@ -117,10 +122,10 @@ void dvdexplorerdlg::showCells(const dvdprogram* pDvdProgram, QStandardItem* par
         const dvdcell *pDvdCell = pDvdProgram->getDvdCell(wCellNo);
         LPCDVDCELL pDVDCELL = pDvdCell->getDVDCELL();
 
-        QStandardItem* child1 = getItem(tr("Cell %0").arg(wCellNo));
+        QStandardItem* pChild1 = getItem(tr("Cell %0").arg(wCellNo));
 
         aitems.clear();
-        aitems.append(child1);
+        aitems.append(pChild1);
         aitems.append(getItem(tr("%0").arg(getFormattedSize(pDvdCell->getSize()))));
         aitems.append(getItem(tr("%0").arg(getPlayTime(pDVDCELL->m_qwPlayTime))));
         aitems.append(getItem(""));
@@ -128,77 +133,79 @@ void dvdexplorerdlg::showCells(const dvdprogram* pDvdProgram, QStandardItem* par
         aitems.append(getItem(""));
         parent->appendRow(aitems);
 
-        child1->setData(QVariant((long long)pDvdCell));
+        pChild1->setData(QVariant((long long)pDvdCell));
 
         for (uint16_t wUnitNo = 1; wUnitNo <= pDvdCell->getUnitCount(); wUnitNo++)
         {
             const dvdunit *pDvdUnit = pDvdCell->getDvdUnit(wUnitNo);
             //LPDVDUNIT pDVDUNIT = pDvdUnit->getDVDUNIT();
 
-            QStandardItem* child2 = getItem(tr("Unit %0").arg(wUnitNo));
+            QStandardItem* pChild2 = getItem(tr("Unit %0").arg(wUnitNo));
 
             aitems.clear();
-            aitems.append(child2);
+            aitems.append(pChild2);
             aitems.append(getItem(tr("%0").arg(getFormattedSize(pDvdUnit->getSize()))));
             aitems.append(getItem(tr("%0").arg(""/*getPlayTime(pDvdCell->getPlayTime())*/)));
             aitems.append(getItem(""));
             aitems.append(getItem(""));
             aitems.append(getItem(""));
-            child1->appendRow(aitems);
+            pChild1->appendRow(aitems);
 
-            child2->setData(QVariant((long long)pDvdUnit));
+            pChild2->setData(QVariant((long long)pDvdUnit));
         }
     }
 }
 
 void dvdexplorerdlg::showPhysicalView()
 {
-    QStandardItemModel *ptreeViewDVDModel = (QStandardItemModel *)ui->treeViewDVD->model();
+    QStandardItemModel *pTreeViewDvdModel = qobject_cast<QStandardItemModel *>(ui->treeViewDvd->model());
     QList<QStandardItem*> aitems;
 
-    qDebug() << "Building physical view";
+    Q_ASSERT(pTreeViewDvdModel != NULL);
 
-    ui->treeViewDVD->setEditTriggers(QTreeView::NoEditTriggers);   // Cannot edit in physical mode
+    //qDebug() << "Building physical view";
 
-    setDVDColumnSize();
+    ui->treeViewDvd->setEditTriggers(QTreeView::NoEditTriggers);   // Cannot edit in physical mode
 
-    QStandardItem* item = getItem(tr("DVD [%0]").arg(m_DVD.getPath().c_str()));
+    setDvdColumnSize();
 
-    item->setData(QVariant((long long)&m_DVD));
+    QStandardItem* pItem = getItem(tr("DVD [%0]").arg(m_DvdParse.getPath().c_str()));
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= m_DVD.getTitleSetCount(); wTitleSetNo++)
+    pItem->setData(QVariant((long long)&m_DvdParse));
+
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= m_DvdParse.getTitleSetCount(); wTitleSetNo++)
     {
-        const dvdtitle *pDvdTitle = m_DVD.getDvdTitle(wTitleSetNo);
+        const dvdtitle *pDvdTitle = m_DvdParse.getDvdTitle(wTitleSetNo);
 
-        QStandardItem* child1 = getItem(tr("Title %0").arg(wTitleSetNo));
+        QStandardItem* pChild1 = getItem(tr("Title %0").arg(wTitleSetNo));
 
         aitems.clear();
-        aitems.append(child1);
+        aitems.append(pChild1);
         aitems.append(getItem(tr("%0").arg(getFormattedSize(pDvdTitle->getSize()))));
         aitems.append(getItem(tr("%0").arg(getPlayTime(pDvdTitle->getPlayTime()))));
         aitems.append(getItem(""));
         aitems.append(getItem(""));
         aitems.append(getItem(""));
-        item->appendRow(aitems);
+        pItem->appendRow(aitems);
 
-        child1->setData(QVariant((long long)pDvdTitle));
+        pChild1->setData(QVariant((long long)pDvdTitle));
 
         for (uint16_t wProgramChainNo = 1; wProgramChainNo <= pDvdTitle->getPgcCount(); wProgramChainNo++)
         {
             const dvdpgc *pDvdPgc = pDvdTitle->getDvdPgc(wProgramChainNo);
 
-            QStandardItem* child2 = getItem(tr("PGC %0").arg(wProgramChainNo));
+            QStandardItem* pChild2 = getItem(tr("PGC %0").arg(wProgramChainNo));
 
             aitems.clear();
-            aitems.append(child2);
+            aitems.append(pChild2);
             aitems.append(getItem(tr("%0").arg(getFormattedSize(pDvdPgc->getSize()))));
             aitems.append(getItem(tr("%0").arg(getPlayTime(pDvdPgc->getPlayTime()))));
             aitems.append(getItem(""));
             aitems.append(getItem(""));
             aitems.append(getItem(""));
-            child1->appendRow(aitems);
+            pChild1->appendRow(aitems);
 
-            child2->setData(QVariant((long long)pDvdPgc));
+            pChild2->setData(QVariant((long long)pDvdPgc));
 
             for (uint16_t wProgramNo = 1; wProgramNo <= pDvdPgc->getProgramCount(); wProgramNo++)
             {
@@ -213,7 +220,7 @@ void dvdexplorerdlg::showPhysicalView()
                 aitems.append(getItem(""));
                 aitems.append(getItem(""));
                 aitems.append(getItem(""));
-                child2->appendRow(aitems);
+                pChild2->appendRow(aitems);
 
                 child3->setData(QVariant((long long)pDvdProgram));
                 //child3->setIcon(m_iconcamera);
@@ -223,97 +230,105 @@ void dvdexplorerdlg::showPhysicalView()
         }
     }
 
-    ptreeViewDVDModel->setItem(0, 0, item);
-    ptreeViewDVDModel->setItem(0, 1, getItem(tr("%0").arg(getFormattedSize(m_DVD.getSize()))));
-    ptreeViewDVDModel->setItem(0, 2, getItem(tr("%0").arg(getPlayTime(m_DVD.getPlayTime()))));
-    ptreeViewDVDModel->setItem(0, 3, getItem(""));
-    ptreeViewDVDModel->setItem(0, 4, getItem(""));
-    ptreeViewDVDModel->setItem(0, 5, getItem(""));
+    pTreeViewDvdModel->setItem(0, 0, pItem);
+    pTreeViewDvdModel->setItem(0, 1, getItem(tr("%0").arg(getFormattedSize(m_DvdParse.getSize()))));
+    pTreeViewDvdModel->setItem(0, 2, getItem(tr("%0").arg(getPlayTime(m_DvdParse.getPlayTime()))));
+    pTreeViewDvdModel->setItem(0, 3, getItem(""));
+    pTreeViewDvdModel->setItem(0, 4, getItem(""));
+    pTreeViewDvdModel->setItem(0, 5, getItem(""));
 
-    QModelIndex index = ptreeViewDVDModel->indexFromItem(item);
-    ui->treeViewDVD->setExpanded(index, true);
-    QItemSelectionModel *selection = ui->treeViewDVD->selectionModel();
-    selection->select(index, QItemSelectionModel::ClearAndSelect);
+    QModelIndex index = pTreeViewDvdModel->indexFromItem(pItem);
+    ui->treeViewDvd->setExpanded(index, true);
+    QItemSelectionModel *pSelection = ui->treeViewDvd->selectionModel();
+    pSelection->select(index, QItemSelectionModel::ClearAndSelect);
 }
 
 void dvdexplorerdlg::showVirtualView()
 {
-    QStandardItemModel *ptreeViewDVDModel = (QStandardItemModel *)ui->treeViewDVD->model();
+    QStandardItemModel *pTreeViewDvdModel = qobject_cast<QStandardItemModel *>(ui->treeViewDvd->model());
     QList<QStandardItem*> aitems;
 
-    qDebug() << "Building virtual view";
+    Q_ASSERT(pTreeViewDvdModel != NULL);
 
-    ui->treeViewDVD->setEditTriggers(QTreeView::AllEditTriggers);
+    //qDebug() << "Building virtual view";
 
-    setDVDColumnSize();
+    ui->treeViewDvd->setEditTriggers(QTreeView::AllEditTriggers);
 
-    QStandardItem* item = getItem(tr("DVD [%0]").arg(m_DVD.getPath().c_str()));
+    setDvdColumnSize();
 
-    item->setData(QVariant((long long)&m_DVD));
+    QStandardItem* pItem = getItem(tr("DVD [%0]").arg(m_DvdParse.getPath().c_str()));
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= m_DVD.getDvdPttVmgCount(); wTitleSetNo++)
+    pItem->setData(QVariant((long long)&m_DvdParse));
+
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= m_DvdParse.getDvdPttVmgCount(); wTitleSetNo++)
     {
-        const dvdpttvmg *pDvdPttVmg = m_DVD.getDvdPttVmg(wTitleSetNo);
+        const dvdpttvmg *pDvdPttVmg = m_DvdParse.getDvdPttVmg(wTitleSetNo);
+        //const dvdtitle *pDvdTitle = m_DvdParse.getDvdTitle(wTitleSetNo);
+        if (pDvdPttVmg == NULL)
+        {
+            continue;
+        }
+
         const dvdtitle *pDvdTitle = pDvdPttVmg->getDvdTitle();
 
-        QStandardItem* child1 = getItem(tr("Title %0").arg(wTitleSetNo));
+        QStandardItem* pChild1 = getItem(tr("Title %0").arg(wTitleSetNo));
 
         aitems.clear();
-        aitems.append(child1);
+        aitems.append(pChild1);
         aitems.append(getItem(tr("%0").arg(getFormattedSize(pDvdPttVmg->getSize()))));
         aitems.append(getItem(tr("%0").arg(getPlayTime(pDvdPttVmg->getPlayTime()))));
         aitems.append(getItem(""));
         aitems.append(getItemFromStdString(pDvdPttVmg->getTitle(), true));
         aitems.append(getItem(""));
-        item->appendRow(aitems);
+        pItem->appendRow(aitems);
 
-        child1->setData(QVariant((long long)pDvdTitle));
+        pChild1->setData(QVariant((long long)pDvdTitle));
 
         for (uint16_t wPttNo = 1; wPttNo <= pDvdPttVmg->getPttVtsCount(); wPttNo++)
         {
             const dvdpttvts * pDvdPttVts = pDvdPttVmg->getDvdPttVts(wPttNo);
             LPCDVDPTTVTS pDVDPTTVTS = pDvdPttVts->getDVDPTTVTS();
-            const dvdprogram * pDvdProgram = m_DVD.getDvdProgram(pDVDPTTVTS);
+            const dvdprogram * pDvdProgram = m_DvdParse.getDvdProgram(pDVDPTTVTS);
 
-            QStandardItem* child2 = getItem(tr("Chapter %0").arg(pDVDPTTVTS->m_wProgramNo));
+            QStandardItem* pChild2 = getItem(tr("Chapter %0").arg(pDVDPTTVTS->m_wProgramNo));
 
             aitems.clear();
-            aitems.append(child2);
+            aitems.append(pChild2);
             aitems.append(getItem(tr("%0").arg(getFormattedSize(pDvdPttVts->getSize()))));
             aitems.append(getItem(tr("%0").arg(getPlayTime(pDvdPttVts->getPlayTime()))));
             aitems.append(getItemFromStdString(pDvdPttVts->getArtist(), true));
             aitems.append(getItemFromStdString(pDvdPttVts->getTitle(), true));
             aitems.append(getItem(""));
-            child1->appendRow(aitems);
+            pChild1->appendRow(aitems);
 
-            child2->setData(QVariant((long long)pDvdProgram));
-            //child2->setIcon(m_iconcamera);
+            pChild2->setData(QVariant((long long)pDvdProgram));
+            //pChild2->setIcon(m_iconcamera);
 
-            showCells(pDvdProgram, child2);
+            showCells(pDvdProgram, pChild2);
         }
     }
 
-    ptreeViewDVDModel->setItem(0, 0, item);
-    ptreeViewDVDModel->setItem(0, 1, getItem(tr("%0").arg(getFormattedSize(m_DVD.getVirtSize()))));
-    ptreeViewDVDModel->setItem(0, 2, getItem(tr("%0").arg(getPlayTime(m_DVD.getVirtPlayTime()))));
-    ptreeViewDVDModel->setItem(0, 3, getItemFromStdString(m_DVD.getAlbumArtist(), true));
-    ptreeViewDVDModel->setItem(0, 4, getItemFromStdString(m_DVD.getAlbum(), true));
-    ptreeViewDVDModel->setItem(0, 5, getItemFromStdString(m_DVD.getGenre(), true));
+    pTreeViewDvdModel->setItem(0, 0, pItem);
+    pTreeViewDvdModel->setItem(0, 1, getItem(tr("%0").arg(getFormattedSize(m_DvdParse.getVirtSize()))));
+    pTreeViewDvdModel->setItem(0, 2, getItem(tr("%0").arg(getPlayTime(m_DvdParse.getVirtPlayTime()))));
+    pTreeViewDvdModel->setItem(0, 3, getItemFromStdString(m_DvdParse.getAlbumArtist(), true));
+    pTreeViewDvdModel->setItem(0, 4, getItemFromStdString(m_DvdParse.getAlbum(), true));
+    pTreeViewDvdModel->setItem(0, 5, getItemFromStdString(m_DvdParse.getGenre(), true));
 
-    QModelIndex index = ptreeViewDVDModel->indexFromItem(item);
-    ui->treeViewDVD->setExpanded(index, true);
-    QItemSelectionModel *selection = ui->treeViewDVD->selectionModel();
-    selection->select(index, QItemSelectionModel::ClearAndSelect);
+    QModelIndex index = pTreeViewDvdModel->indexFromItem(pItem);
+    ui->treeViewDvd->setExpanded(index, true);
+    QItemSelectionModel *pSelection = ui->treeViewDvd->selectionModel();
+    pSelection->select(index, QItemSelectionModel::ClearAndSelect);
 }
 
 void dvdexplorerdlg::updateDialog()
 {
-    if (m_DVD.isLoaded())
+    if (m_DvdParse.isLoaded())
     {
-        ui->actionExport_XML->setEnabled(true);
-        ui->actionQuery_DVD->setEnabled(true);
-        ui->actionSubmit_DVD->setEnabled(true);
-        ui->action_Edit_View_Details->setEnabled(true);
+        ui->actionExportXml->setEnabled(true);
+        ui->actionQueryDvd->setEnabled(true);
+        ui->actionSubmitDvd->setEnabled(true);
+        ui->actionEditDetails->setEnabled(true);
 
         clearDetails();
 
@@ -326,20 +341,20 @@ void dvdexplorerdlg::updateDialog()
             showVirtualView();
         }
 
-        showDetails(&m_DVD);
+        showDetails(&m_DvdParse);
     }
     else
     {
-        ui->actionExport_XML->setEnabled(false);
-        ui->actionQuery_DVD->setEnabled(false);
-        ui->actionSubmit_DVD->setEnabled(false);
-        ui->action_Edit_View_Details->setEnabled(false);
+        ui->actionExportXml->setEnabled(false);
+        ui->actionQueryDvd->setEnabled(false);
+        ui->actionSubmitDvd->setEnabled(false);
+        ui->actionEditDetails->setEnabled(false);
 
         clearDetails();
     }
 }
 
-int dvdexplorerdlg::parseDVD(const QString & strPath)
+int dvdexplorerdlg::parseDvd(const QString & strPath)
 {
     int res = 0;
 
@@ -348,19 +363,21 @@ int dvdexplorerdlg::parseDVD(const QString & strPath)
 
     loadSettings(NULL);
 
-    res = m_DVD.parse(strPath.toStdString());
+    res = m_DvdParse.parse(strPath.toStdString());
 
     updateDialog();
 
+    queryDvd();
+
     if (res != 0)
     {
-        QMessageBox::critical(this, tr("DVD parse error"), m_DVD.getErrorString().c_str());
+        QMessageBox::critical(this, tr("DVD parse error"), m_DvdParse.getErrorString().c_str(), tr("OK"));
     }
 
     return res;
 }
 
-int dvdexplorerdlg::queryDVD()
+int dvdexplorerdlg::queryDvd()
 {
     dvddatabase dvdDatabase(PROGRAM_NAME);
     dvdparselst lstDvdParse;
@@ -368,34 +385,34 @@ int dvdexplorerdlg::queryDVD()
 
     loadSettings(&dvdDatabase);
 
-    ui->statusBar->showMessage(tr("Querying DVD..."));
+    statusMessage(tr("Querying DVD..."));
 
-    res = dvdDatabase.query(&lstDvdParse, &m_DVD);
+    res = dvdDatabase.query(&lstDvdParse, &m_DvdParse);
 
     DVDERRORCODE eErrorCode = dvdDatabase.getErrorCode();
 
     if (eErrorCode == DVDERRORCODE_NOT_FOUND)
     {
-        ui->statusBar->showMessage(tr("DVD not found"));
-        QMessageBox::information(this, tr("Info"), tr("DVD not found in database"));
+        statusMessage(tr("DVD not found in database"));
+        QMessageBox::information(this, tr("Info"), tr("DVD not found in database"), tr("OK"));
     }
     else if (eErrorCode != DVDERRORCODE_SUCCESS)
     {
-        ui->statusBar->showMessage(tr("DVD query error"));
-        QMessageBox::critical(this, tr("DVD query error"), dvdDatabase.getErrorString().c_str());
+        statusMessage(tr("DVD query error") + " " + dvdDatabase.getErrorString().c_str());
+        QMessageBox::critical(this, tr("DVD query error"), dvdDatabase.getErrorString().c_str(), tr("OK"));
     }
     else if (lstDvdParse.size())
     {
-        m_DVD.update(lstDvdParse[0]);
+        m_DvdParse.update(lstDvdParse[0]);
         ui->checkBoxPhysicalView->setChecked(false);
         updateDialog();
-        ui->statusBar->showMessage(tr("DVD found"));
+        statusMessage(tr("DVD found"));
     }
 
     return res;
 }
 
-int dvdexplorerdlg::findDVD()
+int dvdexplorerdlg::findDvd()
 {
     searchtextdlg searchTextDlg(this);
     int res = -1;
@@ -407,21 +424,21 @@ int dvdexplorerdlg::findDVD()
 
         loadSettings(&dvdDatabase);
 
-        ui->statusBar->showMessage(tr("Searching DVD..."));
+        statusMessage(tr("Searching DVD..."));
 
         res = dvdDatabase.search(&lstDvdParse, searchTextDlg.getSearch().toStdString());
 
         if (res != 0)
         {
-            ui->statusBar->showMessage(tr("DVD search failed"));
-            QMessageBox::critical(this, tr("DVD search failed"), dvdDatabase.getErrorString().c_str());
+            statusMessage(tr("DVD search failed") + " " + dvdDatabase.getErrorString().c_str());
+            QMessageBox::critical(this, tr("DVD search failed"), dvdDatabase.getErrorString().c_str(), tr("OK"));
         }
         else
         {
-            m_DVD = *lstDvdParse[0]; // TODO: We display 1st match, OK for now, but we should be able to handle 1+ matches.
+            m_DvdParse = *lstDvdParse[0]; // TODO: We display 1st match, OK for now, but we should be able to handle 1+ matches.
             ui->checkBoxPhysicalView->setChecked(false);
             updateDialog();
-            ui->statusBar->showMessage(tr("DVD search complete"));
+            statusMessage(tr("DVD search complete"));
         }
     }
 
@@ -430,74 +447,76 @@ int dvdexplorerdlg::findDVD()
 
 void dvdexplorerdlg::updateData()
 {
-    QStandardItemModel *ptreeViewDVDModel = (QStandardItemModel *)ui->treeViewDVD->model();
-    QStandardItem *item = NULL;
+    QStandardItemModel *pTreeViewDvdModel = qobject_cast<QStandardItemModel *>(ui->treeViewDvd->model());
+    QStandardItem *pItem = NULL;
 
-    item = ptreeViewDVDModel->item(0, 3);
-    m_DVD.setAlbumArtist(item->text().toStdString());
-    item = ptreeViewDVDModel->item(0, 4);
-    m_DVD.setAlbum(item->text().toStdString());
-    item = ptreeViewDVDModel->item(0, 5);
-    m_DVD.setGenre(item->text().toStdString());
+    Q_ASSERT(pTreeViewDvdModel != NULL);
 
-    QStandardItem* child1 = ptreeViewDVDModel->item(0, 0);
+    pItem = pTreeViewDvdModel->item(0, 3);
+    m_DvdParse.setAlbumArtist(pItem->text().toStdString());
+    pItem = pTreeViewDvdModel->item(0, 4);
+    m_DvdParse.setAlbum(pItem->text().toStdString());
+    pItem = pTreeViewDvdModel->item(0, 5);
+    m_DvdParse.setGenre(pItem->text().toStdString());
 
-    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= child1->rowCount(); wTitleSetNo++)
+    QStandardItem* pChild1 = pTreeViewDvdModel->item(0, 0);
+
+    for (uint16_t wTitleSetNo = 1; wTitleSetNo <= pChild1->rowCount(); wTitleSetNo++)
     {
-        item = child1->child(wTitleSetNo - 1, 4);
+        pItem = pChild1->child(wTitleSetNo - 1, 4);
 
-        dvdpttvmg * pDvdPttVmg = m_DVD.getDvdPttVmg(wTitleSetNo);
+        dvdpttvmg * pDvdPttVmg = m_DvdParse.getDvdPttVmg(wTitleSetNo);
 
-        pDvdPttVmg->setTitle(item->text().toStdString());
+        pDvdPttVmg->setTitle(pItem->text().toStdString());
 
-        QStandardItem* child2 = child1->child(wTitleSetNo - 1, 0);
+        QStandardItem* pChild2 = pChild1->child(wTitleSetNo - 1, 0);
 
-        for (uint16_t wPttNo = 1; wPttNo <= child2->rowCount(); wPttNo++)
+        for (uint16_t wPttNo = 1; wPttNo <= pChild2->rowCount(); wPttNo++)
         {
-            dvdpttvts * pDvdPttVts = m_DVD.getDvdPttVts(wTitleSetNo, wPttNo);
+            dvdpttvts * pDvdPttVts = m_DvdParse.getDvdPttVts(wTitleSetNo, wPttNo);
 
-            item = child2->child(wPttNo - 1, 3);
-            pDvdPttVts->setArtist(item->text().toStdString());
-            item = child2->child(wPttNo - 1, 4);
-            pDvdPttVts->setTitle(item->text().toStdString());
+            pItem = pChild2->child(wPttNo - 1, 3);
+            pDvdPttVts->setArtist(pItem->text().toStdString());
+            pItem = pChild2->child(wPttNo - 1, 4);
+            pDvdPttVts->setTitle(pItem->text().toStdString());
         }
     }
 }
 
-int dvdexplorerdlg::submitDVD()
+int dvdexplorerdlg::submitDvd()
 {
     dvddatabase dvdDatabase(PROGRAM_NAME);
     int res = 0;
 
     if (isPhysicalView())
     {
-        QMessageBox::information(this, tr("Information"), tr("Cannot submit DVD in physical view mode. Please switch to virtual view."));
+        QMessageBox::information(this, tr("Information"), tr("Cannot submit DVD in physical view mode. Please switch to virtual view."), tr("OK"));
         return -1;
     }
 
-    res = QMessageBox::information(this, tr("Information"), tr("Are you sure you want to submit the current data?"), QMessageBox::Ok | QMessageBox::Cancel);
+    res = QMessageBox::information(this, tr("Information"), tr("Are you sure you want to submit the current data?"), tr("Yes"), tr("Cancel"), "", 1);
 
-    if (res != QMessageBox::Ok)
+    if (res != 0)
     {
         return -1;
     }
 
     loadSettings(&dvdDatabase);
-    ui->statusBar->showMessage(tr("Submitting DVD..."));
+    statusMessage(tr("Submitting DVD..."));
 
     updateData();
 
-    res = dvdDatabase.submit(&m_DVD);
+    res = dvdDatabase.submit(&m_DvdParse);
 
     if (res != 0)
     {
-        ui->statusBar->showMessage(tr("DVD submit failed"));
-        QMessageBox::critical(this, tr("DVD submit failed"), dvdDatabase.getErrorString().c_str());
+        statusMessage(tr("DVD submit failed") + " " + dvdDatabase.getErrorString().c_str());
+        QMessageBox::critical(this, tr("DVD submit failed"), dvdDatabase.getErrorString().c_str(), tr("OK"));
     }
     else
     {
-        ui->statusBar->showMessage(tr("DVD submitted"));
-        res = queryDVD();
+        statusMessage(tr("DVD submitted"));
+        res = queryDvd();
     }
 
     return res;
@@ -506,84 +525,25 @@ int dvdexplorerdlg::submitDVD()
 int dvdexplorerdlg::editDetails()
 {
     editdetailsdlg editDetailsDlg(this);
-    editDetailsDlg.setParser(&m_DVD);
+    editDetailsDlg.setParser(&m_DvdParse);
     editDetailsDlg.exec();
     return 0;
 }
 
-int dvdexplorerdlg::editOptions()
-{
-    editoptionsdlg editOptionsDlg(this);
-    editOptionsDlg.exec();
-    return 0;
-}
-
-int dvdexplorerdlg::exportXml()
-{
-    QString strOutFile = QFileDialog::getSaveFileName(this,
-                                                      tr("Save DVD to File"),
-                                                      "",
-                                                      tr("XML (*.xml);;All files (*)"));
-    int res = 0;
-
-    if (!strOutFile.isEmpty())
-    {
-        dvddatabase dvdDatabase(PROGRAM_NAME);
-
-        updateData();
-
-        res = dvdDatabase.write(&m_DVD, strOutFile.toStdString());
-        if (res)
-        {
-            QMessageBox::critical(this, tr("Error writing output file"), m_DVD.getErrorString().c_str());
-        }
-    }
-
-    return res;
-}
-
-int dvdexplorerdlg::importXml()
-{
-    QString strInFile = QFileDialog::getOpenFileName(this,
-                                                     tr("Load DVD from File"),
-                                                     "",
-                                                     tr("XML (*.xml);;All files (*)"));
-
-    int res = 0;
-
-    if (!strInFile.isEmpty())
-    {
-        dvddatabase dvdDatabase(PROGRAM_NAME);
-        dvdparselst lstDvdParseOut;
-
-        res = dvdDatabase.read(&lstDvdParseOut, strInFile.toStdString());
-        if (res)
-        {
-            QMessageBox::critical(this, tr("Error reading input file"), dvdDatabase.getErrorString().c_str());
-        }
-        else
-        {
-            m_DVD = *lstDvdParseOut[0];
-            updateDialog();
-        }
-    }
-
-    return res;
-}
-
-void dvdexplorerdlg::on_treeViewDVD_clicked(const QModelIndex & index)
+void dvdexplorerdlg::on_treeViewDvd_clicked(const QModelIndex & index)
 {
     if (!index.isValid())
     {
         return;
     }
 
-    QStandardItemModel *ptreeViewDVDModel = (QStandardItemModel *)ui->treeViewDVD->model();
-    QStandardItem *child1 = ptreeViewDVDModel->itemFromIndex(index);
+    QStandardItemModel *pTreeViewDvdModel = qobject_cast<QStandardItemModel *>(ui->treeViewDvd->model());
+    Q_ASSERT(pTreeViewDvdModel != NULL);
+    QStandardItem *pChild1 = pTreeViewDvdModel->itemFromIndex(index);
 
-    if (child1 != NULL)
+    if (pChild1 != NULL)
     {
-        const dvdetectbase *pDvDetectBase = (const dvdetectbase *)child1->data().toLongLong();
+        const dvdetectbase *pDvDetectBase = (const dvdetectbase *)pChild1->data().toLongLong();
 
         if (pDvDetectBase != NULL)
         {
@@ -627,20 +587,22 @@ void dvdexplorerdlg::on_treeViewDVD_clicked(const QModelIndex & index)
     }
 }
 
-void dvdexplorerdlg::setDVDColumnSize()
+void dvdexplorerdlg::setDvdColumnSize()
 {
-    QStandardItemModel *pModel = (QStandardItemModel *)ui->treeViewDVD->model();
+    QStandardItemModel *pModel = qobject_cast<QStandardItemModel *>(ui->treeViewDvd->model());
+
+    Q_ASSERT(pModel != NULL);
 
     pModel->clear();
 
     pModel->setColumnCount(6);
-    ui->treeViewDVD->setColumnWidth(0, 250);
-    ui->treeViewDVD->setColumnWidth(1, 60);
-    ui->treeViewDVD->setColumnWidth(2, 90);
-    ui->treeViewDVD->setColumnWidth(3, 150);
-    ui->treeViewDVD->setColumnWidth(4, 150);
-    ui->treeViewDVD->setColumnWidth(6, 150);
-    ui->treeViewDVD->setHeaderHidden(false);
+    ui->treeViewDvd->setColumnWidth(0, 250);
+    ui->treeViewDvd->setColumnWidth(1, 60);
+    ui->treeViewDvd->setColumnWidth(2, 90);
+    ui->treeViewDvd->setColumnWidth(3, 150);
+    ui->treeViewDvd->setColumnWidth(4, 150);
+    ui->treeViewDvd->setColumnWidth(6, 150);
+    ui->treeViewDvd->setHeaderHidden(false);
 
     QStringList labels;
 
@@ -656,7 +618,9 @@ void dvdexplorerdlg::setDVDColumnSize()
 
 void dvdexplorerdlg::setDetailsColumnSize()
 {
-    QStandardItemModel *pModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pModel != NULL);
 
     pModel->clear();
 
@@ -666,7 +630,9 @@ void dvdexplorerdlg::setDetailsColumnSize()
 
 void dvdexplorerdlg::setStreamColumnSize()
 {
-    QStandardItemModel *pModel = (QStandardItemModel *)ui->treeViewStreams->model();
+    QStandardItemModel *pModel = qobject_cast<QStandardItemModel *>(ui->treeViewStreams->model());
+
+    Q_ASSERT(pModel != NULL);
 
     pModel->clear();
 
@@ -682,7 +648,9 @@ void dvdexplorerdlg::setStreamColumnSize()
 
 void dvdexplorerdlg::setFilesColumnSize()
 {
-    QStandardItemModel *pModel = (QStandardItemModel *)ui->treeViewFiles->model();
+    QStandardItemModel *pModel = qobject_cast<QStandardItemModel *>(ui->treeViewFiles->model());
+
+    Q_ASSERT(pModel != NULL);
 
     pModel->clear();
 
@@ -694,17 +662,17 @@ void dvdexplorerdlg::setFilesColumnSize()
 
 void dvdexplorerdlg::clearDetails()
 {
-    delete ui->treeViewDVD->model();
+    delete ui->treeViewDvd->model();
     delete ui->treeViewDetails->model();
     delete ui->treeViewStreams->model();
     delete ui->treeViewFiles->model();
 
-    ui->treeViewDVD->setModel(new QStandardItemModel(0, 5, this));
+    ui->treeViewDvd->setModel(new QStandardItemModel(0, 5, this));
     ui->treeViewDetails->setModel(new QStandardItemModel(0, 2, this));
     ui->treeViewStreams->setModel(new QStandardItemModel(0, 5, this));
     ui->treeViewFiles->setModel(new QStandardItemModel(0, 2, this));
 
-    setDVDColumnSize();
+    setDvdColumnSize();
     setDetailsColumnSize();
     setStreamColumnSize();
     setFilesColumnSize();
@@ -719,53 +687,55 @@ bool dvdexplorerdlg::showDetails(const dvdparse *pDvdParse)
         return false;
     }
 
-    QStandardItemModel *ptreeViewDetailsModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pTreeViewDetailsModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pTreeViewDetailsModel != NULL);
 
     const DVDVMGM *pDVDVMGM = pDvdParse->getDVDVMGM();
     QList<QStandardItem *> items;
 
-    if (m_DVD.getRevision())
+    if (m_DvdParse.getRevision())
     {
         items.clear();
         items.append(getItem(tr("Revision")));
-        items.append(getItem(tr("%0").arg(m_DVD.getRevision())));
-        ptreeViewDetailsModel->appendRow(items);
+        items.append(getItem(tr("%0").arg(m_DvdParse.getRevision())));
+        pTreeViewDetailsModel->appendRow(items);
     }
 
-    if (m_DVD.getPath().size())
+    if (m_DvdParse.getPath().size())
     {
         items.clear();
         items.append(getItem(tr("Disk")));
-        items.append(getItem(tr("%0").arg(m_DVD.getPath().c_str())));
-        ptreeViewDetailsModel->appendRow(items);
+        items.append(getItem(tr("%0").arg(m_DvdParse.getPath().c_str())));
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     items.clear();
     items.append(getItem(tr("Version")));
     items.append(getItem(tr("%0.%1").arg(pDVDVMGM->m_wVersionNumberMajor).arg(pDVDVMGM->m_wVersionNumberMinor)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Volume")));
     items.append(getItem(tr("%0/%1").arg(pDVDVMGM->m_wVolumeNumber).arg(pDVDVMGM->m_wNumberOfVolumes)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Side")));
     items.append(getItem(tr("%0").arg(pDVDVMGM->m_wSideID)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Title Sets")));
     items.append(getItem(tr("%0").arg(pDvdParse->getTitleSetCount())));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     if (pDVDVMGM->m_szProviderID[0])
     {
         items.clear();
         items.append(getItem(tr("Provider ID")));
         items.append(getItem(tr("%0").arg(pDVDVMGM->m_szProviderID)));
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     QString strRegions;
@@ -784,7 +754,7 @@ bool dvdexplorerdlg::showDetails(const dvdparse *pDvdParse)
     items.clear();
     items.append(getItem(tr("Regions")));
     items.append(getItem(strRegions));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     // TODO: uint8_t  m_byVMG_POS[8]; // VMG POS
 
@@ -795,7 +765,7 @@ bool dvdexplorerdlg::showDetails(const dvdparse *pDvdParse)
                          .arg(getVideoStandard(pDVDVMGM->m_VideoStream.m_eStandard))
                          .arg(getVideoAspect(pDVDVMGM->m_VideoStream.m_eAspect))
                          .arg(pDVDVMGM->m_VideoStream.m_Resolution.m_wX).arg(pDVDVMGM->m_VideoStream.m_Resolution.m_wY)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     if (pDVDVMGM->m_wAudioStreamCount)
     {
@@ -806,7 +776,7 @@ bool dvdexplorerdlg::showDetails(const dvdparse *pDvdParse)
                              .arg(pDVDVMGM->m_AudioStream.m_wChannels)
                              .arg(pDVDVMGM->m_AudioStream.m_dwSampleRate / 1000)
                              .arg(getAudioQuantisation(pDVDVMGM->m_AudioStream.m_eQuantisation))));
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     if (pDVDVMGM->m_wSubpicStreamCount)
@@ -815,21 +785,20 @@ bool dvdexplorerdlg::showDetails(const dvdparse *pDvdParse)
         items.append(getItem(tr("Menu Subpicture")));
         if (pDVDVMGM->m_SubpicStream.m_bLanguageCodePresent)
         {
-            items.append(getItem(tr("%0")
-                                 .arg(getLanguage(pDVDVMGM->m_SubpicStream.m_szLanguageCode))));
+            items.append(getItemAndValue(tr("%0").arg(getLanguage(pDVDVMGM->m_SubpicStream.m_szLanguageCode)), pDVDVMGM->m_SubpicStream.m_szLanguageCode));
         }
         else
         {
             items.append(getItem(tr("unknown")));
         }
 
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     items.clear();
     items.append(getItem(tr("DVDetect Hash")));
     items.append(getItemFromStdString(pDvdParse->getHash()));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     showFiles(pDvdParse);
 
@@ -845,7 +814,9 @@ bool dvdexplorerdlg::showDetails(const dvdtitle *pDvdTitle)
         return false;
     }
 
-    QStandardItemModel *ptreeViewDetailsModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pTreeViewDetailsModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pTreeViewDetailsModel != NULL);
 
     const DVDVTS *pDVDVTS = pDvdTitle->getDVDVTS();
     QList<QStandardItem *> items;
@@ -853,14 +824,14 @@ bool dvdexplorerdlg::showDetails(const dvdtitle *pDvdTitle)
     items.clear();
     items.append(getItem(tr("Version")));
     items.append(getItem(tr("%0.%1").arg(pDVDVTS->m_wVersionNumberMajor).arg(pDVDVTS->m_wVersionNumberMinor)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     if (isPhysicalView())
     {
         items.clear();
         items.append(getItem(tr("Program Chains")));
         items.append(getItem(tr("%0").arg(pDvdTitle->getPgcCount())));
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     const DVDVIDEOSTREAM & videoAttributes = pDVDVTS->m_VideoStreamVTS;
@@ -868,40 +839,40 @@ bool dvdexplorerdlg::showDetails(const dvdtitle *pDvdTitle)
     items.clear();
     items.append(getItem(tr("Automatic PanScan Disallowed")));
     items.append(getItem(tr("%0").arg(getYesOrNo(videoAttributes.m_bAutomaticPanScanDisallowed))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     if (pDVDVTS->m_VideoStreamVTSM.m_eStandard == DVDVIDEOTVSTANDARD_NTSC)
     {
         items.clear();
         items.append(getItem(tr("CC for line 21 field 2 in GOP")));
         items.append(getItem(tr("%0").arg(getYesOrNo(videoAttributes.m_bCCForLine21Field1InGOP))));
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
 
         items.clear();
         items.append(getItem(tr("CC for line 21 field 2 in GOP")));
         items.append(getItem(tr("%0").arg(getYesOrNo(videoAttributes.m_bCCForLine21Field2InGOP))));
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     items.clear();
     items.append(getItem(tr("CBR")));
     items.append(getItem(tr("%0").arg(getYesOrNo(videoAttributes.m_bCBR))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Letterbox Disallowed")));
     items.append(getItem(tr("%0").arg(getYesOrNo(videoAttributes.m_bAutomaticLetterboxDisallowed))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Letterboxed")));
     items.append(getItem(tr("%0").arg(getYesOrNo(videoAttributes.m_bLetterBoxed))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Source")));
     items.append(getItem(tr("%0").arg(getFilmOrCamera(videoAttributes.m_bSourceFilm))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Menu Video")));
@@ -910,7 +881,7 @@ bool dvdexplorerdlg::showDetails(const dvdtitle *pDvdTitle)
                          .arg(getVideoStandard(pDVDVTS->m_VideoStreamVTSM.m_eStandard))
                          .arg(getVideoAspect(pDVDVTS->m_VideoStreamVTSM.m_eAspect))
                          .arg(pDVDVTS->m_VideoStreamVTSM.m_Resolution.m_wX).arg(pDVDVTS->m_VideoStreamVTSM.m_Resolution.m_wY)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     if (pDVDVTS->m_wAudioStreamCountVTSM)
     {
@@ -921,7 +892,7 @@ bool dvdexplorerdlg::showDetails(const dvdtitle *pDvdTitle)
                              .arg(pDVDVTS->m_AudioStreamVTSM.m_wChannels)
                              .arg(pDVDVTS->m_AudioStreamVTSM.m_dwSampleRate / 1000)
                              .arg(getAudioQuantisation(pDVDVTS->m_AudioStreamVTSM.m_eQuantisation))));
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     if (pDVDVTS->m_wSubpicStreamCountVTSM)
@@ -930,14 +901,14 @@ bool dvdexplorerdlg::showDetails(const dvdtitle *pDvdTitle)
         items.append(getItem(tr("Menu Subpicture")));
         if (pDVDVTS->m_SubpicStreamVTSM.m_bLanguageCodePresent)
         {
-            items.append(getItem(tr("%0").arg(getLanguage(pDVDVTS->m_SubpicStreamVTSM.m_szLanguageCode))));
+            items.append(getItemAndValue(tr("%0").arg(getLanguage(pDVDVTS->m_SubpicStreamVTSM.m_szLanguageCode)), pDVDVTS->m_SubpicStreamVTSM.m_szLanguageCode));
         }
         else
         {
             items.append(getItem(tr("unknown")));
         }
 
-        ptreeViewDetailsModel->appendRow(items);
+        pTreeViewDetailsModel->appendRow(items);
     }
 
     showStreams(pDvdTitle);
@@ -955,7 +926,9 @@ bool dvdexplorerdlg::showDetails(const dvdpgc* pDvdPgc)
         return false;
     }
 
-    QStandardItemModel *ptreeViewDetailsModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pTreeViewDetailsModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pTreeViewDetailsModel != NULL);
 
     const DVDPGC *pDVDPGC = pDvdPgc->getDVDPGC();
     QList<QStandardItem *> items;
@@ -963,24 +936,24 @@ bool dvdexplorerdlg::showDetails(const dvdpgc* pDvdPgc)
     items.clear();
     items.append(getItem(tr("EntryPGC")));
     items.append(getItem(tr("%0").arg(getYesOrNo(pDVDPGC->m_bEntryPGC))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("PGC Number")));
     items.append(getItem(tr("%0").arg(pDVDPGC->m_wProgramChainNo)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Programs")));
     items.append(getItem(tr("%0").arg(pDvdPgc->getProgramCount())));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("PlayTime")));
     items.append(getItem(tr("%0").arg(getPlayTime(pDvdPgc->getPlayTime()))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
-    const dvdtitle * pDvdTitle = m_DVD.getDvdTitle(pDVDPGC->m_wTitleSetNo);
+    const dvdtitle * pDvdTitle = m_DvdParse.getDvdTitle(pDVDPGC->m_wTitleSetNo);
     showStreams(pDvdTitle);
     showFiles(pDvdTitle);
 
@@ -996,7 +969,9 @@ bool dvdexplorerdlg::showDetails(const dvdpttvts* pDvdPtt)
         return false;
     }
 
-    QStandardItemModel *ptreeViewDetailsModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pTreeViewDetailsModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pTreeViewDetailsModel != NULL);
 
     LPCDVDPTTVTS pDVDPTTVTS = pDvdPtt->getDVDPTTVTS();
     QList<QStandardItem *> items;
@@ -1004,14 +979,14 @@ bool dvdexplorerdlg::showDetails(const dvdpttvts* pDvdPtt)
     items.clear();
     items.append(getItem(tr("Program Chain (PGCN)")));
     items.append(getItem(tr("%0").arg(pDVDPTTVTS->m_wProgramChainNo)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Program (PGN)")));
     items.append(getItem(tr("%0").arg(pDVDPTTVTS->m_wProgramNo)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
-    const dvdtitle * pDvdTitle = m_DVD.getDvdTitle(pDVDPTTVTS->m_wTitleSetNo);
+    const dvdtitle * pDvdTitle = m_DvdParse.getDvdTitle(pDVDPTTVTS->m_wTitleSetNo);
     showStreams(pDvdTitle);
     showFiles(pDvdTitle);
 
@@ -1027,7 +1002,9 @@ bool dvdexplorerdlg::showDetails(const dvdprogram *pDvdProgram)
         return false;
     }
 
-    QStandardItemModel *ptreeViewDetailsModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pTreeViewDetailsModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pTreeViewDetailsModel != NULL);
 
     LPCDVDPROGRAM pDVDPROGRAM = pDvdProgram->getDVDPROGRAM();
     QList<QStandardItem *> items;
@@ -1035,29 +1012,29 @@ bool dvdexplorerdlg::showDetails(const dvdprogram *pDvdProgram)
     items.clear();
     items.append(getItem(tr("Program")));
     items.append(getItem(tr("%0").arg(pDVDPROGRAM->m_wProgramNo)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Cells")));
     items.append(getItem(tr("%0").arg(pDvdProgram->getCellCount())));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Start Sector")));
     items.append(getItem(tr("%0").arg(pDvdProgram->getStartSector())));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("End Sector")));
     items.append(getItem(tr("%0").arg(pDvdProgram->getEndSector())));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("PlayTime")));
     items.append(getItem(tr("%0").arg(getPlayTime(pDvdProgram->getPlayTime()))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
-    const dvdtitle * pDvdTitle = m_DVD.getDvdTitle(pDVDPROGRAM->m_wTitleSetNo);
+    const dvdtitle * pDvdTitle = m_DvdParse.getDvdTitle(pDVDPROGRAM->m_wTitleSetNo);
     showStreams(pDvdTitle);
     showFiles(pDvdTitle);
 
@@ -1073,7 +1050,9 @@ bool dvdexplorerdlg::showDetails(const dvdcell *pDvdCell)
         return false;
     }
 
-    QStandardItemModel *ptreeViewDetailsModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pTreeViewDetailsModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pTreeViewDetailsModel != NULL);
 
     LPCDVDCELL pDVDCELL = pDvdCell->getDVDCELL();
     QList<QStandardItem *> items;
@@ -1081,99 +1060,99 @@ bool dvdexplorerdlg::showDetails(const dvdcell *pDvdCell)
     items.clear();
     items.append(getItem(tr("Cell")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_wCellNo)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Cell Type")));
     items.append(getItem(tr("%0").arg(getCellType(pDVDCELL->m_eCellType))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Block Type")));
     items.append(getItem(tr("%0").arg(getBlockType(pDVDCELL->m_eBlockType))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Cell playback time")));
     items.append(getItem(tr("%0").arg(getPlayTime(pDVDCELL->m_qwPlayTime, pDVDCELL->m_wFrameRate))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("First VOBU Start Sector")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_dwFirstVOBUStartSector)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("First ILVU End Sector")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_dwFirstILVUEndSector)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Last VOBU Start Sector")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_dwLastVOBUStartSector)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Last VOBU End Sector")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_dwLastVOBUEndSector)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Seamless Multiplex")));
     items.append(getItem(tr("%0").arg(getYesOrNo(pDVDCELL->m_bSeamlessMultiplex))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Interleaved")));
     items.append(getItem(tr("%0").arg(getYesOrNo(pDVDCELL->m_bInterleaved))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("SCR Discontinuity")));
     items.append(getItem(tr("%0").arg(getYesOrNo(pDVDCELL->m_bSCRdiscontinuity))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Seamless Angle Linked In DSI")));
     items.append(getItem(tr("%0").arg(getYesOrNo(pDVDCELL->m_bSeamlessAngleLinkedInDSI))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("VOB Still Mode")));
     items.append(getItem(tr("%0").arg(getYesOrNo(pDVDCELL->m_bVOBStillMode))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Stops Trick Play")));
     items.append(getItem(tr("%0").arg(getYesOrNo(pDVDCELL->m_bStopsTrickPlay))));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Cell Still Time")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_wCellStillTime)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Cell Command #")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_wCellCommand)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("VOBU/Cell ID")));
     items.append(getItem(tr("%0/%1").arg(pDVDCELL->m_wVOBidn).arg(pDVDCELL->m_wCELLidn)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("Units")));
     items.append(getItem(tr("%0").arg(pDvdCell->getUnitCount())));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("VOB IDs")));
     items.append(getItem(tr("%0").arg(pDVDCELL->m_wNumberOfVOBIds)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
-    const dvdtitle * pDvdTitle = m_DVD.getDvdTitle(pDVDCELL->m_wTitleSetNo);
+    const dvdtitle * pDvdTitle = m_DvdParse.getDvdTitle(pDVDCELL->m_wTitleSetNo);
     showStreams(pDvdTitle);
     showFiles(pDvdTitle);
 
@@ -1189,7 +1168,9 @@ bool dvdexplorerdlg::showDetails(const dvdunit *pDvdUnit)
         return false;
     }
 
-    QStandardItemModel *ptreeViewDetailsModel = (QStandardItemModel *)ui->treeViewDetails->model();
+    QStandardItemModel *pTreeViewDetailsModel = qobject_cast<QStandardItemModel *>(ui->treeViewDetails->model());
+
+    Q_ASSERT(pTreeViewDetailsModel != NULL);
 
     LPCDVDUNIT pDVDUNIT = pDvdUnit->getDVDUNIT();
     QList<QStandardItem *> items;
@@ -1197,14 +1178,14 @@ bool dvdexplorerdlg::showDetails(const dvdunit *pDvdUnit)
     items.clear();
     items.append(getItem(tr("Start Sector")));
     items.append(getItem(tr("%0").arg(pDVDUNIT->m_dwStartSector)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
     items.clear();
     items.append(getItem(tr("End Sector")));
     items.append(getItem(tr("%0").arg(pDVDUNIT->m_dwEndSector)));
-    ptreeViewDetailsModel->appendRow(items);
+    pTreeViewDetailsModel->appendRow(items);
 
-    const dvdtitle * pDvdTitle = m_DVD.getDvdTitle(pDVDUNIT->m_wTitleSetNo);
+    const dvdtitle * pDvdTitle = m_DvdParse.getDvdTitle(pDVDUNIT->m_wTitleSetNo);
     showStreams(pDvdTitle);
     showFiles(pDvdTitle);
 
@@ -1220,33 +1201,35 @@ bool dvdexplorerdlg::showStreams(const dvdtitle *pDvdTitle)
         return false;
     }
 
-    QStandardItemModel *treeViewStreamsModel = (QStandardItemModel *)ui->treeViewStreams->model();
+    QStandardItemModel *pTreeViewStreamsModel = qobject_cast<QStandardItemModel *>(ui->treeViewStreams->model());
+
+    Q_ASSERT(pTreeViewStreamsModel != NULL);
 
     LPCDVDVTS pDVDVTS = pDvdTitle->getDVDVTS();
     QList<QStandardItem *> items;
-    QStandardItem *item;
+    QStandardItem *pItem;
 
     items.clear();
-    item = getItem(tr("%0").arg(tr("Video")));
-    item->setData(pDVDVTS->m_VideoStreamVTS.m_wID);
-    items.append(item);
+    pItem = getItem(tr("%0").arg(tr("Video")));
+    pItem->setData(pDVDVTS->m_VideoStreamVTS.m_wID);
+    items.append(pItem);
     items.append(getItem(tr("[0x%0]").arg(pDVDVTS->m_VideoStreamVTS.m_wID, 0, 16)));
     items.append(getItem(tr("%0").arg(getVideoCodingMode(pDVDVTS->m_VideoStreamVTS.m_eCodingMode))));
     items.append(getItem(tr("%0").arg(getVideoStandard(pDVDVTS->m_VideoStreamVTS.m_eStandard))));
     items.append(getItem(tr("%0").arg(getVideoAspect(pDVDVTS->m_VideoStreamVTS.m_eAspect))));
     items.append(getItem(tr("%0x%1").arg(pDVDVTS->m_VideoStreamVTS.m_Resolution.m_wX).arg(pDVDVTS->m_VideoStreamVTS.m_Resolution.m_wY)));
-    treeViewStreamsModel->appendRow(items);
+    pTreeViewStreamsModel->appendRow(items);
 
     for (uint16_t wAudioStreamNo = 1; wAudioStreamNo <= pDVDVTS->m_wAudioStreamCountVTS; wAudioStreamNo++)
     {
         items.clear();
-        item = getItem(tr("%0").arg(tr("Audio")));
-        item->setData(pDVDVTS->m_AudioStreamVTS[wAudioStreamNo - 1].m_wID);
-        items.append(item);
+        pItem = getItem(tr("%0").arg(tr("Audio")));
+        pItem->setData(pDVDVTS->m_AudioStreamVTS[wAudioStreamNo - 1].m_wID);
+        items.append(pItem);
         items.append(getItem(tr("[0x%0]").arg(pDVDVTS->m_AudioStreamVTS[wAudioStreamNo - 1].m_wID, 0, 16)));
         if (pDVDVTS->m_AudioStreamExVTS[wAudioStreamNo - 1].m_bLanguageCodePresent)
         {
-            items.append(getItem(tr("%0").arg(getLanguage(pDVDVTS->m_AudioStreamExVTS[wAudioStreamNo - 1].m_szLanguageCode))));
+            items.append(getItemAndValue(tr("%0").arg(getLanguage(pDVDVTS->m_AudioStreamExVTS[wAudioStreamNo - 1].m_szLanguageCode)), pDVDVTS->m_AudioStreamExVTS[wAudioStreamNo - 1].m_szLanguageCode));
         }
         else
         {
@@ -1258,26 +1241,26 @@ bool dvdexplorerdlg::showStreams(const dvdtitle *pDvdTitle)
         items.append(getItem(tr("%0 kHz").arg(pDVDVTS->m_AudioStreamVTS[wAudioStreamNo - 1].m_dwSampleRate / 1000)));
         //items.append(getItem(tr("%0").arg(getAudioQuantisation(pDVDVTS->m_AudioStreamVTSM.m_eQuantisation))));
 
-        treeViewStreamsModel->appendRow(items);
+        pTreeViewStreamsModel->appendRow(items);
     }
 
     for (uint16_t wSubpicStreamNo = 1; wSubpicStreamNo <= pDVDVTS->m_wSubpicStreamCountVTS; wSubpicStreamNo++)
     {
         items.clear();
-        item = getItem(tr("%0").arg(tr("Subpicture")));
-        item->setData(pDVDVTS->m_SubpicStreamVTS[wSubpicStreamNo - 1].m_wID);
-        items.append(item);
+        pItem = getItem(tr("%0").arg(tr("Subpicture")));
+        pItem->setData(pDVDVTS->m_SubpicStreamVTS[wSubpicStreamNo - 1].m_wID);
+        items.append(pItem);
         items.append(getItem(tr("[0x%0]").arg(pDVDVTS->m_SubpicStreamVTS[wSubpicStreamNo - 1].m_wID, 0, 16)));
         if (pDVDVTS->m_SubpicStreamVTS[wSubpicStreamNo - 1].m_bLanguageCodePresent)
         {
-            items.append(getItem(tr("%0").arg(getLanguage(pDVDVTS->m_SubpicStreamVTS[wSubpicStreamNo - 1].m_szLanguageCode))));
+            items.append(getItemAndValue(tr("%0").arg(getLanguage(pDVDVTS->m_SubpicStreamVTS[wSubpicStreamNo - 1].m_szLanguageCode)), pDVDVTS->m_SubpicStreamVTS[wSubpicStreamNo - 1].m_szLanguageCode));
         }
         else
         {
             items.append(getItem(tr("%0").arg(tr("unknown"))));
         }
 
-        treeViewStreamsModel->appendRow(items);
+        pTreeViewStreamsModel->appendRow(items);
     }
 
     return true;
@@ -1292,7 +1275,9 @@ bool dvdexplorerdlg::showFiles(const dvdtitle *pDvdTitle)
         return false;
     }
 
-    QStandardItemModel *treeViewViewFiles = (QStandardItemModel *)ui->treeViewFiles->model();
+    QStandardItemModel *pTreeViewViewFilesModel = qobject_cast<QStandardItemModel *>(ui->treeViewFiles->model());
+
+    Q_ASSERT(pTreeViewViewFilesModel != NULL);
 
     for (uint16_t wFileNo = 0; wFileNo < pDvdTitle->getFileCount(); wFileNo++)
     {
@@ -1305,7 +1290,7 @@ bool dvdexplorerdlg::showFiles(const dvdtitle *pDvdTitle)
         items.append(getItem(tr("%0").arg(pDvdFile->getFileName().c_str())));
         items.append(getItem(tr("%0").arg(getFormattedSize(pDVDFILE->m_dwSize))));
         items.append(getItem(tr("%0").arg(getFormattedDate(pDVDFILE->m_Date))));
-        treeViewViewFiles->appendRow(items);
+        pTreeViewViewFilesModel->appendRow(items);
     }
 
     return true;
@@ -1320,7 +1305,9 @@ bool dvdexplorerdlg::showFiles(const dvdparse *pDvdParse)
         return false;
     }
 
-    QStandardItemModel *treeViewViewFiles = (QStandardItemModel *)ui->treeViewFiles->model();
+    QStandardItemModel *pTreeViewViewFilesModel = qobject_cast<QStandardItemModel *>(ui->treeViewFiles->model());
+
+    Q_ASSERT(pTreeViewViewFilesModel != NULL);
 
     for (uint16_t wFileNo = 0; wFileNo < pDvdParse->getFileCount(); wFileNo++)
     {
@@ -1333,7 +1320,7 @@ bool dvdexplorerdlg::showFiles(const dvdparse *pDvdParse)
         items.append(getItem(tr("%0").arg(pDvdFile->getFileName().c_str())));
         items.append(getItem(tr("%0").arg(getFormattedSize(pDVDFILE->m_dwSize))));
         items.append(getItem(tr("%0").arg(getFormattedDate(pDVDFILE->m_Date))));
-        treeViewViewFiles->appendRow(items);
+        pTreeViewViewFilesModel->appendRow(items);
     }
 
     return true;
@@ -1455,7 +1442,7 @@ QString dvdexplorerdlg::getAudioQuantisation(DVDAUDIOQUANTISATION eQuantisation)
 
 QString dvdexplorerdlg::getLanguage(const char *pszLanguage) const
 {
-    return pszLanguage;
+    return dvdlanguage::convertISOtoLanguage(pszLanguage);
 }
 
 QString dvdexplorerdlg::getCellType(CELLTYPE eCellType) const
@@ -1606,11 +1593,11 @@ void dvdexplorerdlg::on_actionOpen_triggered()
 
     ui->statusBar->showMessage(tr("Opening ") + strDir);
 
-    parseDVD(strDir);
-    queryDVD();
+    parseDvd(strDir);
+    queryDvd();
 }
 
-void dvdexplorerdlg::on_actionOpen_from_Web_triggered()
+void dvdexplorerdlg::on_actionOpenFromWeb_triggered()
 {
     QString strDir;
     openfromwebdlg openFromWebDlg(this);
@@ -1626,17 +1613,17 @@ void dvdexplorerdlg::on_actionOpen_from_Web_triggered()
 
         ui->statusBar->showMessage(tr("Opening ") + strDir);
 
-        parseDVD(strDir);
-        queryDVD();
+        parseDvd(strDir);
+        queryDvd();
     }
 }
 
-void dvdexplorerdlg::on_actionExport_XML_triggered()
+void dvdexplorerdlg::on_actionExportXml_triggered()
 {
     exportXml();
 }
 
-void dvdexplorerdlg::on_actionImport_XML_triggered()
+void dvdexplorerdlg::on_actionImportXml_triggered()
 {
     importXml();
 }
@@ -1651,22 +1638,22 @@ void dvdexplorerdlg::on_actionExit_triggered()
     close();
 }
 
-void dvdexplorerdlg::on_actionQuery_DVD_triggered()
+void dvdexplorerdlg::on_actionQueryDvd_triggered()
 {
-    queryDVD();
+    queryDvd();
 }
 
-void dvdexplorerdlg::on_actionFind_DVD_triggered()
+void dvdexplorerdlg::on_actionFindDvd_triggered()
 {
-    findDVD();
+    findDvd();
 }
 
-void dvdexplorerdlg::on_actionSubmit_DVD_triggered()
+void dvdexplorerdlg::on_actionSubmitDvd_triggered()
 {
-    submitDVD();
+    submitDvd();
 }
 
-void dvdexplorerdlg::on_action_Edit_View_Details_triggered()
+void dvdexplorerdlg::on_actionEditDetails_triggered()
 {
     editDetails();
 }
@@ -1678,28 +1665,28 @@ void dvdexplorerdlg::on_actionAbout_triggered()
     aboutDlg.exec();
 }
 
-void dvdexplorerdlg::on_treeViewDVD_customContextMenuRequested(const QPoint & /*pos*/)
+void dvdexplorerdlg::on_treeViewDvd_customContextMenuRequested(const QPoint & /*pos*/)
 {
     QAction *actionEditDetails = new QAction(tr("Edit details"), this);
     QAction *actionQuery = new QAction(tr("Query"), this);
-    QAction *actionSearch = new QAction(tr("Search"), this);
+    QAction *actionFind = new QAction(tr("Find"), this);
     QAction *actionSubmit = new QAction(tr("Submit"), this);
 
     QMenu menu(tr("Search"), this);
 
     menu.addAction(actionQuery);
-    menu.addAction(actionSearch);
+    menu.addAction(actionFind);
     menu.addAction(actionSubmit);
     menu.addSeparator();
     menu.addAction(actionEditDetails);
 
     menu.setDefaultAction(actionEditDetails);
-    menu.setEnabled(m_DVD.isLoaded());
+    menu.setEnabled(m_DvdParse.isLoaded());
 
     connect(actionEditDetails, SIGNAL(triggered()), this, SLOT(handleContextMenuEditDetails()));
-    connect(actionQuery, SIGNAL(triggered()), this, SLOT(on_actionQuery_DVD_triggered()));
-    connect(actionSearch, SIGNAL(triggered()), this, SLOT(on_actionSearch_DVD_triggered()));
-    connect(actionSubmit, SIGNAL(triggered()), this, SLOT(on_actionSubmit_DVD_triggered()));
+    connect(actionQuery, SIGNAL(triggered()), this, SLOT(on_actionQueryDvd_triggered()));
+    connect(actionFind, SIGNAL(triggered()), this, SLOT(on_actionFindDvd_triggered()));
+    connect(actionSubmit, SIGNAL(triggered()), this, SLOT(on_actionSubmitDvd_triggered()));
 
     menu.exec(QCursor::pos(), 0);
 }
@@ -1713,9 +1700,9 @@ void dvdexplorerdlg::loadSettings(dvddatabase *pDvdDatabase)
 {
     QSettings settings("guiexample.conf");
     settings.beginGroup("libdvdetect");
-    m_DVD.setSubmitter(settings.value("submitter").toString().toStdString());
-    m_DVD.setScanMode((DVDSCANMODE)settings.value("scanmode", DVDSCANMODE_AUTO).toInt());
-    m_DVD.setProxy(settings.value("proxyserver").toString().toStdString());
+    m_DvdParse.setSubmitter(settings.value("submitter").toString().toStdString());
+    m_DvdParse.setScanMode((DVDSCANMODE)settings.value("scanmode", DVDSCANMODE_AUTO).toInt());
+    m_DvdParse.setProxy(settings.value("proxyserver").toString().toStdString());
     if (pDvdDatabase != NULL)
     {
         pDvdDatabase->setServerUrl(settings.value("serverurl", pDvdDatabase->getServerUrl().c_str()).toString().toStdString());
@@ -1727,5 +1714,80 @@ void dvdexplorerdlg::loadSettings(dvddatabase *pDvdDatabase)
 bool dvdexplorerdlg::isPhysicalView() const
 {
     return ui->checkBoxPhysicalView->isChecked();
+}
+
+void dvdexplorerdlg::retranslate()
+{
+    ui->retranslateUi(this);
+}
+
+QString dvdexplorerdlg::getHash() const
+{
+    return QString::fromStdString(m_DvdParse.getHash());
+}
+
+void dvdexplorerdlg::statusMessage(const QString & strStatusMessage) const
+{
+    ui->statusBar->showMessage(strStatusMessage);
+}
+
+int dvdexplorerdlg::editOptions()
+{
+    editoptionsdlg editOptionsDlg(this);
+    editOptionsDlg.exec();
+    return 0;
+}
+
+int dvdexplorerdlg::exportXml()
+{
+    QString strOutFile = QFileDialog::getSaveFileName(this,
+                                                      tr("Save DVD to File"),
+                                                      "",
+                                                      tr("XML (*.xml);;All files (*)"));
+    int res = 0;
+
+    if (!strOutFile.isEmpty())
+    {
+        dvddatabase dvdDatabase(PROGRAM_NAME);
+
+        updateData();
+
+        res = dvdDatabase.write(&m_DvdParse, strOutFile.toStdString());
+        if (res)
+        {
+            QMessageBox::critical(this, tr("Error writing output file"), m_DvdParse.getErrorString().c_str());
+        }
+    }
+
+    return res;
+}
+
+int dvdexplorerdlg::importXml()
+{
+    QString strInFile = QFileDialog::getOpenFileName(this,
+                                                     tr("Load DVD from File"),
+                                                     "",
+                                                     tr("XML (*.xml);;All files (*)"));
+
+    int res = 0;
+
+    if (!strInFile.isEmpty())
+    {
+        dvddatabase dvdDatabase(PROGRAM_NAME);
+        dvdparselst lstDvdParseOut;
+
+        res = dvdDatabase.read(&lstDvdParseOut, strInFile.toStdString());
+        if (res)
+        {
+            QMessageBox::critical(this, tr("Error reading input file"), dvdDatabase.getErrorString().c_str());
+        }
+        else
+        {
+            m_DvdParse = *lstDvdParseOut[0];
+            updateDialog();
+        }
+    }
+
+    return res;
 }
 

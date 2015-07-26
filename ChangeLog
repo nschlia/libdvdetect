@@ -1,3 +1,22 @@
+2015-XX-XX nschlia V0.70
+
+2015-07-XX nschlia V0.60
+
+  * Changed order in ChangeLog to have the latest release on top.
+  * Reformatted ChangeLog to look better when viewed online in Github.
+
+TODO:
+
+  * If a submitter re-submits the same DVD, the database gets updated instead of creating 
+    a new revision. This avoids creating several revisions with minor changes.
+    
+FIXES:
+
+11704 Fix crash when DVD not found in database
+11472 Wrong virtual title selection fixed: take from program
+11469 Wrong virtual title selection fixed (testing!)
+
+
 2013-09-19 nschlia V0.50
 
 Living in the past: All releases in this document were dated back to 2012, but I guess the 

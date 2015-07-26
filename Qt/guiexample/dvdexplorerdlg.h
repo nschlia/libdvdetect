@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -40,8 +40,8 @@ class dvdexplorerdlg;
 }
 
 class QModelIndex;
-class QStandardItemModel;
 class QStandardItem;
+class QStandardItemModel;
 
 /*!
  * \brief dvdexplorerdlg class
@@ -50,6 +50,9 @@ class QStandardItem;
 class dvdexplorerdlg : public QMainWindow
 {
     Q_OBJECT
+    Q_CLASSINFO("author", "Norbert Schlia")
+    Q_CLASSINFO("url", "http://www.dvdetect.de/")
+    Q_CLASSINFO("project", "DVD Lookup Library")
 
 public:
     //! Constructor.
@@ -65,6 +68,10 @@ public:
      */
     virtual ~dvdexplorerdlg();
 
+    void                retranslate();
+
+    QString             getHash() const;
+
 protected:
     //! Access the DVDUNIT data structure.
     /*!
@@ -72,14 +79,14 @@ protected:
      * \return Success:
      * \return Fail:
      */
-    int                 parseDVD(const QString & strPath);
+    int                 parseDvd(const QString & strPath);
 
     void                showCells(const dvdprogram* pDvdProgram, QStandardItem* parent);
     void                showPhysicalView();
     void                showVirtualView();
     void                updateDialog();
 
-    void                setDVDColumnSize();
+    void                setDvdColumnSize();
     void                setDetailsColumnSize();
     void                setStreamColumnSize();
     void                setFilesColumnSize();
@@ -110,9 +117,9 @@ protected:
     QString             getFormattedDate(time_t unixTime) const;
     QString             getPlayTime(uint64_t qwPlaytimems, uint16_t wFrameRate = (uint16_t)-1) const;
 
-    int                 queryDVD();
-    int                 findDVD();
-    int                 submitDVD();
+    int                 queryDvd();
+    int                 findDvd();
+    int                 submitDvd();
     int                 editDetails();
     int                 editOptions();
     int                 exportXml();
@@ -123,25 +130,27 @@ protected:
 
     bool                isPhysicalView() const;
 
+    void                statusMessage(const QString & strStatusMessage) const;
+
 private slots:
     void                on_actionOpen_triggered();
-    void                on_actionExport_XML_triggered();
-    void                on_actionImport_XML_triggered();
+    void                on_actionExportXml_triggered();
+    void                on_actionImportXml_triggered();
     void                on_actionOptions_triggered();
-    void                on_actionOpen_from_Web_triggered();
+    void                on_actionOpenFromWeb_triggered();
     void                on_actionExit_triggered();
-    void                on_actionQuery_DVD_triggered();
-    void                on_actionFind_DVD_triggered();
-    void                on_actionSubmit_DVD_triggered();
+    void                on_actionQueryDvd_triggered();
+    void                on_actionFindDvd_triggered();
+    void                on_actionSubmitDvd_triggered();
     void                on_actionAbout_triggered();
-    void                on_treeViewDVD_clicked(const QModelIndex &index);
-    void                on_action_Edit_View_Details_triggered();
-    void                on_treeViewDVD_customContextMenuRequested(const QPoint &pos);
+    void                on_treeViewDvd_clicked(const QModelIndex &index);
+    void                on_actionEditDetails_triggered();
+    void                on_treeViewDvd_customContextMenuRequested(const QPoint &pos);
     void                handleContextMenuEditDetails();
     void                on_checkBoxPhysicalView_clicked();
 
 protected:
-    dvdparse            m_DVD;              //!< dvdparse parser object
+    dvdparse            m_DvdParse;              //!< dvdparse parser object
 
 private:
     Ui::dvdexplorerdlg *ui;

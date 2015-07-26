@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -207,6 +207,11 @@ bool dvdparse::locateDVD()
             // If not DVD files found, autoadd subdirectory
             m_strPath += "VIDEO_TS/";
         }
+    }
+    else
+    {
+        // On web sources there's no easy way to determine if this is a directory, so we simply remove anything after the last /
+        ::removeFileSpec(m_strPath);
     }
 
     return true;
@@ -445,6 +450,8 @@ void dvdparse::getVmgPtt(const uint8_t* pData)
         dvdPttVmg->m_DVDPTTVMG.m_wVideoTitleSetNo       = getbyte(pVMG_PTT_SRPT->m_byVideoTitleSet);
         dvdPttVmg->m_DVDPTTVMG.m_wTitleNo               = getbyte(pVMG_PTT_SRPT->m_byTitleNumber);
 
+        dvdPttVmg->m_DVDPTTVMG.m_wRealTitleNo           = wTitle;
+
         m_lstDvdPttVmg.push_back(dvdPttVmg);
     }
 }
@@ -627,12 +634,12 @@ void dvdparse::addPrograms(const uint8_t* pData, dvdpgc *dvdPgc, uint16_t wTitle
 
     uint32_t dwStartAddressVTS_PGCI_UT      = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTS_PGCI_UT));
 
-    LPCVTS_PGCI_UT pVTS_PGCI_UT = (LPCVTS_PGCI_UT)(pData + (dwStartAddressVTS_PGCI_UT + sizeof(VTS_PGCI_UT_HEADER) + (wProgramChainNo - 1) * sizeof(VTS_PGCI_UT)));
+    LPCVTS_PGCI_UT pVTS_PGCI_UT             = (LPCVTS_PGCI_UT)(pData + (dwStartAddressVTS_PGCI_UT + sizeof(VTS_PGCI_UT_HEADER) + (wProgramChainNo - 1) * sizeof(VTS_PGCI_UT)));
     dvdPgc->m_DVDPGC.m_bEntryPGC            = (getbyte(pVTS_PGCI_UT->m_byTitleNo) & 0x80) ? true : false;
     dvdPgc->m_DVDPGC.m_wProgramChainNo      = getbyte(pVTS_PGCI_UT->m_byTitleNo) & 0x7f;
     uint32_t dwOffsetVTS_PGC                = be2native(pVTS_PGCI_UT->m_dwOffsetVTS_PGC);
 
-    LPCVTS_PGCHEADER pVTS_PGCHEADER = (LPCVTS_PGCHEADER)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC));
+    LPCVTS_PGCHEADER pVTS_PGCHEADER         = (LPCVTS_PGCHEADER)(pData + (dwStartAddressVTS_PGCI_UT + dwOffsetVTS_PGC));
     uint16_t wPGCProgramMapOffset           = be2native(pVTS_PGCHEADER->m_wPGCProgramMapOffset);    // offset within PGC to program map
     uint16_t wPGCCellPlaybackOffset         = be2native(pVTS_PGCHEADER->m_wPGCCellPlaybackOffset);  // offset within PGC to cell playback information table
     uint16_t wCellPositionOffset            = be2native(pVTS_PGCHEADER->m_wCellPositionOffset);     // offset within PGC to cell position information table
@@ -717,11 +724,11 @@ int dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, uint16_t wTitleSetNo)
     {
         dvdfile *dvdFile = new dvdfile;
 
-        dvdFile->m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_MENU_VOB;
-        dvdFile->m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
-        dvdFile->m_DVDFILE.m_wVobNo                  = 0;
-        dvdFile->m_DVDFILE.m_dwSize                  = filestat.m_qwFileSize;
-        dvdFile->m_DVDFILE.m_Date                    = filestat.m_FileTime;
+        dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_MENU_VOB;
+        dvdFile->m_DVDFILE.m_wTitleSetNo            = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                 = 0;
+        dvdFile->m_DVDFILE.m_dwSize                 = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date                   = filestat.m_FileTime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
         return 0;
@@ -738,11 +745,11 @@ int dvdparse::getVtsVob(dvdtitle *dvdTitle, uint16_t wVobNo, uint16_t wTitleSetN
     {
         dvdfile *dvdFile = new dvdfile;
 
-        dvdFile->m_DVDFILE.m_eDvdFileType            = DVDFILETYPE_VTS_VOB;
-        dvdFile->m_DVDFILE.m_wTitleSetNo             = wTitleSetNo;
-        dvdFile->m_DVDFILE.m_wVobNo                  = wVobNo;
-        dvdFile->m_DVDFILE.m_dwSize                  = filestat.m_qwFileSize;
-        dvdFile->m_DVDFILE.m_Date                    = filestat.m_FileTime;
+        dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_VTS_VOB;
+        dvdFile->m_DVDFILE.m_wTitleSetNo            = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                 = wVobNo;
+        dvdFile->m_DVDFILE.m_dwSize                 = filestat.m_qwFileSize;
+        dvdFile->m_DVDFILE.m_Date                   = filestat.m_FileTime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
         return 0;
@@ -755,11 +762,11 @@ void dvdparse::getVtsIfo(dvdtitle *dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI
     {
         dvdfile *dvdFile = new dvdfile;
 
-        dvdFile->m_DVDFILE.m_eDvdFileType               = DVDFILETYPE_VTS_IFO;
-        dvdFile->m_DVDFILE.m_wTitleSetNo                = wTitleSetNo;
-        dvdFile->m_DVDFILE.m_wVobNo                     = 0;
-        dvdFile->m_DVDFILE.m_dwSize                     = qwSizeOfVMGI;
-        dvdFile->m_DVDFILE.m_Date                       = ftime;           // simply use date of title IFO
+        dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_VTS_IFO;
+        dvdFile->m_DVDFILE.m_wTitleSetNo            = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                 = 0;
+        dvdFile->m_DVDFILE.m_dwSize                 = qwSizeOfVMGI;
+        dvdFile->m_DVDFILE.m_Date                   = ftime;           // simply use date of title IFO
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
@@ -770,11 +777,11 @@ void dvdparse::getVtsIfo(dvdtitle *dvdTitle, time_t ftime, uint64_t qwSizeOfVMGI
     {
         dvdfile *dvdFile = new dvdfile;
 
-        dvdFile->m_DVDFILE.m_eDvdFileType               = DVDFILETYPE_VTS_BUP;
-        dvdFile->m_DVDFILE.m_wTitleSetNo                = wTitleSetNo;
-        dvdFile->m_DVDFILE.m_wVobNo                     = 0;
-        dvdFile->m_DVDFILE.m_dwSize                     = qwSizeOfVMGI;
-        dvdFile->m_DVDFILE.m_Date                       = ftime;
+        dvdFile->m_DVDFILE.m_eDvdFileType           = DVDFILETYPE_VTS_BUP;
+        dvdFile->m_DVDFILE.m_wTitleSetNo            = wTitleSetNo;
+        dvdFile->m_DVDFILE.m_wVobNo                 = 0;
+        dvdFile->m_DVDFILE.m_dwSize                 = qwSizeOfVMGI;
+        dvdFile->m_DVDFILE.m_Date                   = ftime;
 
         dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
@@ -787,11 +794,11 @@ void dvdparse::getVtsMenuVob(dvdtitle *dvdTitle, time_t ftime, uint32_t dwMenuVo
 {
     dvdfile *dvdFile = new dvdfile;
 
-    dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_MENU_VOB;
-    dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
-    dvdFile->m_DVDFILE.m_wVobNo                      = 0;
-    dvdFile->m_DVDFILE.m_dwSize                      = dwMenuVobSize;
-    dvdFile->m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
+    dvdFile->m_DVDFILE.m_eDvdFileType               = DVDFILETYPE_MENU_VOB;
+    dvdFile->m_DVDFILE.m_wTitleSetNo                = wTitleSetNo;
+    dvdFile->m_DVDFILE.m_wVobNo                     = 0;
+    dvdFile->m_DVDFILE.m_dwSize                     = dwMenuVobSize;
+    dvdFile->m_DVDFILE.m_Date                       = ftime;           // simply use date of title IFO
 
     dvdTitle->m_lstDvdFile.push_back(dvdFile);
 #if !defined(NDEBUG) && defined(HAVE_ASSERT_H)
@@ -803,11 +810,11 @@ void dvdparse::getVtsVob(dvdtitle *dvdTitle, time_t ftime, uint32_t dwSize, uint
 {
     dvdfile *dvdFile = new dvdfile;
 
-    dvdFile->m_DVDFILE.m_eDvdFileType                = DVDFILETYPE_VTS_VOB;
-    dvdFile->m_DVDFILE.m_wTitleSetNo                 = wTitleSetNo;
-    dvdFile->m_DVDFILE.m_wVobNo                      = wVobNo;
-    dvdFile->m_DVDFILE.m_dwSize                      = dwSize;
-    dvdFile->m_DVDFILE.m_Date                        = ftime;           // simply use date of title IFO
+    dvdFile->m_DVDFILE.m_eDvdFileType               = DVDFILETYPE_VTS_VOB;
+    dvdFile->m_DVDFILE.m_wTitleSetNo                = wTitleSetNo;
+    dvdFile->m_DVDFILE.m_wVobNo                     = wVobNo;
+    dvdFile->m_DVDFILE.m_dwSize                     = dwSize;
+    dvdFile->m_DVDFILE.m_Date                       = ftime;           // simply use date of title IFO
 
     dvdTitle->m_lstDvdFile.push_back(dvdFile);
 
@@ -824,14 +831,14 @@ void dvdparse::getVtsAttributes(const uint8_t *pData, dvdtitle * dvdTitle)
     getVideoAttributes(dvdTitle->m_DVDVTS.m_VideoStreamVTSM, pVTS_IFO->m_byVideoStreamVTS_VOBS);
 
     // audio attributes of VTSM_VOBS
-    dvdTitle->m_DVDVTS.m_wAudioStreamCountVTSM        = be2native(pVTS_IFO->m_wAudioStreamCountVTSM);
+    dvdTitle->m_DVDVTS.m_wAudioStreamCountVTSM      = be2native(pVTS_IFO->m_wAudioStreamCountVTSM);
     if (dvdTitle->m_DVDVTS.m_wAudioStreamCountVTSM)
     {
         getAudioAttributes(dvdTitle->m_DVDVTS.m_AudioStreamVTSM, pVTS_IFO->m_byAudioStreamVTSM, 0);
     }
 
     // subpicture attributes of VTSM_VOBS
-    dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTSM   = be2native(pVTS_IFO->m_wSubpicStreamCountVTSM);
+    dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTSM     = be2native(pVTS_IFO->m_wSubpicStreamCountVTSM);
     if (dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTSM)
     {
         getSubpictureAttributes(dvdTitle->m_DVDVTS.m_SubpicStreamVTSM, pVTS_IFO->m_bySubpicStreamVTSM_VOBS, 0);
@@ -840,7 +847,7 @@ void dvdparse::getVtsAttributes(const uint8_t *pData, dvdtitle * dvdTitle)
     // video attributes of VTS_VOBS
     getVideoAttributes(dvdTitle->m_DVDVTS.m_VideoStreamVTS, pVTS_IFO->m_byVideoStreamVTS_VOBS);
     // audio attributes of VTS_VOBS
-    dvdTitle->m_DVDVTS.m_wAudioStreamCountVTS         = be2native(pVTS_IFO->m_wAudioStreamCountVTS);
+    dvdTitle->m_DVDVTS.m_wAudioStreamCountVTS       = be2native(pVTS_IFO->m_wAudioStreamCountVTS);
     for (uint16_t wAudioStreamNo = 1; wAudioStreamNo <= dvdTitle->m_DVDVTS.m_wAudioStreamCountVTS; wAudioStreamNo++)
     {
         getAudioAttributes(dvdTitle->m_DVDVTS.m_AudioStreamVTS[wAudioStreamNo - 1], pVTS_IFO->m_byAudioStreamsVTS_VOBS[wAudioStreamNo - 1], wAudioStreamNo);
@@ -848,7 +855,7 @@ void dvdparse::getVtsAttributes(const uint8_t *pData, dvdtitle * dvdTitle)
     }
 
     // subpicture attributes of VTS_VOBS
-    dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTS    = be2native(pVTS_IFO->m_wSubpicStreamCountVTS);
+    dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTS      = be2native(pVTS_IFO->m_wSubpicStreamCountVTS);
     for (uint16_t wSubpicStreamNo = 1; wSubpicStreamNo <= dvdTitle->m_DVDVTS.m_wSubpicStreamCountVTS; wSubpicStreamNo++)
     {
         getSubpictureAttributes(dvdTitle->m_DVDVTS.m_SubpicStreamVTS[wSubpicStreamNo - 1], pVTS_IFO->m_bySubpicStreamVTS_VOBS[wSubpicStreamNo - 1], wSubpicStreamNo);
@@ -916,16 +923,16 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                     dwBlockSize = dwEndAdress - dwOffsetToPTT + 1;
                 }
 
-                uint32_t dwCounter = dwBlockSize / sizeof(VTS_PTT);
+                uint32_t dwChapters = dwBlockSize / sizeof(VTS_PTT);
 
-                if (!dwCounter)
+                if (!dwChapters)
                 {
                     continue;
                 }
 
                 dvdpttvmg * dvdPttVmg = m_lstDvdPttVmg[wPttTitleSetNo];
 
-                for (uint16_t wPttChapterNo = 1; wPttChapterNo <= dwCounter; wPttChapterNo++)
+                for (uint16_t wPttChapterNo = 1; wPttChapterNo <= dwChapters; wPttChapterNo++)
                 {
                     dvdpttvts *dvdPttVts = new dvdpttvts(this);
 
@@ -979,13 +986,13 @@ bool dvdparse::parseTitleSet(uint16_t wTitleSetNo)
                 uint64_t qwSizeOfVTST_VOBS  = dvdSector2bytes(be2native(pVTS_IFO->m_dwSectorPointerVTST_VOBS)); // 0C4 	4		sector pointer to VTST_VOBS (Title VOB)
 
                 // Calculate size of VTS_##_0.VOB
-                uint32_t dwMenuVobSize = qwSizeOfVTSM_VOBS ? (qwSizeOfVTST_VOBS - qwSizeOfVTSM_VOBS) : 0;
+                uint32_t dwMenuVobSize      = qwSizeOfVTSM_VOBS ? (qwSizeOfVTST_VOBS - qwSizeOfVTSM_VOBS) : 0;
                 // Calculate size of VTS_##_1.VOB to VTS_##_9.VOB
-                uint64_t qwTitleVobSize = qwSizeOfVTS - qwSizeOfVTST_VOBS - qwSizeOfVMGI;
+                uint64_t qwTitleVobSize     = qwSizeOfVTS - qwSizeOfVTST_VOBS - qwSizeOfVMGI;
                 // Number of VOBS
-                uint16_t wVobCount = qwTitleVobSize / DVD_MAX_VOB_SIZE;
+                uint16_t wVobCount          = qwTitleVobSize / DVD_MAX_VOB_SIZE;
                 // Size of last VOB
-                uint32_t dwLastVobSize = qwTitleVobSize % DVD_MAX_VOB_SIZE;
+                uint32_t dwLastVobSize      = qwTitleVobSize % DVD_MAX_VOB_SIZE;
 
                 // Menu IFO
                 getVtsIfo(dvdTitle, ftime, qwSizeOfVMGI, wTitleSetNo);

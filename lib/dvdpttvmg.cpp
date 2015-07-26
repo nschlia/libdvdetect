@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -67,7 +67,24 @@ dvdtitle * dvdpttvmg::getDvdTitle() const
         return NULL;
     }
 
-    return m_pDvdParse->getDvdTitle(m_DVDPTTVMG.m_wVideoTitleSetNo);
+    const dvdpttvts * pDvdPttVts = getDvdPttVts(1);
+
+    if (pDvdPttVts == NULL)
+    {
+        return NULL;
+    }
+
+    LPCDVDPTTVTS pDVDPTTVTS = pDvdPttVts->getDVDPTTVTS();
+    const dvdprogram * pDvdProgram = m_pDvdParse->getDvdProgram(pDVDPTTVTS);
+
+    if (pDvdProgram == NULL)
+    {
+        return NULL;
+    }
+
+    LPCDVDPROGRAM pDVDPROGRAM = pDvdProgram->getDVDPROGRAM();
+    return m_pDvdParse->getDvdTitle(pDVDPROGRAM->m_wTitleSetNo);
+    //return m_pDvdParse->getDvdTitle(m_DVDPTTVMG.m_wRealTitleNo /*m_wVideoTitleSetNo*/);
 }
 
 dvdpttvts * dvdpttvmg::getDvdPttVts(uint16_t wPttNo) const

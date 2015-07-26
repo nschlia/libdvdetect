@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -242,9 +242,9 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
             }
 
             connectSocket = ::socket((*it).sa_family, SOCK_STREAM, IPPROTO_TCP);
-            if (connectSocket == INVALID_SOCKET)
+            if (connectSocket == (SOCKET)INVALID_SOCKET)
             {
-                setError(_T("socket"), 0);
+                setError(_T("socket open failed"), 0);
                 throw -1;
             }
 
@@ -260,9 +260,50 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
 
         if (nResult == SOCKET_ERROR)
         {
-            setError(_T("connect"), 0);
+            setError(_T("connect faild"), 0);
             throw -1;
         }
+
+#if 1
+    	int iOptVal = 0;
+    	socklen_t iOptLen = sizeof (int);
+
+    	nResult = getsockopt(connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char *) &iOptVal, &iOptLen);
+        if (nResult == SOCKET_ERROR)
+        {
+            setError(_T("getsockopt for SO_KEEPALIVE failed"), 0);
+    	}
+//    	else
+//    	{
+//			cout << "SO_KEEPALIVE Value:" << iOptVal << endl;
+//		}
+#endif
+
+  		BOOL bOptVal = FALSE;
+  	  	int bOptLen = sizeof (BOOL);
+
+        bOptVal = TRUE;
+
+    	nResult = ::setsockopt(connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char *) &bOptVal, bOptLen);
+        if (nResult == SOCKET_ERROR)
+        {
+            setError(_T("setsockopt for SO_KEEPALIVE failed"), 0);
+            throw -1;
+        }
+
+
+#if 1
+iOptVal = 0;
+    	nResult = getsockopt(connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char *) &iOptVal, &iOptLen);
+        if (nResult == SOCKET_ERROR)
+        {
+            setError(_T("getsockopt for SO_KEEPALIVE failed"), 0);
+    	}
+//    	else
+//    	{
+//			cout << "NEW SO_KEEPALIVE Value:" << iOptVal << endl;
+//		}
+#endif
 
         switch (eMethod)
         {
@@ -276,6 +317,8 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
                 strSendBuf += _T(" HTTP/1.0") HTML_TNEWLINE;
                 strSendBuf += _T("Host: ");
                 strSendBuf += strHost;
+                strSendBuf += HTML_TNEWLINE;
+                strSendBuf += "Proxy-Connection: Keep-Alive";
                 strSendBuf += HTML_TNEWLINE;
             }
             else
@@ -309,6 +352,8 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
                 strSendBuf += _T(" HTTP/1.1") HTML_TNEWLINE;
                 strSendBuf += _T("Host: ");
                 strSendBuf += strHost;
+                strSendBuf += HTML_TNEWLINE;
+                strSendBuf += "Proxy-Connection: Keep-Alive";
                 strSendBuf += HTML_TNEWLINE;
             }
             else
@@ -386,7 +431,7 @@ int http::request(METHOD eMethod, const TSTRING & strUrl, const TSTRING & strDat
         m_nResponse = nResponse;
     }
 
-    if (connectSocket != INVALID_SOCKET)
+    if (connectSocket != (SOCKET)INVALID_SOCKET)
     {
         ::closesocket(connectSocket);
     }
@@ -429,7 +474,7 @@ int http::recv(SOCKET s, char ** ppBuffer, int flags, METHOD eMethod)
     struct pollfd ufds[1];
     int     nResult = 0;
     int     nRetBytes = 0;
-    int     nNoDataCount = 0;
+//    int     nNoDataCount = 0;
     int64_t qwMaxSize = -1;
     bool    bHeadersOnly = (eMethod == GET_HEADERSONLY || eMethod == POST_HEADERSONLY) ? true : false;
 
@@ -486,7 +531,7 @@ int http::recv(SOCKET s, char ** ppBuffer, int flags, METHOD eMethod)
 
                 if ( nResult > 0 )
                 {
-                    nNoDataCount = 0;
+//                    nNoDataCount = 0;
 
                     if (getLoggingEnabled(1))
                     {
@@ -517,9 +562,14 @@ int http::recv(SOCKET s, char ** ppBuffer, int flags, METHOD eMethod)
                 }
                 else
                 {
+//        			if (WSAECONNRESET == WSAGetLastError())
+//        			{
+ //                   	break;
+//					}
+
                     // Set error
                     nRetBytes = nResult;
-                    printf(_T("recv has failed, res %i"), nResult);
+                    setError(_T("recv has failed"), 0);
                     break;
                 }
             }

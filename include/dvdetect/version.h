@@ -4,16 +4,16 @@
   Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -23,16 +23,16 @@
  */
 
 //! LIBDVDETECT_VERSION can be used as a string in programs to show what version is used.
-#define LIBDVDETECT_VERSION             "0.50.0 i686-pc-mingw32"
+#define LIBDVDETECT_VERSION             "0.60.0 x86_64-suse-linux-gnu"
 
 //! LIBDVDETECT_PROTOCOL_VERSION is the current protocol version. Libraries supporting higher versions must always support all smaller versions as well.
 #define LIBDVDETECT_PROTOCOL_VERSION	0
 
-#define DVDETECT_FILEVERSION            0,50,0,0
-#define DVDETECT_FILEVERSION_STR        "0.50.0.0\0"
+#define DVDETECT_FILEVERSION            0,60,0,0
+#define DVDETECT_FILEVERSION_STR        "0.60.0.0\0"
 
-#define DVDETECT_PRODUCTVERSION         0,50,0,0
-#define DVDETECT_PRODUCTVERSION_STR     "0.50\0"
+#define DVDETECT_PRODUCTVERSION         0,60,0,0
+#define DVDETECT_PRODUCTVERSION_STR     "0.60\0"
 
 #define DVDETECT_COMPANYNAME_STR        "Oblivion Software/Norbert Schlia"
 #define DVDETECT_FILEDESCRIPTION_STR    "libdvdetect"

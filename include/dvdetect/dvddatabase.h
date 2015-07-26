@@ -1,19 +1,19 @@
 /*
   dvdetect DVD detection, analysis & DVDETECT lookup library
 
-  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  GNU LESSER GENERAL PUBLIC LICENSE for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -47,12 +47,13 @@ public:
      *  Construct a dvddatabase element.
      */
     explicit dvddatabase(const std::string & strClientName,
-                         void *  (*openFile)(const char *, const char *, const char *) = ::openFile,
-                         size_t  (*readFile)(void*, size_t, size_t, void*) = ::readFile,
-                         int     (*writeFile)(const void*, size_t, size_t, void*) = ::writeFile,
-                         int     (*closeFile)(void *) = ::closeFile,
-                         int     (*statFile)(const char *, LPDVDFILESTAT, const char *) = ::statFile,
-                         int     (*fstatFile)(void*, LPDVDFILESTAT) = ::fstatFile);
+                         void *  (*openFile)(const char *filename, const char *mode, const char *proxy) = ::openFile,
+                         size_t  (*readFile)(void* buffer, size_t size, size_t count, void* stream) = ::readFile,
+                         int     (*writeFile)(const void* buffer, size_t size, size_t count, void* stream) = ::writeFile,
+                         int     (*closeFile)(void *stream) = ::closeFile,
+                         int     (*statFile)(const char *file, LPDVDFILESTAT pFileStat, const char *proxy) = ::statFile,
+                         int     (*fstatFile)(void* stream, LPDVDFILESTAT pFileStat) = ::fstatFile);
+
     //! Destructor.
     /*!
      *  Destruct a dvddatabase element.
