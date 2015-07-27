@@ -25,34 +25,25 @@
  *
  * The DVD Detection Library (libdvdetect) is a library to lookup DVDs in a database, similar to
  * existing services for CDs like Gracenote, freeDB or MusicBrainz. and provide information about
- * e.g. title, UPC/EAN or even cover arts. It is OS-independent and compiles for Windows or Unix
+ * e.g. title, UPC/EAN or even cover arts. It is OS independent and compiles for Windows or Unix
  * operating systems. Mac support is also planned.
  *
  * What the library does not provide is DVD ripping and decryption. This is not the intent, besides
  * cracking encyption is illegal in many countries. It merely reads the structure (e.g. titles and
  * chapters) and generates a special checksum to look up the database.
  *
- * <b>Note
- *
- * The current pre-alpha version does not provide database lookup! Please be patient and stay tuned,
- * this will be implemented very soon!</b>
- *
  * \section build_sec Building
  *
  * For *nix, please make sure you have the tinyxml 2.6.1+ library installed first. For Windows, see
  * win/readme.txt for instructions how to install it.
+ * 
+ * Detailed instructions can be found in INSTALL at the top level directory.
  *
  * \subsection build_step1 Step 1: configure
  * \subsection build_step2 Step 2: make
- * \subsection build_step3 Optional Step 3: make doxygen
+ * \subsection build_step3 Optional Step 3: cd doc + run build (make doxygen documentation)
  *
  * \section install_sec Installation
- *
- * <b>DO NOT INSTALL THIS VERSION!<br>
- * The current version is a pre-alpha version and should not be installed on a production system.
- * Installation has not been fully tested and is not guaranteed to work properly. If a later release
- * is installed remains of this version may remain and be in the way.</b>
- *
  * \subsection install_step1 Step 1: follow the instructions in "Building"
  * \subsection install_step2 Step 2: make install
  */
