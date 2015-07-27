@@ -26,19 +26,18 @@ CXXFLAGS = -O3
 DEFS += -DNDEBUG -DTINYXML_USE_STL -DTIXML_USE_STL 
 
 LDFLAGS = 
-INCLUDES = 
 
 if HAVE_WIN32
 # Some extra stuff required for Windows
 LDFLAGS += -lws2_32 --enable-auto-import -fno-keep-inline-dllexport -mthreads
 DEFS += -DDLL_EXPORT
-INCLUDES += -I${top_srcdir}/win/tinyxml/
+AM_CPPFLAGS += -I${top_srcdir}/win/tinyxml/
 else
 # Under *nix, tinyxml should be part of the distribution, so simply link
 LDFLAGS += -ltinyxml
 endif
 
-INCLUDES += -I$(top_srcdir)/include -I$(top_builddir)/include
+AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libdvdetect.la
 libdvdetect_la_SOURCES = \
