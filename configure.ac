@@ -177,4 +177,12 @@ dnl Check for doxygen (dynamic documentation generator)
 dnl ---------------------------------------------
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen, no)
 
+dnl ---------------------------------------------
+dnl Check for g++
+dnl ---------------------------------------------
+AC_CHECK_PROG(BUILD_CXX, g++, g++)
+if test -z "$BUILD_CXX"; then
+     		AC_MSG_ERROR([g++ is required to build libdvdetect])
+fi
+
 AC_OUTPUT
