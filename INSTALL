@@ -108,13 +108,17 @@ There is an excellent guide how to install Minimum GNU for Windows (MinGW)
 that can be found here:
 http://blog.florianwolters.de/educational/2013/11/21/Installing-MinGW/
 
+Different from the above guid, assuming MinGW is on c:\mingw, run these 
+commands:
+
+set MINGW_HOME=c:\mingw
+PATH=%PATH%;%MINGW_HOME%\msys\1.0\bin;%MINGW_HOME%\bin
+
 If you follow these instructions and add MinGW to your path, you can simply
 start a bash shell (type bash on a command prompt).
 
-Mount the mingw directory as decribed on the MinGW wiki 
-and run configure+make:
-
-http://www.mingw.org/wiki/msys
+Next mount the mingw directory as decribed on the MinGW wiki 
+and run configure+make (see http://www.mingw.org/wiki/msys):
 
 Using MSYS with MinGW
 
