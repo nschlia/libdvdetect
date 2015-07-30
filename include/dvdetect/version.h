@@ -1,7 +1,7 @@
 /*
   dvdetect DVD detection & lookup library
 
-  Copyright (C) 2013-2015 Norbert Schlia <nschlia@dvdetect.de>
+  Copyright (C) 2013 Norbert Schlia <nschlia@dvdetect.de>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file version.h
+/** \file version.h 
  *
  *  \brief A file containing the libdvdetect package version
  */
@@ -37,7 +37,7 @@
 #define DVDETECT_COMPANYNAME_STR        "Oblivion Software/Norbert Schlia"
 #define DVDETECT_FILEDESCRIPTION_STR    "libdvdetect"
 #define DVDETECT_INTERNALNAME_STR       "libdvdetect"
-#define DVDETECT_LEGALCOPYRIGHT_STR     "Copyright (c) 2013-2015 Oblivion Software/Norbert Schlia"
+#define DVDETECT_LEGALCOPYRIGHT_STR     "Copyright (c) 2013 Oblivion Software/Norbert Schlia"
 #define DVDETECT_LEGALTRADEMARKS1_STR   "All Rights Reserved"
 #define DVDETECT_LEGALTRADEMARKS2_STR   DVDETECT_LEGALTRADEMARKS1_STR
 #define DVDETECT_ORIGINALFILENAME_STR   "dvdetect.dll"

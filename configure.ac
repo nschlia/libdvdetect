@@ -105,9 +105,32 @@ AC_LIBTOOL_WIN32_DLL
 # FIXME: Replace `main' with a function in `-lpthread':
 #AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-ltinyxml':
-#AC_CHECK_LIB([tinyxml], [main])
+#AC_CHECK_LIB([tinyxml], [main], [], [
+#  AC_MSG_ERROR([unable to find the cos() function])
+#])
 # FIXME: Replace `main' with a function in `-lws2_32':
 #AC_CHECK_LIB([ws2_32], [main])
+
+dnl ==================
+dnl Checks for tinyxml
+dnl ==================
+AC_CHECK_LIB([tinyxml],
+             [main],
+             [have_tinyxml_library=true],
+	     [AC_MSG_WARN([tinyxml library not found.])])
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([tinyxml.h],
+                 [have_tinyxml_header=true],
+                 [AC_MSG_WARN([tinyxml library headers not found.])],
+                 [])
+AC_LANG_POP([C++])
+if test "x$have_tinyxml_library" != "xtrue" -o "x$have_tinyxml_header" != "xtrue"
+then
+	if test "$OS" != "Windows_NT" 
+	then
+     		AC_MSG_ERROR([Please install tinyxml2!])
+	fi
+fi
 
 dnl ---------------------------------------------
 dnl Check if we are running on a big endian machine
@@ -153,5 +176,13 @@ dnl ---------------------------------------------
 dnl Check for doxygen (dynamic documentation generator)
 dnl ---------------------------------------------
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen, no)
+
+dnl ---------------------------------------------
+dnl Check for g++
+dnl ---------------------------------------------
+AC_CHECK_PROG(BUILD_CXX, g++, g++)
+if test -z "$BUILD_CXX"; then
+     		AC_MSG_ERROR([g++ is required to build libdvdetect])
+fi
 
 AC_OUTPUT
