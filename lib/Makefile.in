@@ -273,7 +273,6 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BUILD_CXX = @BUILD_CXX@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = -O3
@@ -401,8 +400,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 #AM_CFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
-AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors \
-	$(am__append_3) -I$(top_srcdir)/include \
+AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
+INCLUDES = $(am__append_3) -I$(top_srcdir)/include \
 	-I$(top_builddir)/include
 lib_LTLIBRARIES = libdvdetect.la
 libdvdetect_la_SOURCES = dvdcell.cpp dvddatabase.cpp dvdetectbase.cpp \

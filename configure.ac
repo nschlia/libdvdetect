@@ -25,7 +25,7 @@ dnl ---------------------------------------------
 #    If the interface is the same as the previous version, change to current:revision+1:age
 
 #AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
-AC_INIT(libdvdetect library, 0.70.0, bugs@dvdetect.de,,http://www.dvdetect.de)
+AC_INIT(libdvdetect library, 0.60.0, bugs@dvdetect.de,,http://www.dvdetect.de)
 
 AC_SUBST(LIBDVDETECT_VERSION_MAJOR, `echo $PACKAGE_VERSION | sed 's/\(.*\)\..*\..*/\1/g'`)
 AC_SUBST(LIBDVDETECT_VERSION_MINOR, `echo $PACKAGE_VERSION | sed 's/.*\.\(.*\)\..*/\1/g'`)
@@ -105,32 +105,9 @@ AC_LIBTOOL_WIN32_DLL
 # FIXME: Replace `main' with a function in `-lpthread':
 #AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-ltinyxml':
-#AC_CHECK_LIB([tinyxml], [main], [], [
-#  AC_MSG_ERROR([unable to find the cos() function])
-#])
+#AC_CHECK_LIB([tinyxml], [main])
 # FIXME: Replace `main' with a function in `-lws2_32':
 #AC_CHECK_LIB([ws2_32], [main])
-
-dnl ==================
-dnl Checks for tinyxml
-dnl ==================
-AC_CHECK_LIB([tinyxml],
-             [main],
-             [have_tinyxml_library=true],
-	     [AC_MSG_WARN([tinyxml library not found.])])
-AC_LANG_PUSH([C++])
-AC_CHECK_HEADER([tinyxml.h],
-                 [have_tinyxml_header=true],
-                 [AC_MSG_WARN([tinyxml library headers not found.])],
-                 [])
-AC_LANG_POP([C++])
-if test "x$have_tinyxml_library" != "xtrue" -o "x$have_tinyxml_header" != "xtrue"
-then
-	if test "$OS" != "Windows_NT" 
-	then
-     		AC_MSG_ERROR([Please install tinyxml2!])
-	fi
-fi
 
 dnl ---------------------------------------------
 dnl Check if we are running on a big endian machine
@@ -176,13 +153,5 @@ dnl ---------------------------------------------
 dnl Check for doxygen (dynamic documentation generator)
 dnl ---------------------------------------------
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen, no)
-
-dnl ---------------------------------------------
-dnl Check for g++
-dnl ---------------------------------------------
-AC_CHECK_PROG(BUILD_CXX, g++, g++)
-if test -z "$BUILD_CXX"; then
-     		AC_MSG_ERROR([g++ is required to build libdvdetect])
-fi
 
 AC_OUTPUT
