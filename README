@@ -3,7 +3,7 @@ WHAT IS libdvdetect
 DOCUMENTATION
 
 The API documentation can be consulted on the project homepage:
-    http://www.libdvdetect.de/
+    http://www.dvdetect.de/
 
 It is possible to create your own copy of this documentation in both
 HTML and LaTeX format using the doxygen program (http://doxygen.org).
