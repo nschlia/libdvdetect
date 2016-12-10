@@ -25,7 +25,7 @@ dnl ---------------------------------------------
 #    If the interface is the same as the previous version, change to current:revision+1:age
 
 #AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
-AC_INIT(libdvdetect library, 0.60.0, bugs@dvdetect.de,,http://www.dvdetect.de)
+AC_INIT(libdvdetect, 0.70.0, bugs@dvdetect.de,, http://www.dvdetect.de)
 
 AC_SUBST(LIBDVDETECT_VERSION_MAJOR, `echo $PACKAGE_VERSION | sed 's/\(.*\)\..*\..*/\1/g'`)
 AC_SUBST(LIBDVDETECT_VERSION_MINOR, `echo $PACKAGE_VERSION | sed 's/.*\.\(.*\)\..*/\1/g'`)
@@ -73,12 +73,15 @@ AM_CONDITIONAL([HAVE_CYGWIN], [test "$OSTYPE" = "cygwin"])
 dnl ---------------------------------------------
 dnl windoze stuff
 dnl ---------------------------------------------
-AM_CONDITIONAL([HAVE_WIN32], [test "$OS" = "Windows_NT"])
-AC_CHECK_HEADERS([windows.h winsock2.h Ws2tcpip.h], [], [],
+AC_CHECK_HEADERS([windows.h winsock2.h ws2tcpip.h], 
+     [have_windows=true],
+     [AC_MSG_NOTICE([Building for Windows target.])],
      [[#ifdef HAVE_WINDOWS_H
      # include <windows.h>
      #endif
      ]])                                                                                                  
+AM_CONDITIONAL([HAVE_WIN32], [test "$OS" = "Windows_NT"])
+AM_CONDITIONAL([HAVE_WIN32], [test "x$have_windows" = "xtrue"])
 
 dnl ---------------------------------------------
 dnl Checks for programs.
@@ -105,9 +108,33 @@ AC_LIBTOOL_WIN32_DLL
 # FIXME: Replace `main' with a function in `-lpthread':
 #AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-ltinyxml':
-#AC_CHECK_LIB([tinyxml], [main])
+#AC_CHECK_LIB([tinyxml], [main], [], [
+#  AC_MSG_ERROR([unable to find the cos() function])
+#])
 # FIXME: Replace `main' with a function in `-lws2_32':
 #AC_CHECK_LIB([ws2_32], [main])
+
+dnl ==================
+dnl Checks for tinyxml
+dnl ==================
+AC_CHECK_LIB([tinyxml],
+             [main],
+             [have_tinyxml_library=true],
+	     [AC_MSG_WARN([tinyxml library not found. Embedded tinyxml code will be built.])])
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([tinyxml.h],
+                 [have_tinyxml_header=true],
+                 [AC_MSG_WARN([tinyxml library not found. Embedded tinyxml code will be built.])],
+                 [])
+AC_LANG_POP([C++])
+if test "x$have_tinyxml_library" != "xtrue" -o "x$have_tinyxml_header" != "xtrue"
+then
+    build_tinyxml=yes
+else
+    build_tinyxml=no
+    AC_DEFINE([TIXML_USE_STL], [1], [Define to 1 to use STL string in TinyXML])
+fi
+AM_CONDITIONAL([BUILD_TINYXML], [test "x$build_tinyxml" = "xyes"])
 
 dnl ---------------------------------------------
 dnl Check if we are running on a big endian machine
@@ -133,7 +160,7 @@ AC_CHECK_TYPES([ptrdiff_t])
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
-AC_FUNC_MALLOC
+#AC_FUNC_MALLOC
 AC_FUNC_MKTIME
 # http://rickfoosusa.blogspot.de/2011/11/howto-fix-undefined-reference-to.html
 #AC_FUNC_REALLOC
@@ -153,5 +180,13 @@ dnl ---------------------------------------------
 dnl Check for doxygen (dynamic documentation generator)
 dnl ---------------------------------------------
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen, no)
+
+dnl ---------------------------------------------
+dnl Check for g++
+dnl ---------------------------------------------
+AC_CHECK_PROG(BUILD_CXX, g++, g++)
+if test -z "$BUILD_CXX"; then
+     		AC_MSG_ERROR([g++ is required to build libdvdetect])
+fi
 
 AC_OUTPUT

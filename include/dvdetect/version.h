@@ -23,16 +23,16 @@
  */
 
 //! LIBDVDETECT_VERSION can be used as a string in programs to show what version is used.
-#define LIBDVDETECT_VERSION             "0.60.0 x86_64-suse-linux-gnu"
+#define LIBDVDETECT_VERSION             "0.70.0 x86_64-unknown-linux-gnu"
 
 //! LIBDVDETECT_PROTOCOL_VERSION is the current protocol version. Libraries supporting higher versions must always support all smaller versions as well.
 #define LIBDVDETECT_PROTOCOL_VERSION	0
 
-#define DVDETECT_FILEVERSION            0,60,0,0
-#define DVDETECT_FILEVERSION_STR        "0.60.0.0\0"
+#define DVDETECT_FILEVERSION            0,70,0,0
+#define DVDETECT_FILEVERSION_STR        "0.70.0.0\0"
 
-#define DVDETECT_PRODUCTVERSION         0,60,0,0
-#define DVDETECT_PRODUCTVERSION_STR     "0.60\0"
+#define DVDETECT_PRODUCTVERSION         0,70,0,0
+#define DVDETECT_PRODUCTVERSION_STR     "0.70\0"
 
 #define DVDETECT_COMPANYNAME_STR        "Oblivion Software/Norbert Schlia"
 #define DVDETECT_FILEDESCRIPTION_STR    "libdvdetect"

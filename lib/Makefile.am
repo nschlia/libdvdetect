@@ -26,19 +26,17 @@ CXXFLAGS = -O3
 DEFS += -DNDEBUG -DTINYXML_USE_STL -DTIXML_USE_STL 
 
 LDFLAGS = 
-INCLUDES = 
 
 if HAVE_WIN32
 # Some extra stuff required for Windows
 LDFLAGS += -lws2_32 --enable-auto-import -fno-keep-inline-dllexport -mthreads
 DEFS += -DDLL_EXPORT
-INCLUDES += -I${top_srcdir}/win/tinyxml/
 else
 # Under *nix, tinyxml should be part of the distribution, so simply link
 LDFLAGS += -ltinyxml
 endif
 
-INCLUDES += -I$(top_srcdir)/include -I$(top_builddir)/include
+AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libdvdetect.la
 libdvdetect_la_SOURCES = \
@@ -74,14 +72,18 @@ libdvdetect_la_SOURCES += \
         emu/strptime.c
 endif
 
+if BUILD_TINYXML
 # Windows has no tinyxml, so use our code.
-if HAVE_WIN32
+AM_CPPFLAGS += -I${top_srcdir}/win/tinyxml/
 nodist_libdvdetect_la_SOURCES = \
 	${top_srcdir}/win/tinyxml/tinystr.cpp \
 	${top_srcdir}/win/tinyxml/tinyxml.cpp \
 	${top_srcdir}/win/tinyxml/tinyxmlerror.cpp \
 	${top_srcdir}/win/tinyxml/tinyxmlparser.cpp
+else
+LDFLAGS += -ltinyxml
 endif
+
 
 libdvdetect_la_LDFLAGS = -no-undefined -version-info $(libdvdetect_la_CURRENT):$(libdvdetect_la_REVISION):$(libdvdetect_la_AGE)
 

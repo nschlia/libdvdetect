@@ -46,7 +46,7 @@
 #endif
 
 #ifdef HAVE_WS2TCPIP_H
-#include <Ws2tcpip.h>
+#include <ws2tcpip.h>
 #endif
 #endif //!__CYGWIN__
 
@@ -120,6 +120,11 @@ typedef int bool;
 #include "common.h"
 #endif
 
+//#if defined(WIN32) && defined(__GNUC__)
+//#include <ws2ipdef.h>
+//#include <ws2tcpip.h>
+//#endif
+
 #ifdef __cplusplus
 
 //! IPv4 and IPv6 Address
@@ -189,6 +194,54 @@ extern "C" char * strptime (const char *buf, const char *format, struct tm *tm);
 #endif
 #ifndef FALSE
 #define FALSE (0)
+#endif
+#endif
+
+#ifndef POLLRDNORM
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct pollfd {
+  SOCKET fd;
+  short  events;
+  short  revents;
+} WSAPOLLFD, *PWSAPOLLFD, *LPWSAPOLLFD;
+
+#define POLLRDNORM 0x0100
+#define POLLRDBAND 0x0200
+#define POLLIN    (POLLRDNORM | POLLRDBAND)
+#define POLLPRI    0x0400
+
+#define POLLWRNORM 0x0010
+#define POLLOUT   (POLLWRNORM)
+#define POLLWRBAND 0x0020
+
+#define POLLERR    0x0001
+#define POLLHUP    0x0002
+#define POLLNVAL   0x0004
+
+int WSAAPI WSAPoll(
+  WSAPOLLFD fdarray[],
+  ULONG nfds,
+  INT timeout
+);
+
+typedef struct addrinfo  ADDRINFOA, *PADDRINFOA;
+
+int WSAAPI getaddrinfo(
+    PCSTR pNodeName,
+    PCSTR pServiceName,
+    const ADDRINFOA *pHints,
+       PADDRINFOA *ppResult
+);
+
+void WSAAPI freeaddrinfo(
+    struct addrinfo *ai
+);
+
+#ifdef __cplusplus
+}
 #endif
 #endif
 
