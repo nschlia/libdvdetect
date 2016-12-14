@@ -18,7 +18,7 @@
 #METASOURCES = AUTO
 
 #AM_CFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
-AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
+AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions
 CFLAGS = -O3
 CXXFLAGS = -O3
 #-g 
@@ -30,10 +30,13 @@ LDFLAGS =
 if HAVE_WIN32
 # Some extra stuff required for Windows
 LDFLAGS += -lws2_32 --enable-auto-import -fno-keep-inline-dllexport -mthreads
-DEFS += -DDLL_EXPORT
 else
 # Under *nix, tinyxml should be part of the distribution, so simply link
 LDFLAGS += -ltinyxml
+endif
+
+if BUILDING_STATIC
+DEFS += -DBUILDING_STATIC
 endif
 
 AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include
@@ -84,10 +87,11 @@ else
 LDFLAGS += -ltinyxml
 endif
 
-
 libdvdetect_la_LDFLAGS = -no-undefined -version-info $(libdvdetect_la_CURRENT):$(libdvdetect_la_REVISION):$(libdvdetect_la_AGE)
 
-pkginclude_HEADERS = \
+#pkgincludedir=$(includedir)/dvdetect
+pkginclude_HEADERS = 
+noinst_HEADERS = \
 	common.h \
 	commonwin32.h \
 	compat.h \
@@ -99,3 +103,5 @@ pkginclude_HEADERS = \
 	xmldocbuilder.h \
 	xmldocparser.h \
 	md5/md5.h
+
+
