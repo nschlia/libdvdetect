@@ -18,23 +18,23 @@
 #METASOURCES = AUTO
 
 #AM_CFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
-AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions -pedantic-errors
+AM_CPPFLAGS = -c -pipe -Wall -Wextra -fexceptions
 CFLAGS = -O3
 CXXFLAGS = -O3
 #-g 
 
 DEFS += -DNDEBUG
-
 LDFLAGS = 
 
-if HAVE_WIN32
-# For Cygwin, build static library. For general Windows, build DLL.
-#if HAVE_CYGWIN
+if HAVE_CYGWIN
 #DEFS += -DBUILDING_STATIC
-#else
-DEFS += -DDLL_IMPORT
-#endif
+else
+if BUILDING_STATIC
+DEFS += -DBUILDING_STATIC
 endif
+endif
+# The basic API is C++, therefore we need libstdc++ even if using the C API.
+LIBDVDETECT_LIBS = -lstdc++
 
 AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include $(LIBDVDETECT_FLAGS) 
 
@@ -49,4 +49,5 @@ dvdlookupcxx_LDADD = $(top_builddir)/lib/libdvdetect.la $(LIBDVDETECT_LIBS)
 dvdsubmitcxx_SOURCES = dvdsubmitcxx.cpp 
 dvdsubmitcxx_LDADD = $(top_builddir)/lib/libdvdetect.la $(LIBDVDETECT_LIBS) 
 
+#pkgincludedir=$(includedir)/dvdetect
 pkginclude_HEADERS = 

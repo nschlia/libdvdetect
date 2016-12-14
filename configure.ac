@@ -25,7 +25,7 @@ dnl ---------------------------------------------
 #    If the interface is the same as the previous version, change to current:revision+1:age
 
 #AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
-AC_INIT(libdvdetect, 0.70.0, bugs@dvdetect.de,, http://www.dvdetect.de)
+AC_INIT(libdvdetect, 0.71.0, bugs@dvdetect.de,, http://www.dvdetect.de)
 
 AC_SUBST(LIBDVDETECT_VERSION_MAJOR, `echo $PACKAGE_VERSION | sed 's/\(.*\)\..*\..*/\1/g'`)
 AC_SUBST(LIBDVDETECT_VERSION_MINOR, `echo $PACKAGE_VERSION | sed 's/.*\.\(.*\)\..*/\1/g'`)
@@ -61,6 +61,7 @@ AM_CONDITIONAL([HAVE_STRPTIME], [test "$STRPTIMEAVAILABLE" = "1"])
 dnl ---------------------------------------------
 dnl Distribution archive
 dnl ---------------------------------------------
+#AM_INIT_AUTOMAKE([dist-bzip2 subdir-objects])
 AM_INIT_AUTOMAKE([dist-bzip2])
 AM_MAINTAINER_MODE
 
@@ -145,7 +146,7 @@ AC_C_BIGENDIAN
 AC_CHECK_HEADERS([limits.h stddef.h unistd.h sys/socket.h sys/types.h sys/stat.h netinet/in.h arpa/inet.h poll.h netdb.h stdint.h stdbool.h assert.h openssl/md5.h])                                                                                                  
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_CHECK_HEADER_STDBOOL
+#AC_CHECK_HEADER_STDBOOL
 AC_C_INLINE
 AC_TYPE_INT16_T
 AC_TYPE_INT64_T
@@ -188,5 +189,11 @@ AC_CHECK_PROG(BUILD_CXX, g++, g++)
 if test -z "$BUILD_CXX"; then
      		AC_MSG_ERROR([g++ is required to build libdvdetect])
 fi
+
+dnl ---------------------------------------------
+dnl Add define for static build
+dnl ---------------------------------------------
+
+AM_CONDITIONAL([BUILDING_STATIC], [test x"$enable_static" = xyes]) 
 
 AC_OUTPUT

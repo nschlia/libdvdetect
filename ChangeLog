@@ -1,4 +1,15 @@
-2015-XX-XX nschlia V0.70
+2016-12-14 nschlia V0.71
+
+  * Fix several bugs in autoconf (make configure work properly)
+  * Fix installation when cross compiling
+  * Fix native installation
+  * Remove unnecessary files from "make install"
+
+2016-12-11 nschlia V0.70
+
+  * Correct package name
+  * Fix link under windoze
+  * better build if crosscompiling
 
 2015-07-26 nschlia V0.60
 
