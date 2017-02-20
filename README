@@ -3,7 +3,8 @@ WHAT IS libdvdetect
 DOCUMENTATION
 
 The API documentation can be consulted on the project homepage:
-    http://www.dvdetect.de/
+
+    https://www.dvdetect.de/
 
 It is possible to create your own copy of this documentation in both
 HTML and LaTeX format using the doxygen program (http://doxygen.org).
@@ -62,11 +63,16 @@ undergone testing as of yet
 INFORMATION
 
 The primary source of information for this project is:
-    http://libdvdetect.sourceforge.net/
 
-Bugs, patches, feature request can be submitted on the project
+    https://github.com/nschlia/libdvdetect
+
+Bugs and feature requests can be submitted on the project
 homepage:
-    http://sourceforge.net/projects/libdvdetect/
+
+    https://github.com/nschlia/libdvdetect/issues
 
 Or they can be send directly to me:
     Norbert Schlia <mailto:nschlia@dvdetect.de>
+
+Feel free to clone the project on github and provide your own
+changes!
